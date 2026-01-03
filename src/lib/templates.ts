@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises";
 import path from "path";
+import JSON5 from "json5";
 
 const templateDir = process.env.TEMPLATE_DIR!;
 if (!templateDir) {
@@ -13,9 +14,14 @@ export async function getTemplate<TemplateName extends keyof templateMap, Templa
     }
     const filePath = path.join(templateDir, filename);
     const content = await readFile(filePath, 'utf8');
-    const data: TemplateData = JSON.parse(content);
-    cachedTemplates[filename] = data;
-    return data;
+    try {
+        const data: TemplateData = JSON5.parse(content);
+        cachedTemplates[filename] = data;
+        return data;
+    } catch (e) {
+        console.error(`Error parsing JSON from file ${filePath}:`, e);
+        throw e;
+    }
 }
 
 export const templates = {
