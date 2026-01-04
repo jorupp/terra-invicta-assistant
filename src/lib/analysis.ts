@@ -50,6 +50,19 @@ export async function analyzeData(saveFile: SaveFile) {
     throw new Error("Player faction data not found in save file.");
   }
 
+  const controlPoints = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIControlPoint"].map(({ Value: cp }) => ({
+    id: cp.ID.value,
+    factionId: cp.faction?.value,
+    nationId: cp.nation?.value,
+    displayName: cp.displayName,
+    benefitsDisabled: cp.benefitsDisabled,
+    defended: cp.defended,
+    // TODO: can we get a CP cost somewhere?
+  }));
+  const playerNationIds = new Set<number>(
+    controlPoints.filter((cp) => cp.factionId === playerFaction.id && cp.nationId).map((cp) => cp.nationId!)
+  );
+
   const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
 
   const shipHulls = (await templates.shipHulls()).map((h) => ({
@@ -173,6 +186,19 @@ export async function analyzeData(saveFile: SaveFile) {
     .filter((fleet) => fleet.faction === alienFaction.ID.value)
     .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId));
 
+  const regions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIRegionState"].map(({ Value: region }) => ({
+    id: region.ID.value,
+    templateName: region.templateName,
+    nation: region.nation.value,
+  }));
+  const regionsById = new Map<number, (typeof regions)[0]>(regions.map((region) => [region.id, region]));
+  const nations = saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"].map(({ Value: nation }) => ({
+    id: nation.ID.value,
+    templateName: nation.templateName,
+    displayName: nation.displayName,
+  }));
+  const nationsById = new Map<number, (typeof nations)[0]>(nations.map((nation) => [nation.id, nation]));
+
   const orgTemplates = new Map(
     (await templates.orgs()).map((org) => [
       org.dataName,
@@ -185,7 +211,7 @@ export async function analyzeData(saveFile: SaveFile) {
         allowedOnMarket: org.allowedOnMarket,
         requiredOwnerTraits: org.requiredOwnerTraits,
         prohibitedOwnerTraits: org.prohibitedOwnerTraits,
-        homeRegionMapTemplateName: org.homeRegionMapTemplateName,
+        // homeRegionMapTemplateName: org.homeRegionMapTemplateName, // regionid is on org
         missionsGrantedNames: org.missionsGrantedNames,
         grantsMarked: org.grantsMarked,
         techBonuses: org.techBonuses,
@@ -195,6 +221,9 @@ export async function analyzeData(saveFile: SaveFile) {
 
   const orgs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrgState"].map(({ Value: org }) => {
     const template = org.templateName ? orgTemplates.get(org.templateName) : undefined;
+    const homeRegionId = org.homeRegion?.value;
+    const homeNationId = regionsById.get(homeRegionId || -1)?.nation;
+    const homeNation = homeNationId ? nationsById.get(homeNationId) : undefined;
     return {
       id: org.ID.value,
       displayName: org.displayName,
@@ -202,7 +231,9 @@ export async function analyzeData(saveFile: SaveFile) {
       template,
       assignedCouncilorId: org.assignedCouncilor?.value,
       factionOrbitId: org.factionOrbit?.value,
-      homeRegionId: org.homeRegion?.value,
+      homeRegionId,
+      homeNationId,
+      homeNationName: homeNation?.displayName,
       tier: org.tier,
       takeoverDefense: org.takeoverDefense,
       costMoney: org.costMoney,
@@ -251,6 +282,7 @@ export async function analyzeData(saveFile: SaveFile) {
     alienFleetsToPlayerOrbits,
     playerUnassignedOrgs,
     playerAvailableOrgs,
+    playerNationIds: [...playerNationIds],
   };
 }
 
