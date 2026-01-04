@@ -273,6 +273,29 @@ export async function analyzeData(saveFile: SaveFile) {
   const playerUnassignedOrgs = orgs.filter((org) => playerFaction?.unassignedOrgIds.includes(org.id));
   const playerAvailableOrgs = orgs.filter((org) => playerFaction?.availableOrgIds.includes(org.id));
 
+  const councilors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TICouncilorState"].map(
+    ({ Value: councilor }) => {
+      const orgIds = new Set(councilor.orgs.map((i) => i.value));
+      const councilorOrgs = orgs.filter((org) => orgIds.has(org.id));
+      return {
+        id: councilor.ID.value,
+        displayName: councilor.displayName,
+        factionId: councilor.faction?.value,
+        traitTemplateNames: councilor.traitTemplateNames,
+        attributes: councilor.attributes,
+        orgs: councilorOrgs,
+        homeRegionId: councilor.homeRegion?.value,
+        homeNationId: regionsById.get(councilor.homeRegion?.value || -1)?.nation,
+        typeTemplateName: councilor.typeTemplateName,
+        xp: councilor.XP,
+      };
+    }
+  );
+  const playerCouncilors = councilors.filter((councilor) => playerFaction?.councilorIds.includes(councilor.id));
+  const playerAvailableCouncilors = councilors.filter((councilor) =>
+    playerFaction?.availableCouncilorIds.includes(councilor.id)
+  );
+
   return {
     player,
     playerFaction,
@@ -283,6 +306,8 @@ export async function analyzeData(saveFile: SaveFile) {
     playerUnassignedOrgs,
     playerAvailableOrgs,
     playerNationIds: [...playerNationIds],
+    playerCouncilors,
+    playerAvailableCouncilors,
   };
 }
 

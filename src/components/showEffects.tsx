@@ -2,7 +2,7 @@ import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
 import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MissionControl, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
 import { Org } from "@/lib/templates";
 
-type ShowEffectsProps = Partial<
+export type ShowEffectsProps = Partial<
   Pick<Org, 'techBonuses'> &
   CouncilorAttributes &
     Pick<
@@ -60,6 +60,7 @@ export const ShowEffects = (props: ShowEffectsProps) => {
   const administration = (props.administration || 0) + (props.Administration || 0);
   const science = (props.science || 0) + (props.Science || 0);
   const security = (props.security || 0) + (props.Security || 0);
+  const apparentLoyalty = props.ApparentLoyalty || 0;
   const loyalty = props.Loyalty || 0;
   const priorityEconomyBonus = props.economyBonus || 0;
   const priorityWelfareBonus = props.welfareBonus || 0;
@@ -77,7 +78,7 @@ export const ShowEffects = (props: ShowEffectsProps) => {
   const techBonuses = props.techBonuses || [];
 
   return <>
-    {tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}</>}
+    {tier > 5 ? <>{tier} <TierStar /> </> : tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}</>}
     {/** TODO: how to show takeover defense? */}
     {costMoney !== 0 && <>{costMoney} <Currency/> </>}
     {costInfluence !== 0 && <>{costInfluence} <Influence/></> }
@@ -93,6 +94,7 @@ export const ShowEffects = (props: ShowEffectsProps) => {
     {administration !== 0 && <>{administration} <Administration/> </>}
     {science !== 0 && <>{science} <Science/> </>}
     {security !== 0 && <>{security} <Security/> </>}
+    {apparentLoyalty !== 0 && <>{apparentLoyalty} <Loyalty/> </>}
     {loyalty !== 0 && <>{loyalty} <Loyalty/> </>}
     {priorityEconomyBonus !== 0 && <>{pct(priorityEconomyBonus)} <PriorityEconomy/> </>}
     {priorityWelfareBonus !== 0 && <>{pct(priorityWelfareBonus)} <PriorityWelfare/> </>}
@@ -116,6 +118,25 @@ export const ShowEffects = (props: ShowEffectsProps) => {
     </>}
   </>;
 };
+
+export function combineEffects(p1: ShowEffectsProps, p2: ShowEffectsProps): ShowEffectsProps {
+  const result: ShowEffectsProps = {...p1};
+  for (const key in p2) {
+    const k = key as keyof ShowEffectsProps;
+    if (k == 'techBonuses') {
+      result.techBonuses = [...[...(result.techBonuses || []), ...(p2.techBonuses || [])].reduce((acc, curr) => {
+        const key = curr.category;
+        const existing = acc.get(key) || 0;
+        acc.set(key, existing + curr.bonus);
+        return acc;
+      }, new Map<string, number>()).entries().map(([category, bonus]) => ({category, bonus}) )];
+    }
+    else if (typeof p2[k] === "number") {
+      result[k] = (result[k] || 0) + (p2[k] || 0);
+    }
+  }
+  return result;
+}
 
 function pct(value: number) {
   return (value * 100).toFixed(0) + "%";

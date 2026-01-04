@@ -1,10 +1,9 @@
 "use client";
 
-import { Currency } from "@/components/icons";
-import { ShowEffects } from "@/components/showEffects";
+import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
-import { Minus, MinusCircle, MinusCircleIcon, Plus, PlusCircleIcon } from "lucide-react";
+import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 
 export default function CurrentGameComponent({ analysis }: { analysis: Analysis }) {
   const playerNationIds = new Set(analysis.playerNationIds);
@@ -12,6 +11,85 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
     <div>
       <h2>Current Game Component</h2>
       <h3>Faction: {analysis.playerFaction.displayName}</h3>
+
+      <h3>Active Councilors:</h3>
+      <Table>
+        <TableHeader>
+          <TableHead>Name</TableHead>
+          <TableHead>Nation</TableHead>
+        </TableHeader>
+        <TableBody>
+          {analysis.playerCouncilors.map((councilor) => {
+            const orgEffects = councilor.orgs.reduce<ShowEffectsProps>((acc, org) => {
+              return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
+            }, {});
+            return (
+              <TableRow key={councilor.id}>
+                <TableCell>{councilor.displayName}</TableCell>
+                <TableCell>
+                  <ShowEffects
+                    Persuasion={(councilor.attributes.Persuasion || 0) + (orgEffects.persuasion || 0)}
+                    Command={(councilor.attributes.Command || 0) + (orgEffects.command || 0)}
+                    Investigation={(councilor.attributes.Investigation || 0) + (orgEffects.investigation || 0)}
+                    Espionage={(councilor.attributes.Espionage || 0) + (orgEffects.espionage || 0)}
+                    Administration={(councilor.attributes.Administration || 0) + (orgEffects.administration || 0)}
+                    Science={(councilor.attributes.Science || 0) + (orgEffects.science || 0)}
+                    Security={(councilor.attributes.Security || 0) + (orgEffects.security || 0)}
+                    ApparentLoyalty={councilor.attributes.ApparentLoyalty || 0}
+                    // TODO: is there a case where we should show this?
+                    // Loyalty={councilor.attributes.Loyalty}
+                  />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects tier={orgEffects.tier} />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects
+                    incomeBoost_month={orgEffects.incomeBoost_month}
+                    incomeMoney_month={orgEffects.incomeMoney_month}
+                    incomeInfluence_month={orgEffects.incomeInfluence_month}
+                    incomeOps_month={orgEffects.incomeOps_month}
+                    incomeMissionControl={orgEffects.incomeMissionControl}
+                    incomeResearch_month={orgEffects.incomeResearch_month}
+                    projectCapacityGranted={orgEffects.projectCapacityGranted}
+                  />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects
+                    persuasion={orgEffects.persuasion}
+                    command={orgEffects.command}
+                    investigation={orgEffects.investigation}
+                    espionage={orgEffects.espionage}
+                    administration={orgEffects.administration}
+                    science={orgEffects.science}
+                    security={orgEffects.security}
+                  />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects
+                    economyBonus={orgEffects.economyBonus}
+                    welfareBonus={orgEffects.welfareBonus}
+                    environmentBonus={orgEffects.environmentBonus}
+                    knowledgeBonus={orgEffects.knowledgeBonus}
+                    governmentBonus={orgEffects.governmentBonus}
+                    unityBonus={orgEffects.unityBonus}
+                    militaryBonus={orgEffects.militaryBonus}
+                    oppressionBonus={orgEffects.oppressionBonus}
+                    spoilsBonus={orgEffects.spoilsBonus}
+                    spaceDevBonus={orgEffects.spaceDevBonus}
+                    spaceflightBonus={orgEffects.spaceflightBonus}
+                    MCBonus={orgEffects.MCBonus}
+                    miningBonus={orgEffects.miningBonus}
+                  />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects techBonuses={orgEffects.techBonuses} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
 
       <h3>Available orgs:</h3>
       <Table>
