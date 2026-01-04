@@ -290,6 +290,7 @@ export async function analyzeData(saveFile: SaveFile) {
     statMods: trait.statMods,
     techBonuses: trait.techBonuses,
     missionsGrantedNames: trait.missionsGrantedNames,
+    tags: trait.tags,
   }));
   const councilorTraitTemplatesByDataName = new Map(councilorTraitTemplates.map((trait) => [trait.dataName, trait]));
 
@@ -297,42 +298,56 @@ export async function analyzeData(saveFile: SaveFile) {
     attributes: CouncilorAttributes,
     traitTemplates: typeof councilorTraitTemplates,
     councilorOrgs: typeof orgs
-  ): { effectsBaseAndTraits: ShowEffectsProps; effectsWithOrgs: ShowEffectsProps } {
-    // Start with base attributes
-    let effectsBaseAndTraits: ShowEffectsProps = { ...attributes };
+  ): { effectsBaseAndUnaugmentedTraits: ShowEffectsProps; effectsWithOrgsAndAugments: ShowEffectsProps } {
+    function addTraits(effects: ShowEffectsProps, traits: typeof councilorTraitTemplates): ShowEffectsProps {
+      // Add trait effects
+      let finalEffects = traits.reduce<ShowEffectsProps>(
+        (acc, trait) => {
+          return combineEffects(acc, {
+            incomeMoney_month: trait?.incomeMoney,
+            incomeBoost_month: trait?.incomeBoost,
+            incomeInfluence_month: trait?.incomeInfluence,
+            incomeResearch_month: trait?.incomeResearch,
+            techBonuses: trait?.techBonuses,
+          });
+        },
+        { ...effects }
+      );
 
-    // Add trait effects
-    effectsBaseAndTraits = traitTemplates.reduce<ShowEffectsProps>((acc, trait) => {
-      return combineEffects(acc, {
-        incomeMoney_month: trait?.incomeMoney,
-        incomeBoost_month: trait?.incomeBoost,
-        incomeInfluence_month: trait?.incomeInfluence,
-        incomeResearch_month: trait?.incomeResearch,
-        techBonuses: trait?.techBonuses,
-      });
-    }, effectsBaseAndTraits);
-
-    // Apply trait statMods and priorityBonuses
-    for (const trait of traitTemplates) {
-      for (const { stat, operation, strValue, condition } of trait.statMods || []) {
-        if (stat && strValue && !condition && operation === "Additive") {
-          (effectsBaseAndTraits as any)[stat] = ((effectsBaseAndTraits as any)[stat] || 0) + Number(strValue);
+      // Apply trait statMods and priorityBonuses
+      for (const trait of traits) {
+        for (const { stat, operation, strValue, condition } of trait.statMods || []) {
+          if (stat && strValue && !condition && operation === "Additive") {
+            (finalEffects as any)[stat] = ((finalEffects as any)[stat] || 0) + Number(strValue);
+          }
+        }
+        for (const { priority, bonus } of trait.priorityBonuses || []) {
+          if (priority && bonus) {
+            const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
+            (finalEffects as any)[key] = ((finalEffects as any)[key] || 0) + bonus;
+          }
         }
       }
-      for (const { priority, bonus } of trait.priorityBonuses || []) {
-        if (priority && bonus) {
-          const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
-          (effectsBaseAndTraits as any)[key] = ((effectsBaseAndTraits as any)[key] || 0) + bonus;
-        }
-      }
+      return finalEffects;
     }
 
-    // Add org effects to create the full effects value
-    const effectsWithOrgs = councilorOrgs.reduce<ShowEffectsProps>((acc, org) => {
-      return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
-    }, effectsBaseAndTraits);
+    // Start with base attributes
+    const effectsBaseAndUnaugmentedTraits = addTraits(
+      { ...attributes },
+      traitTemplates.filter((t) => !(t.tags || []).includes("Augmented"))
+    );
 
-    return { effectsBaseAndTraits, effectsWithOrgs };
+    const effectsWithAugments = addTraits(
+      effectsBaseAndUnaugmentedTraits,
+      traitTemplates.filter((t) => (t.tags || []).includes("Augmented"))
+    );
+
+    // Add org effects to create the full effects value
+    const effectsWithOrgsAndAugments = councilorOrgs.reduce<ShowEffectsProps>((acc, org) => {
+      return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
+    }, effectsWithAugments);
+
+    return { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments };
   }
 
   const councilors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TICouncilorState"].map(
@@ -343,7 +358,7 @@ export async function analyzeData(saveFile: SaveFile) {
         .map((name) => councilorTraitTemplatesByDataName.get(name))
         .filter((t): t is (typeof councilorTraitTemplates)[0] => !!t);
 
-      const { effectsBaseAndTraits, effectsWithOrgs } = computeCouncilorEffects(
+      const { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments } = computeCouncilorEffects(
         councilor.attributes,
         traitTemplates,
         councilorOrgs
@@ -361,8 +376,8 @@ export async function analyzeData(saveFile: SaveFile) {
         homeNationId: regionsById.get(councilor.homeRegion?.value || -1)?.nation,
         typeTemplateName: councilor.typeTemplateName,
         xp: councilor.XP,
-        effectsBaseAndTraits,
-        effectsWithOrgs,
+        effectsBaseAndUnaugmentedTraits,
+        effectsWithOrgsAndAugments,
       };
     }
   );
