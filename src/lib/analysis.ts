@@ -254,6 +254,8 @@ export async function analyzeData(saveFile: SaveFile) {
   };
 }
 
+export type Analysis = Awaited<ReturnType<typeof analyzeData>>;
+
 function compareDateTime(a?: DateTime, b?: DateTime): number {
   if (!a && !b) {
     return 0;
