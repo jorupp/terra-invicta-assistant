@@ -273,6 +273,34 @@ export interface ShipyardQueueItem {
     resourcesCost: ResourcesCost;
 }
 
+export interface ShipDesign {
+    factionName: string;
+    hullName: string;
+    driveName: string;
+    powerPlantName: string;
+    radiatorName: string;
+    propellantTanks: number;
+    refitIteration: number;
+    noseArmor: { materialName: string; armorValue: number };
+    lateralArmor: { materialName: string; armorValue: number };
+    tailArmor: { materialName: string; armorValue: number };
+    moduleTemplateEntries: { moduleName: string; slot: number }[];
+    hullWeaponTemplateEntries: { moduleName: string; slot: number }[];
+    noseWeaponTemplateEntries: { moduleName: string; slot: number }[];
+    fireModeTemplateEntries: unknown[];
+    role: string;
+    hasDisplayName: boolean;
+    _unnormalizedCombatValue: number;
+    hullAppearanceIndex: number;
+    hideInSkirmish: boolean;
+    isIncompleteDesign: boolean;
+    nation: IDValue | null;
+    dataName: string;
+    friendlyName: string | null;
+    disable: boolean;
+    _displayName: string;
+}
+
 export interface TIFactionState extends BaseState {
     nShipyardQueues: KeyValuePair<IDValue, ShipyardQueueItem[]>[];
     techNameContributionHistory: Record<string, number>;
@@ -297,6 +325,18 @@ export interface TIFactionState extends BaseState {
     habSectors: IDValue[];
     availableOrgs: IDValue[];
     availableCouncilors: IDValue[];
+    shipDesigns: ShipDesign[];
+    shipDesignCount: number;
+    shipRefitDesigns: unknown[];
+    shipRefitDesignNames: string[];
+    obsoleteShipDesigns: unknown[];
+    habDesigns: unknown[];
+    savedHabDesigns: unknown[];
+    customPresets: unknown[];
+    defaultPriorityPresetTemplateName: string;
+    defaultHullAppearanceIndex: number;
+    nextRefitNumber: number;
+    shipsBuiltInClass: Record<string, number>;
     // [key: string]: unknown;
 }
 
