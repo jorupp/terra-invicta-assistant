@@ -1105,13 +1105,45 @@ export interface Tech {
 export interface Trait {
     dataName: string;
     friendlyName: string;
-    opsCost: number;
-    boostCost: number;
-    incomeBoost: number;
-    statMods: any[];
-    techBonuses: any[];
-    priorityBonuses: any[];
+    grouping?: number;
+    tags?: string[];
+    easilyVisible?: boolean;
+    XPCost?: number;
+    upgradesFrom?: string;
+    opsCost?: number;
+    boostCost?: number;
+    incomeBoost?: number;
+    incomeMoney?: number;
+    incomeInfluence?: number;
+    incomeResearch?: number;
+    detectionEspBonus?: number;
+    rerollTrait?: string;
+    rerollTraitBonus?: number;
+    statMods: Array<{
+        stat?: string;
+        operation?: string;
+        strValue?: string;
+        condition?: {
+            $type?: string;
+            sign?: string;
+            strValue?: string;
+            strIdx?: string;
+        };
+    }>;
+    techBonuses: Array<{
+        category: string;
+        bonus: number;
+    }>;
+    priorityBonuses: Array<{
+        priority: string;
+        bonus: number;
+    }>;
     baseChance: number;
+    classChance?: Array<{
+        councilorClass: string;
+        chance?: number;
+    }>;
+    missionsGrantedNames: string[];
 }
 
 export interface UtilityModule {

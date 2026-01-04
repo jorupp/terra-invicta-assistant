@@ -273,15 +273,38 @@ export async function analyzeData(saveFile: SaveFile) {
   const playerUnassignedOrgs = orgs.filter((org) => playerFaction?.unassignedOrgIds.includes(org.id));
   const playerAvailableOrgs = orgs.filter((org) => playerFaction?.availableOrgIds.includes(org.id));
 
+  const councilorTraitTemplates = (await templates.traits()).map((trait) => ({
+    dataName: trait.dataName,
+    friendlyName: trait.friendlyName,
+    xpCost: trait.XPCost,
+    upgradesFrom: trait.upgradesFrom,
+    boostCost: trait.boostCost,
+    opsCost: trait.opsCost,
+    detectionEspBonus: trait.detectionEspBonus,
+    incomeBoost: trait.incomeBoost,
+    incomeInfluence: trait.incomeInfluence,
+    incomeMoney: trait.incomeMoney,
+    incomeResearch: trait.incomeResearch,
+    priorityBonuses: trait.priorityBonuses,
+    statMods: trait.statMods,
+    techBonuses: trait.techBonuses,
+    missionsGrantedNames: trait.missionsGrantedNames,
+  }));
+  const councilorTraitTemplatesByDataName = new Map(councilorTraitTemplates.map((trait) => [trait.dataName, trait]));
+
   const councilors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TICouncilorState"].map(
     ({ Value: councilor }) => {
       const orgIds = new Set(councilor.orgs.map((i) => i.value));
       const councilorOrgs = orgs.filter((org) => orgIds.has(org.id));
+      const traitTemplates = councilor.traitTemplateNames
+        .map((name) => councilorTraitTemplatesByDataName.get(name))
+        .filter((t): t is (typeof councilorTraitTemplates)[0] => !!t);
       return {
         id: councilor.ID.value,
         displayName: councilor.displayName,
         factionId: councilor.faction?.value,
         traitTemplateNames: councilor.traitTemplateNames,
+        traitTemplates,
         attributes: councilor.attributes,
         orgs: councilorOrgs,
         homeRegionId: councilor.homeRegion?.value,
