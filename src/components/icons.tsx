@@ -59,6 +59,16 @@ export const TechSocial = buildIcon("Tech: Social", "https://wiki.hoodedhorse.co
 export const TechMilitary = buildIcon("Tech: Military", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/9c/Tech_military_icon.png");
 export const TechInfo = buildIcon("Tech: Info", "https://wiki.hoodedhorse.com/images/mbhh_ti/0/00/Tech_info_icon.png");
 export const TechXeno = buildIcon("Tech: Xeno", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/50/Tech_xeno_icon.png");
+export const TechIcons = {
+  EnergyScience: TechEnergy,
+  MaterialScience: TechMaterial,
+  SpaceScience: TechSpace,
+  LifeScience: TechLife,
+  SocialScience: TechSocial,
+  MilitaryScience: TechMilitary,
+  InfoScience: TechInfo,
+  XenoScience: TechXeno,
+};
 export const PriorityEconomy = buildIcon("Priority: Economy", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/92/ICO_economy_priority.png");
 export const PriorityEnvironment = buildIcon("Priority: Environment", "https://wiki.hoodedhorse.com/images/mbhh_ti/8/8e/ICO_environment_priority.png");
 export const PriorityWelfare = buildIcon("Priority: Welfare", "https://wiki.hoodedhorse.com/images/mbhh_ti/6/61/ICO_welfare_priority.png");
@@ -68,6 +78,9 @@ export const PriorityUnity = buildIcon("Priority: Unity", "https://wiki.hoodedho
 export const PriorityOppression = buildIcon("Priority: Oppression", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/bc/ICO_oppression_priority.png");
 export const PrioritySpoils = buildIcon("Priority: Spoils", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/b2/ICO_spoils_priority.png");
 export const PriorityMilitary = buildIcon("Priority: Military", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/a6/ICO_military_priority.png");
+export const PriorityFunding = buildIcon("Priority: Funding", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/52/ICO_funding_priority.png");
+export const PriorityMissionControl = buildIcon("Priority: Mission Control", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/46/ICO_missionControl_priority.png");
+export const PriorityBoost = buildIcon("Priority: Boost (TODO?)", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/17/ICO_boost.png");
 export const MiningBonus = buildIcon("Mining Bonus", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f7/ICO_core_res.png");
 
 export const FactionResist = buildIcon("Resist", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/d4/FAC_ResistCouncil_128.png");
@@ -97,4 +110,4 @@ export const FactionIcons: { [key: string]: typeof FactionResist } = {
   AlienCouncil: FactionAlien,
 };
 
-export const TierStar = buildIcon("Tier Star", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/11/ICO_mod_star_on.png");
+export const TierStar = buildIcon("Tier Star", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/52/ICO_mod_star_on.png");

@@ -18,8 +18,10 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
         <TableHeader>
           <TableHead>Org Name</TableHead>
           <TableHead>Nation</TableHead>
+          <TableHead>Tier</TableHead>
           <TableHead>Purchase</TableHead>
           <TableHead>Monthly</TableHead>
+          <TableHead>Effects</TableHead>
         </TableHeader>
         <TableBody>
           {analysis.playerAvailableOrgs
@@ -40,6 +42,9 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
                   ) : (
                     ""
                   )}
+                </TableCell>
+                <TableCell>
+                  <ShowEffects tier={org.tier} />
                 </TableCell>
                 <TableCell>
                   {org.type === "available" ? (
@@ -84,13 +89,14 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
                     spaceflightBonus={org.spaceflightBonus}
                     MCBonus={org.MCBonus}
                     miningBonus={org.miningBonus}
+                    techBonuses={org.template?.techBonuses}
                   />
                 </TableCell>
               </TableRow>
             ))}
         </TableBody>
       </Table>
-      <pre>{JSON.stringify(analysis.playerAvailableOrgs?.[0], null, 2)}</pre>
+      <pre>{JSON.stringify(analysis.playerAvailableOrgs, null, 2)}</pre>
     </div>
   );
 }

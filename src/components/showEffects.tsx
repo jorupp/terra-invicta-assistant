@@ -1,7 +1,9 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
-import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MissionControl, Ops, Persuasion, PriorityEconomy, PriorityEnvironment, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TierStar } from "./icons";
+import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MissionControl, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
+import { Org } from "@/lib/templates";
 
 type ShowEffectsProps = Partial<
+  Pick<Org, 'techBonuses'> &
   CouncilorAttributes &
     Pick<
       TIOrgState,
@@ -68,9 +70,11 @@ export const ShowEffects = (props: ShowEffectsProps) => {
   const priorityMilitaryBonus = props.militaryBonus || 0;
   const priorityOppressionBonus = props.oppressionBonus || 0;
   const prioritySpoilsBonus = props.spoilsBonus || 0;
-  // const priorityBoostBonus = (props.spaceDevBonus || 0) + (props.spaceflightBonus || 0); // TODO: I'm guessing one/both of these are boost?
-  const MCBonus = props.MCBonus || 0;
+  const priorityFundingBonus = props.spaceDevBonus || 0;
+  const priorityMcBonus = props.MCBonus || 0;
+  const priorityBoostBonus = props.spaceflightBonus || 0;
   const miningBonus = props.miningBonus || 0;
+  const techBonuses = props.techBonuses || [];
 
   return <>
     {tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}</>}
@@ -90,17 +94,29 @@ export const ShowEffects = (props: ShowEffectsProps) => {
     {science !== 0 && <>{science} <Science/> </>}
     {security !== 0 && <>{security} <Security/> </>}
     {loyalty !== 0 && <>{loyalty} <Loyalty/> </>}
-    {priorityEconomyBonus !== 0 && <>{priorityEconomyBonus} <PriorityEconomy/> </>}
-    {priorityWelfareBonus !== 0 && <>{priorityWelfareBonus} <PriorityWelfare/> </>}
-    {priorityEnvironmentBonus !== 0 && <>{priorityEnvironmentBonus} <PriorityEnvironment/> </>}
-    {priorityKnowledgeBonus !== 0 && <>{priorityKnowledgeBonus} <PriorityKnowledge/> </>}
-    {priorityGovernmentBonus !== 0 && <>{priorityGovernmentBonus} <PriorityGovernment/> </>}
-    {priorityUnityBonus !== 0 && <>{priorityUnityBonus} <PriorityUnity/> </>}
-    {priorityMilitaryBonus !== 0 && <>{priorityMilitaryBonus} <PriorityMilitary/> </>}
-    {priorityOppressionBonus !== 0 && <>{priorityOppressionBonus} <PriorityOppression/> </>}
-    {prioritySpoilsBonus !== 0 && <>{prioritySpoilsBonus} <PrioritySpoils/> </>}
-    {/* {priorityBoostBonus !== 0 && <>{priorityBoostBonus} <PriorityBoost/> </>} */}
-    {MCBonus !== 0 && <>{MCBonus} <MissionControl/> </>}
-    {miningBonus !== 0 && <>{miningBonus} <Currency/> </>}
+    {priorityEconomyBonus !== 0 && <>{pct(priorityEconomyBonus)} <PriorityEconomy/> </>}
+    {priorityWelfareBonus !== 0 && <>{pct(priorityWelfareBonus)} <PriorityWelfare/> </>}
+    {priorityEnvironmentBonus !== 0 && <>{pct(priorityEnvironmentBonus)} <PriorityEnvironment/> </>}
+    {priorityKnowledgeBonus !== 0 && <>{pct(priorityKnowledgeBonus)} <PriorityKnowledge/> </>}
+    {priorityGovernmentBonus !== 0 && <>{pct(priorityGovernmentBonus)} <PriorityGovernment/> </>}
+    {priorityUnityBonus !== 0 && <>{pct(priorityUnityBonus)} <PriorityUnity/> </>}
+    {priorityMilitaryBonus !== 0 && <>{pct(priorityMilitaryBonus)} <PriorityMilitary/> </>}
+    {priorityOppressionBonus !== 0 && <>{pct(priorityOppressionBonus)} <PriorityOppression/> </>}
+    {prioritySpoilsBonus !== 0 && <>{pct(prioritySpoilsBonus)} <PrioritySpoils/> </>}
+    {priorityFundingBonus !== 0 && <>{pct(priorityFundingBonus)} <PriorityFunding/> </>}
+    {priorityBoostBonus !== 0 && <>{pct(priorityBoostBonus)} <PriorityBoost/> </>}
+    {priorityMcBonus !== 0 && <>{pct(priorityMcBonus)} <PriorityMissionControl/> </>}
+    {miningBonus !== 0 && <>{pct(miningBonus)} <Currency/> </>}
+
+    {techBonuses.length > 0 && <>
+      {techBonuses.map(({category, bonus}, index) => {
+        const TechIcon = TechIcons[category as keyof typeof TechIcons];
+        return TechIcon ? <span key={index}>{pct(bonus)} <TechIcon /> </span> : null;
+      })}
+    </>}
   </>;
 };
+
+function pct(value: number) {
+  return (value * 100).toFixed(0) + "%";
+}
