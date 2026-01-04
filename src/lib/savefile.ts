@@ -10,11 +10,11 @@ if (!templateDir) {
 export async function loadSaveFile(filePath: string): Promise<SaveFile> {
     // Read the file content as a buffer
     const buffer = await readFile(filePath);
-    
+
     // Decompress the gzipped content
     const decompressed = gunzipSync(buffer);
     const content = decompressed.toString('utf8');
-    
+
     try {
         const data: SaveFile = JSON5.parse(content);
         return data;
@@ -25,11 +25,11 @@ export async function loadSaveFile(filePath: string): Promise<SaveFile> {
 }
 
 // Base types
-interface IDValue {
+export interface IDValue {
     value: number;
 }
 
-interface DateTime {
+export interface DateTime {
     year: number;
     month: number;
     day: number;
@@ -39,19 +39,18 @@ interface DateTime {
     millisecond: number;
 }
 
-interface Vector3 {
+export interface Vector3 {
     x: number;
     y: number;
     z: number;
 }
 
-interface KeyValuePair<K, V> {
+export interface KeyValuePair<K, V> {
     Key: K;
     Value: V;
 }
 
-// Base state interface
-interface BaseState {
+export interface BaseState {
     archived: boolean;
     ID: IDValue;
     exists: boolean;
@@ -62,7 +61,7 @@ interface BaseState {
 }
 
 // Metadata State
-interface TIMetadataState extends BaseState {
+export interface TIMetadataState extends BaseState {
     playerFactionName: string;
     gameTimeString: string;
     difficulty: string;
@@ -85,7 +84,7 @@ interface TIMetadataState extends BaseState {
 }
 
 // Space Body State
-interface TISpaceBodyState extends BaseState {
+export interface TISpaceBodyState extends BaseState {
     nations: IDValue[];
     habSites: IDValue[];
     currentModelResource: string;
@@ -101,7 +100,7 @@ interface TISpaceBodyState extends BaseState {
 }
 
 // Time State
-interface TITimeState extends BaseState {
+export interface TITimeState extends BaseState {
     daysInCampaign: number;
     currentQuarterSinceStart: number;
     masterMetaTemplateName: string;
@@ -110,7 +109,7 @@ interface TITimeState extends BaseState {
 }
 
 // Lagrange Point State
-interface TILagrangePointState extends BaseState {
+export interface TILagrangePointState extends BaseState {
     secondaryObject: IDValue;
     maxHabTier: number;
     orbits: IDValue[];
@@ -122,7 +121,7 @@ interface TILagrangePointState extends BaseState {
 }
 
 // Region State
-interface TIRegionState extends BaseState {
+export interface TIRegionState extends BaseState {
     nation: IDValue;
     leadOccupier: IDValue | null;
     occupations: KeyValuePair<IDValue, number>[];
@@ -168,7 +167,7 @@ interface TIRegionState extends BaseState {
 }
 
 // Nation State
-interface TINationState extends BaseState {
+export interface TINationState extends BaseState {
     capital: IDValue | null;
     originalCapital: IDValue | null;
     regions: IDValue[];
@@ -179,7 +178,7 @@ interface TINationState extends BaseState {
 }
 
 // Control Point
-interface TIControlPoint extends BaseState {
+export interface TIControlPoint extends BaseState {
     nation: IDValue;
     faction: IDValue | null;
     benefitsDisabled: boolean;
@@ -195,7 +194,7 @@ interface TIControlPoint extends BaseState {
 }
 
 // Councilor State
-interface CouncilorAttributes {
+export interface CouncilorAttributes {
     Persuasion: number;
     Investigation: number;
     Espionage: number;
@@ -207,12 +206,12 @@ interface CouncilorAttributes {
     ApparentLoyalty: number;
 }
 
-interface LocationIllustration {
+export interface LocationIllustration {
     illustrationPath: string;
     offset: number;
 }
 
-interface TICouncilorState extends BaseState {
+export interface TICouncilorState extends BaseState {
     faction: IDValue | null;
     agentForFaction: IDValue | null;
     autofailMissionsValue: number;
@@ -257,16 +256,16 @@ interface TICouncilorState extends BaseState {
 }
 
 // Faction State
-interface ResourceCost {
+export interface ResourceCost {
     resource: string;
     value: number;
 }
 
-interface ResourcesCost {
+export interface ResourcesCost {
     resourceCosts: ResourceCost[];
 }
 
-interface ShipyardQueueItem {
+export interface ShipyardQueueItem {
     shipDesignTemplateName: string;
     startDate: DateTime;
     shipyard: IDValue;
@@ -274,7 +273,7 @@ interface ShipyardQueueItem {
     resourcesCost: ResourcesCost;
 }
 
-interface TIFactionState extends BaseState {
+export interface TIFactionState extends BaseState {
     nShipyardQueues: KeyValuePair<IDValue, ShipyardQueueItem[]>[];
     techNameContributionHistory: Record<string, number>;
     unlockedVictoryObjective: boolean;
@@ -298,11 +297,11 @@ interface TIFactionState extends BaseState {
     habSectors: IDValue[];
     availableOrgs: IDValue[];
     availableCouncilors: IDValue[];
-    [key: string]: unknown;
+    // [key: string]: unknown;
 }
 
 // Player State
-interface TIPlayerState extends BaseState {
+export interface TIPlayerState extends BaseState {
     isAI: boolean;
     faction: IDValue;
     name: string;
@@ -310,14 +309,14 @@ interface TIPlayerState extends BaseState {
 }
 
 // Army State
-interface ArmyOperation {
+export interface ArmyOperation {
     operationDataName: string;
     target: IDValue & { $type: string };
     startDate: DateTime;
     completionDate: DateTime;
 }
 
-interface TIArmyState extends BaseState {
+export interface TIArmyState extends BaseState {
     currentRegion: IDValue;
     embarkDate: DateTime | null;
     destinationSeaDate: DateTime | null;
@@ -343,7 +342,7 @@ interface TIArmyState extends BaseState {
 }
 
 // Org State
-interface TIOrgState extends BaseState {
+export interface TIOrgState extends BaseState {
     orgIconTemplateName: string | null;
     orgIconPath: string;
     displayNameWithArticle: string;
@@ -389,7 +388,7 @@ interface TIOrgState extends BaseState {
 }
 
 // Orbit State
-interface TIOrbitState extends BaseState {
+export interface TIOrbitState extends BaseState {
     amat_ugpy: number;
     assetsInOrbit: IDValue[];
     pendingHabs: number;
@@ -400,7 +399,7 @@ interface TIOrbitState extends BaseState {
 }
 
 // Hab Site State
-interface TIHabSiteState extends BaseState {
+export interface TIHabSiteState extends BaseState {
     parentBody: IDValue;
     hab: IDValue | null;
     landedFleets: IDValue[];
@@ -418,14 +417,14 @@ interface TIHabSiteState extends BaseState {
 }
 
 // Hab State
-interface RingStruct {
+export interface RingStruct {
     NE: boolean;
     NW: boolean;
     SE: boolean;
     SW: boolean;
 }
 
-interface ConnStruct {
+export interface ConnStruct {
     C42: boolean;
     C16: boolean;
     C36: boolean;
@@ -434,14 +433,14 @@ interface ConnStruct {
     C76: boolean;
 }
 
-interface Quaternion {
+export interface Quaternion {
     x: number;
     y: number;
     z: number;
     w: number;
 }
 
-interface TIHabState extends BaseState {
+export interface TIHabState extends BaseState {
     habType: string;
     tier: number;
     advisingCouncilors: IDValue[];
@@ -456,7 +455,7 @@ interface TIHabState extends BaseState {
     underBombardment: boolean;
     sectors: IDValue[];
     districts: IDValue[] | null;
-    habSite: IDValue;
+    habSite: IDValue | null;
     councilorsOnBoard: IDValue[];
     officersOnBoard: IDValue[];
     customHabIconResource: string;
@@ -488,12 +487,12 @@ interface TIHabState extends BaseState {
 }
 
 // Hab Module State
-interface ModuleBuildCost {
+export interface ModuleBuildCost {
     resourceCosts: ResourceCost[];
     completionTime_days: number;
 }
 
-interface TIHabModuleState extends BaseState {
+export interface TIHabModuleState extends BaseState {
     constructionCompleted: boolean;
     completionDate: string;
     decommissioning: boolean;
@@ -530,14 +529,14 @@ interface TIHabModuleState extends BaseState {
 }
 
 // Space Fleet State
-interface FleetFormation {
+export interface FleetFormation {
     patternDataName: string | null;
     spacing: string;
     concentration: string;
     focus: string;
 }
 
-interface TrajectorySegmentBase {
+export interface TrajectorySegmentBase {
     startTime: DateTime;
     barycenter: IDValue & { $type: string };
     isImpulse: boolean;
@@ -546,7 +545,7 @@ interface TrajectorySegmentBase {
     $type: string;
 }
 
-interface MicrothrustSegment extends TrajectorySegmentBase {
+export interface MicrothrustSegment extends TrajectorySegmentBase {
     endTime: DateTime;
     interruptible: boolean;
     epochTime: DateTime;
@@ -561,31 +560,133 @@ interface MicrothrustSegment extends TrajectorySegmentBase {
 
 type TrajectorySegment = MicrothrustSegment | (TrajectorySegmentBase & Record<string, unknown>);
 
-interface TISpaceFleetState extends BaseState {
+interface FleetTrajectoryData {
+    initialDeltaV_mps: number;
+}
+
+interface FleetLogEntry {
+    Label: string;
+    Date: DateTime;
+    Location: (IDValue & { $type: string }) | null;
+    GoalType: string;
+    GoalTarget: (IDValue & { $type: string }) | null;
+    GoalTargetFaction: IDValue | null;
+    ShipCount: number;
+    FuelMass_dekatons: number;
+}
+
+interface WaitingToInitiateCombatData {
+    // [key: string]: unknown;
+}
+
+export interface TISpaceFleetState extends BaseState {
     ships: IDValue[];
     formation: FleetFormation;
     savedFormation: FleetFormation;
     trajectory: {
         Segments: TrajectorySegment[];
-    };
-    [key: string]: unknown;
+        commonBarycenter: IDValue & { $type: string };
+        originOrbit: IDValue;
+        destinationOrbit: IDValue;
+        destinationFleet: IDValue | null;
+        prevDestinationFleet: IDValue | null;
+        destinationStation: IDValue | null;
+        destination: IDValue & { $type: string };
+        destinationFleetTrajectory: unknown | null;
+        fleetCruiseAcceleration_mps2: number;
+        boostDV_mps: number;
+        decelDV_mps: number;
+        assignedTime: DateTime;
+        launchTime: DateTime;
+        arrivalTime: DateTime;
+        launchPosition: Vector3;
+        destinationPosition: Vector3;
+        aerocapture: boolean;
+        flyby: boolean;
+        resupplyOnArrival: boolean;
+        interceptTrajectory: boolean;
+        duration: string;
+        fleetAsSpaceFleetState: IDValue;
+        launched: boolean;
+        involuntary: boolean;
+        collisionTarget: IDValue | null;
+        exitsSolarSystem: boolean;
+        originalDestinationSunOrbiter: IDValue | null;
+        destinationOrbitMeanAnomalyAtEpoch: number | null;
+        destinationOrbitEpoch: DateTime | null;
+        nextTrajectory: unknown | null;
+        loiterDuration_s: number;
+        prepositionDuration_s: number;
+        boostDuration_s: number;
+        coastDuration_s: number;
+        decelDuration_s: number;
+        captureDuration_s: number;
+        distanceToDestinationHillSphere_m: number;
+        DV_targetFleet_mps: number;
+        $type: string;
+    } | null;
+    propellantSharingPlan: unknown | null;
+    inAccelerationPhase: boolean;
+    inDecelerationPhase: boolean;
+    unavailableForOperations: boolean;
+    returnToOperationsTime: DateTime | null;
+    huntingXenofauna: boolean;
+    bombardmentTarget: IDValue | null;
+    fleetOperationCompleteName: string;
+    homeport: IDValue | null;
+    barycenter: IDValue & { $type: string };
+    dockOffset: Vector3;
+    proposedTrajectories: unknown | null;
+    displayNameByFaction: KeyValuePair<IDValue, string>[];
+    currentOperations: {
+        operationDataName: string;
+        startDate?: DateTime;
+        completionDate?: DateTime;
+    }[];
+    dockedLocation: (IDValue & { $type: string }) | null;
+    _fleetTrajectoryData: FleetTrajectoryData | null;
+    combatState: unknown | null;
+    parentFleet: IDValue | null;
+    alwaysShowOrbitTrailDuringTransfer: boolean;
+    AI_FailedAttackEnemyStrength: Record<string, number>;
+    unreachableLocations: IDValue[];
+    gameStateSubjectCreated: boolean;
+    dummyFleet: boolean;
+    bombardmentAltitude_km: number;
+    timeOfLastFireMission: DateTime | null;
+    delayedTransferAbortNotification: unknown | null;
+    campaignStartLocation: (IDValue & { $type: string }) | null;
+    endBombardmentReason: string;
+    bombardmentTargetBracketStatus: string;
+    firstHitFromBombardmentRun: boolean;
+    officerTransferPlan: unknown | null;
+    waitingToInitiateCombatDatas: WaitingToInitiateCombatData[] | null;
+    Logs: FleetLogEntry[];
+    faction: IDValue;
+    orbitState: IDValue | null;
+    inCombat: boolean;
+    _meanAnomalyAtEpoch_Rad: number;
+    _epoch_JYears: number;
+    epoch_DateTime: DateTime;
+    _rnd_rotationOffset_Deg: number | null;
+    globalPosition: Vector3;
 }
 
 // Space Ship State
-interface ShipModuleSlot {
+export interface ShipModuleSlot {
     moduleTemplateName: string;
     slotIndex: number;
     $id: string;
     $ref?: string;
 }
 
-interface ShipArmor {
+export interface ShipArmor {
     maxArmor: number;
     armorValue: number;
     chippedPct: number;
 }
 
-interface TISpaceShipState extends BaseState {
+export interface TISpaceShipState extends BaseState {
     cruiseAcceleration_mps2: number;
     combatAcceleration_mps2: number;
     currentDeltaV_kps: number;
@@ -631,11 +732,11 @@ interface TISpaceShipState extends BaseState {
     damagedParts: { module: ShipModuleSlot; damage: number }[];
     damagePoints: Vector3[];
     prevPartsBeingRepaired: ShipModuleSlot[];
-    [key: string]: unknown;
+    // [key: string]: unknown;
 }
 
 // Mission State
-interface TIMissionState extends BaseState {
+export interface TIMissionState extends BaseState {
     resources: number;
     resolveTimeAssigned: boolean;
     startTime: DateTime | null;
@@ -646,22 +747,22 @@ interface TIMissionState extends BaseState {
 }
 
 // Global Research State
-interface TechProgress {
+export interface TechProgress {
     techTemplateName: string;
     accumulatedResearch: number;
     factionContributions: KeyValuePair<IDValue, number>[];
     selector: IDValue | null;
 }
 
-interface TIGlobalResearchState extends BaseState {
+export interface TIGlobalResearchState extends BaseState {
     finishedTechsNames: string[];
     finishedOneTimeOnlyProjectNames: string[];
     techProgress: TechProgress[];
-    [key: string]: unknown;
+    // [key: string]: unknown;
 }
 
 // Global Values State
-interface ResourceMarketValues {
+export interface ResourceMarketValues {
     Water: number;
     Volatiles: number;
     Metals: number;
@@ -671,7 +772,7 @@ interface ResourceMarketValues {
     Exotics: number;
 }
 
-interface MaxGlobalExpectedHabSiteProduction {
+export interface MaxGlobalExpectedHabSiteProduction {
     Water: number;
     Volatiles: number;
     Metals: number;
@@ -679,7 +780,7 @@ interface MaxGlobalExpectedHabSiteProduction {
     Fissiles: number;
 }
 
-interface CO2Sources {
+export interface CO2Sources {
     SpoilsPriority: number;
     EnvironmentPriority: number;
     Nations: number;
@@ -688,7 +789,7 @@ interface CO2Sources {
     Effect: number;
 }
 
-interface CustomFactionText {
+export interface CustomFactionText {
     customDisplayName: string;
     customAdjective: string;
     customLeaderAddress: string;
@@ -699,7 +800,7 @@ interface CustomFactionText {
     customHabNameListIdx: string | null;
 }
 
-interface ScenarioCustomizations {
+export interface ScenarioCustomizations {
     usingCustomizations: boolean;
     customDifficulty: boolean;
     customFactionText: Record<string, CustomFactionText>;
@@ -734,7 +835,7 @@ interface ScenarioCustomizations {
     shipConstructionSpeedAlien: number;
 }
 
-interface TIGlobalValuesState extends BaseState {
+export interface TIGlobalValuesState extends BaseState {
     earthAtmosphericCO2_ppm: number;
     earthAtmosphericCH4_ppm: number;
     earthAtmosphericN2O_ppm: number;
@@ -762,23 +863,23 @@ interface TIGlobalValuesState extends BaseState {
     CH4SourcesRecord_ppm: CO2Sources;
     N2OSourcesRecord_ppm: CO2Sources;
     scenarioCustomizations: ScenarioCustomizations;
-    [key: string]: unknown;
+    // [key: string]: unknown;
 }
 
 // Space Facility States
-interface TILaunchFacilityState extends BaseState {
+export interface TILaunchFacilityState extends BaseState {
     spaceFacilityType: string;
     region: IDValue;
     gameStateSubjectCreated: boolean;
 }
 
-interface TIMissionControlFacilityState extends BaseState {
+export interface TIMissionControlFacilityState extends BaseState {
     spaceFacilityType: string;
     region: IDValue;
     gameStateSubjectCreated: boolean;
 }
 
-interface TISpaceDefensesFacilityState extends BaseState {
+export interface TISpaceDefensesFacilityState extends BaseState {
     weaponTemplateName: string | null;
     lastTimeFired: DateTime | null;
     spaceFacilityType: string;
@@ -787,20 +888,20 @@ interface TISpaceDefensesFacilityState extends BaseState {
 }
 
 // Alien-related Region States
-interface TIRegionAlienFacilityState extends BaseState {
+export interface TIRegionAlienFacilityState extends BaseState {
     built: boolean;
     currentHP: number;
     region: IDValue;
     gameStateSubjectCreated: boolean;
 }
 
-interface TIRegionAlienActivityState extends BaseState {
+export interface TIRegionAlienActivityState extends BaseState {
     alienMissionsDetected: KeyValuePair<IDValue, string[]>[];
     region: IDValue;
     gameStateSubjectCreated: boolean;
 }
 
-interface TIRegionUFOLandingState extends BaseState {
+export interface TIRegionUFOLandingState extends BaseState {
     landingPresent: boolean;
     deployingArmy: boolean;
     supportingArmyBuildup: boolean;
@@ -809,21 +910,21 @@ interface TIRegionUFOLandingState extends BaseState {
     gameStateSubjectCreated: boolean;
 }
 
-interface TIRegionUFOCrashdownState extends BaseState {
+export interface TIRegionUFOCrashdownState extends BaseState {
     crashdownPresent: boolean;
     crashdownTime: DateTime | null;
     region: IDValue;
     gameStateSubjectCreated: boolean;
 }
 
-interface TIRegionXenoformingState extends BaseState {
+export interface TIRegionXenoformingState extends BaseState {
     xenoformingLevel: number;
     region: IDValue;
     gameStateSubjectCreated: boolean;
 }
 
 // Sector State
-interface TISectorState extends BaseState {
+export interface TISectorState extends BaseState {
     faction: IDValue;
     sectorNum: number;
     hab: IDValue;
@@ -832,7 +933,7 @@ interface TISectorState extends BaseState {
 }
 
 // Federation State
-interface TIFederationState extends BaseState {
+export interface TIFederationState extends BaseState {
     members: IDValue[];
     federationName: string;
     flagResource: string;
@@ -843,26 +944,26 @@ interface TIFederationState extends BaseState {
 }
 
 // Mission Phase State
-interface TIMissionPhaseState extends BaseState {
+export interface TIMissionPhaseState extends BaseState {
     phaseActive: boolean;
     newCampaignStart: boolean;
     factionsSignallingComplete: IDValue[];
 }
 
 // Effects State
-interface TIEffectsState extends BaseState {
+export interface TIEffectsState extends BaseState {
     factionEffectsNames: KeyValuePair<IDValue, Record<string, string[]>>[];
-    [key: string]: unknown;
+    // [key: string]: unknown;
 }
 
 // Historical Data State
-interface TIHistoricalData extends BaseState {
+export interface TIHistoricalData extends BaseState {
     Data: KeyValuePair<IDValue & { $type: string }, Record<string, KeyValuePair<DateTime, number>[]>>[];
-    [key: string]: unknown;
+    // [key: string]: unknown;
 }
 
 // Time Event State
-interface TITimeEvent extends BaseState {
+export interface TITimeEvent extends BaseState {
     triggerTime: DateTime;
     eventObjectID: IDValue;
     eventObject2ID: IDValue;
@@ -879,14 +980,14 @@ interface TITimeEvent extends BaseState {
 }
 
 // Notification and Prompt Queue States
-interface Color {
+export interface Color {
     r: number;
     g: number;
     b: number;
     a: number;
 }
 
-interface NotificationSummary {
+export interface NotificationSummary {
     templateName: string;
     itemSummary: string;
     dateTimeString: string;
@@ -903,11 +1004,11 @@ interface NotificationSummary {
     $id?: string;
 }
 
-interface TINotificationQueueState extends BaseState {
+export interface TINotificationQueueState extends BaseState {
     notificationSummaryQueue: NotificationSummary[];
 }
 
-interface PromptItem {
+export interface PromptItem {
     actingState: IDValue & { $type: string };
     promptingGameState: IDValue & { $type: string };
     relatedGameState: (IDValue & { $type: string }) | null;
@@ -915,7 +1016,7 @@ interface PromptItem {
     value: number;
 }
 
-interface TIPromptQueueState extends BaseState {
+export interface TIPromptQueueState extends BaseState {
     activePlayerNationPromptList: PromptItem[];
     activePlayerFactionPromptList: PromptItem[];
     nationList: PromptItem[];
@@ -924,7 +1025,7 @@ interface TIPromptQueueState extends BaseState {
 }
 
 // Faction Goal types
-interface FactionGoalBase extends BaseState {
+export interface FactionGoalBase extends BaseState {
     importance: number;
     faction: IDValue;
     assignedDate: DateTime;
@@ -932,7 +1033,7 @@ interface FactionGoalBase extends BaseState {
     subsequentGoals: string[] | null;
 }
 
-interface FactionGoal_FoundBase extends FactionGoalBase {
+export interface FactionGoal_FoundBase extends FactionGoalBase {
     site: IDValue;
     setAsPrimaryHab: boolean;
     requiredModuleNames: string[];
@@ -944,12 +1045,12 @@ interface FactionGoal_FoundBase extends FactionGoalBase {
     dynamicAttackTarget: IDValue | null;
 }
 
-interface FactionGoal_BuildMiningBase extends FactionGoalBase {
+export interface FactionGoal_BuildMiningBase extends FactionGoalBase {
     hab: IDValue;
     specialtyModuleDataNames: string[] | null;
 }
 
-interface FactionGoal_SurveilEarth extends FactionGoalBase {
+export interface FactionGoal_SurveilEarth extends FactionGoalBase {
     assignedFleet: IDValue;
     resupplyHab: IDValue | null;
     flyByLocation: IDValue | null;
@@ -958,7 +1059,7 @@ interface FactionGoal_SurveilEarth extends FactionGoalBase {
     dynamicAttackTarget: IDValue | null;
 }
 
-interface FactionGoal_TransportCouncilorsWithFleet extends FactionGoalBase {
+export interface FactionGoal_TransportCouncilorsWithFleet extends FactionGoalBase {
     councilorDestination: IDValue & { $type: string };
     assignedCouncilors: IDValue[];
     assignedFleet: IDValue;
@@ -969,16 +1070,16 @@ interface FactionGoal_TransportCouncilorsWithFleet extends FactionGoalBase {
     dynamicAttackTarget: IDValue | null;
 }
 
-interface FactionGoal_BuildFullStation extends FactionGoalBase {
+export interface FactionGoal_BuildFullStation extends FactionGoalBase {
     hab: IDValue;
     specialtyModuleDataNames: string[] | null;
 }
 
-interface FactionGoal_CaptureNation_Clean extends FactionGoalBase {
+export interface FactionGoal_CaptureNation_Clean extends FactionGoalBase {
     nation: IDValue;
 }
 
-interface FactionGoal_DefendWithFleet extends FactionGoalBase {
+export interface FactionGoal_DefendWithFleet extends FactionGoalBase {
     defendTarget: IDValue & { $type: string };
     forceHullTemplateName: string;
     EarmarkedFleetMC: number;
@@ -990,7 +1091,7 @@ interface FactionGoal_DefendWithFleet extends FactionGoalBase {
     dynamicAttackTarget: IDValue | null;
 }
 
-interface FactionGoal_JoinFleet extends FactionGoalBase {
+export interface FactionGoal_JoinFleet extends FactionGoalBase {
     targetFleet: IDValue;
     targetFleetGoal: IDValue | null;
     assignedFleet: IDValue;
@@ -1001,12 +1102,11 @@ interface FactionGoal_JoinFleet extends FactionGoalBase {
     dynamicAttackTarget: IDValue | null;
 }
 
-interface FactionGoal_SpaceifyNation extends FactionGoalBase {
+export interface FactionGoal_SpaceifyNation extends FactionGoalBase {
     nation: IDValue;
 }
 
-// Main SaveFile interface
-interface SaveFile {
+export interface SaveFile {
     currentID: IDValue;
     gamestates: {
         "PavonisInteractive.TerraInvicta.TIMetadataState": KeyValuePair<IDValue, TIMetadataState>[];
@@ -1055,6 +1155,6 @@ interface SaveFile {
         "PavonisInteractive.TerraInvicta.FactionGoal_BuildMiningBase": KeyValuePair<IDValue, FactionGoal_BuildMiningBase>[];
         "PavonisInteractive.TerraInvicta.FactionGoal_JoinFleet": KeyValuePair<IDValue, FactionGoal_JoinFleet>[];
         "PavonisInteractive.TerraInvicta.FactionGoal_SpaceifyNation": KeyValuePair<IDValue, FactionGoal_SpaceifyNation>[];
-        [key: string]: KeyValuePair<IDValue, BaseState>[];
+        // [key: string]: KeyValuePair<IDValue, BaseState>[];
     };
 }
