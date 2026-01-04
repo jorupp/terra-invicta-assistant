@@ -16,10 +16,16 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
       <Table>
         <TableHeader>
           <TableHead>Name</TableHead>
-          <TableHead>Nation</TableHead>
+          <TableHead>Modified Stats</TableHead>
+          <TableHead>Org Tiers</TableHead>
+          <TableHead>Org Monthly Effects</TableHead>
+          <TableHead>Org Stats</TableHead>
+          <TableHead>Org Priorities</TableHead>
+          <TableHead>Org Science</TableHead>
         </TableHeader>
         <TableBody>
           {analysis.playerCouncilors.map((councilor) => {
+            // TODO: need to figure trait effects in somewhere too - ie. SocialScientist, Teacher, etc.
             const orgEffects = councilor.orgs.reduce<ShowEffectsProps>((acc, org) => {
               return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
             }, {});
@@ -174,7 +180,8 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
             ))}
         </TableBody>
       </Table>
-      <pre>{JSON.stringify(analysis.playerAvailableOrgs, null, 2)}</pre>
+      <pre>{JSON.stringify(analysis.playerCouncilors, null, 2)}</pre>
+      <pre>{JSON.stringify(analysis.playerAvailableCouncilors, null, 2)}</pre>
     </div>
   );
 }

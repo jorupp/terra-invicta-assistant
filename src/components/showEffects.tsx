@@ -1,5 +1,5 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
-import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MissionControl, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
+import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
 import { Org } from "@/lib/templates";
 
 export type ShowEffectsProps = Partial<
@@ -76,39 +76,40 @@ export const ShowEffects = (props: ShowEffectsProps) => {
   const priorityBoostBonus = props.spaceflightBonus || 0;
   const miningBonus = props.miningBonus || 0;
   const techBonuses = props.techBonuses || [];
+  const spacer = <span className="mx-0.5"> </span>;
 
   return <>
-    {tier > 5 ? <>{tier} <TierStar /> </> : tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}</>}
+    {tier > 5 ? <>{tier} <TierStar />{spacer}</> : tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}{spacer}</>}
     {/** TODO: how to show takeover defense? */}
-    {costMoney !== 0 && <>{costMoney} <Currency/> </>}
-    {costInfluence !== 0 && <>{costInfluence} <Influence/></> }
-    {costOps !== 0 && <>{costOps} <Ops/> </>}
-    {costBoost !== 0 && <>{costBoost} <Boost/> </>}
-    {incomeMissionControl !== 0 && <>{incomeMissionControl} <MissionControl/> </>}
-    {incomeResearch !== 0 && <>{incomeResearch} <Research/> </>}
-    {projectCapacityGranted !== 0 && <>+{projectCapacityGranted} <Projects/> </>}
-    {persuasion !== 0 && <>{persuasion} <Persuasion/> </>}
-    {command !== 0 && <>{command} <Command/> </>}
-    {investigation !== 0 && <>{investigation} <Investigation/> </>}
-    {espionage !== 0 && <>{espionage} <Espionage/> </>}
-    {administration !== 0 && <>{administration} <Administration/> </>}
-    {science !== 0 && <>{science} <Science/> </>}
-    {security !== 0 && <>{security} <Security/> </>}
-    {apparentLoyalty !== 0 && <>{apparentLoyalty} <Loyalty/> </>}
-    {loyalty !== 0 && <>{loyalty} <Loyalty/> </>}
-    {priorityEconomyBonus !== 0 && <>{pct(priorityEconomyBonus)} <PriorityEconomy/> </>}
-    {priorityWelfareBonus !== 0 && <>{pct(priorityWelfareBonus)} <PriorityWelfare/> </>}
-    {priorityEnvironmentBonus !== 0 && <>{pct(priorityEnvironmentBonus)} <PriorityEnvironment/> </>}
-    {priorityKnowledgeBonus !== 0 && <>{pct(priorityKnowledgeBonus)} <PriorityKnowledge/> </>}
-    {priorityGovernmentBonus !== 0 && <>{pct(priorityGovernmentBonus)} <PriorityGovernment/> </>}
-    {priorityUnityBonus !== 0 && <>{pct(priorityUnityBonus)} <PriorityUnity/> </>}
-    {priorityMilitaryBonus !== 0 && <>{pct(priorityMilitaryBonus)} <PriorityMilitary/> </>}
-    {priorityOppressionBonus !== 0 && <>{pct(priorityOppressionBonus)} <PriorityOppression/> </>}
-    {prioritySpoilsBonus !== 0 && <>{pct(prioritySpoilsBonus)} <PrioritySpoils/> </>}
-    {priorityFundingBonus !== 0 && <>{pct(priorityFundingBonus)} <PriorityFunding/> </>}
-    {priorityBoostBonus !== 0 && <>{pct(priorityBoostBonus)} <PriorityBoost/> </>}
-    {priorityMcBonus !== 0 && <>{pct(priorityMcBonus)} <PriorityMissionControl/> </>}
-    {miningBonus !== 0 && <>{pct(miningBonus)} <Currency/> </>}
+    {costMoney !== 0 && <><Currency/> {costMoney}{spacer}</>}
+    {costInfluence !== 0 && <><Influence/> {costInfluence}{spacer}</>}
+    {costOps !== 0 && <><Ops/> {costOps}{spacer}</>}
+    {costBoost !== 0 && <><Boost/> {costBoost}{spacer}</>}
+    {incomeMissionControl !== 0 && <><MissionControl/> {incomeMissionControl}{spacer}</>}
+    {incomeResearch !== 0 && <><Research/> {incomeResearch}{spacer}</>}
+    {projectCapacityGranted !== 0 && <>+<Projects/> {projectCapacityGranted}{spacer}</>}
+    {persuasion !== 0 && <><Persuasion/> {persuasion}{spacer}</>}
+    {command !== 0 && <><Command/> {command}{spacer}</>}
+    {investigation !== 0 && <><Investigation/> {investigation}{spacer}</>}
+    {espionage !== 0 && <><Espionage/> {espionage}{spacer}</>}
+    {administration !== 0 && <><Administration/> {administration}{spacer}</>}
+    {science !== 0 && <><Science/> {science}{spacer}</>}
+    {security !== 0 && <><Security/> {security}{spacer}</>}
+    {apparentLoyalty !== 0 && <><Loyalty/> {apparentLoyalty}{spacer}</>}
+    {loyalty !== 0 && <><Loyalty/> {loyalty}{spacer}</>}
+    {priorityEconomyBonus !== 0 && <><PriorityEconomy/> {pct(priorityEconomyBonus)}{spacer}</>}
+    {priorityWelfareBonus !== 0 && <><PriorityWelfare/> {pct(priorityWelfareBonus)}{spacer}</>}
+    {priorityEnvironmentBonus !== 0 && <><PriorityEnvironment/> {pct(priorityEnvironmentBonus)}{spacer}</>}
+    {priorityKnowledgeBonus !== 0 && <><PriorityKnowledge/> {pct(priorityKnowledgeBonus)}{spacer}</>}
+    {priorityGovernmentBonus !== 0 && <><PriorityGovernment/> {pct(priorityGovernmentBonus)}{spacer}</>}
+    {priorityUnityBonus !== 0 && <><PriorityUnity/> {pct(priorityUnityBonus)}{spacer}</>}
+    {priorityMilitaryBonus !== 0 && <><PriorityMilitary/> {pct(priorityMilitaryBonus)}{spacer}</>}
+    {priorityOppressionBonus !== 0 && <><PriorityOppression/> {pct(priorityOppressionBonus)}{spacer}</>}
+    {prioritySpoilsBonus !== 0 && <><PrioritySpoils/> {pct(prioritySpoilsBonus)}{spacer}</>}
+    {priorityFundingBonus !== 0 && <><PriorityFunding/> {pct(priorityFundingBonus)}{spacer}</>}
+    {priorityBoostBonus !== 0 && <><PriorityBoost/> {pct(priorityBoostBonus)}{spacer}</>}
+    {priorityMcBonus !== 0 && <><PriorityMissionControl/> {pct(priorityMcBonus)}{spacer}</>}
+    {miningBonus !== 0 && <><MiningBonus/> {pct(miningBonus)}{spacer}</>}
 
     {techBonuses.length > 0 && <>
       {techBonuses.map(({category, bonus}, index) => {
