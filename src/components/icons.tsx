@@ -19,9 +19,9 @@ import { twMerge } from "tailwind-merge";
 
 // export const Persuasion = (props: Omit<LucideProps, "ref">) => <DollarSign {...config(props)} />;
 
-const buildIcon = (name: string, src: string) => {
+const buildIcon = (name: string, src: string, className?: string) => {
   const Icon = (props: ComponentProps<"img">) => (
-    <img src={src} title={name} {...props} className={twMerge("inline h-4 w-4 -mt-1", props.className)} />
+    <img src={src} title={name} {...props} className={twMerge("inline h-4 w-4 -mt-1", className, props.className)} />
   );
   Icon.DisplayName = name;
   return Icon;
@@ -33,7 +33,7 @@ export const Ops = buildIcon("Ops", "https://wiki.hoodedhorse.com/images/mbhh_ti
 export const Boost = buildIcon("Boost", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/17/ICO_boost.png");
 export const MissionControl = buildIcon("MissionControl", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/da/ICO_mission_control.png");
 export const Research = buildIcon("Research", "https://wiki.hoodedhorse.com/images/mbhh_ti/3/36/ICO_research.png");
-export const Projects = buildIcon("Projects", "https://wiki.hoodedhorse.com/images/mbhh_ti/6/6b/ICO_projects.png");
+export const Projects = buildIcon("Projects", "https://wiki.hoodedhorse.com/images/mbhh_ti/6/6b/ICO_projects.png", 'bg-black dark:bg-transparent');
 export const Gears = Projects;
 export const ControlPoint = buildIcon("ControlPoint", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f9/ICO_ControlPoint_empty.png");
 export const Water = buildIcon("Water", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/90/ICO_water.png");
