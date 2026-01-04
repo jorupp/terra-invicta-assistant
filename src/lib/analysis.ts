@@ -1,5 +1,6 @@
-import { DateTime, SaveFile } from "./savefile";
+import { CouncilorAttributes, DateTime, SaveFile } from "./savefile";
 import { templates } from "./templates";
+import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
 
 export async function analyzeData(saveFile: SaveFile) {
   const playerState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIPlayerState"].find(
@@ -292,6 +293,48 @@ export async function analyzeData(saveFile: SaveFile) {
   }));
   const councilorTraitTemplatesByDataName = new Map(councilorTraitTemplates.map((trait) => [trait.dataName, trait]));
 
+  function computeCouncilorEffects(
+    attributes: CouncilorAttributes,
+    traitTemplates: typeof councilorTraitTemplates,
+    councilorOrgs: typeof orgs
+  ): { effectsBaseAndTraits: ShowEffectsProps; effectsWithOrgs: ShowEffectsProps } {
+    // Start with base attributes
+    let effectsBaseAndTraits: ShowEffectsProps = { ...attributes };
+
+    // Add trait effects
+    effectsBaseAndTraits = traitTemplates.reduce<ShowEffectsProps>((acc, trait) => {
+      return combineEffects(acc, {
+        incomeMoney_month: trait?.incomeMoney,
+        incomeBoost_month: trait?.incomeBoost,
+        incomeInfluence_month: trait?.incomeInfluence,
+        incomeResearch_month: trait?.incomeResearch,
+        techBonuses: trait?.techBonuses,
+      });
+    }, effectsBaseAndTraits);
+
+    // Apply trait statMods and priorityBonuses
+    for (const trait of traitTemplates) {
+      for (const { stat, operation, strValue, condition } of trait.statMods || []) {
+        if (stat && strValue && !condition && operation === "Additive") {
+          (effectsBaseAndTraits as any)[stat] = ((effectsBaseAndTraits as any)[stat] || 0) + Number(strValue);
+        }
+      }
+      for (const { priority, bonus } of trait.priorityBonuses || []) {
+        if (priority && bonus) {
+          const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
+          (effectsBaseAndTraits as any)[key] = ((effectsBaseAndTraits as any)[key] || 0) + bonus;
+        }
+      }
+    }
+
+    // Add org effects to create the full effects value
+    const effectsWithOrgs = councilorOrgs.reduce<ShowEffectsProps>((acc, org) => {
+      return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
+    }, effectsBaseAndTraits);
+
+    return { effectsBaseAndTraits, effectsWithOrgs };
+  }
+
   const councilors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TICouncilorState"].map(
     ({ Value: councilor }) => {
       const orgIds = new Set(councilor.orgs.map((i) => i.value));
@@ -299,6 +342,13 @@ export async function analyzeData(saveFile: SaveFile) {
       const traitTemplates = councilor.traitTemplateNames
         .map((name) => councilorTraitTemplatesByDataName.get(name))
         .filter((t): t is (typeof councilorTraitTemplates)[0] => !!t);
+
+      const { effectsBaseAndTraits, effectsWithOrgs } = computeCouncilorEffects(
+        councilor.attributes,
+        traitTemplates,
+        councilorOrgs
+      );
+
       return {
         id: councilor.ID.value,
         displayName: councilor.displayName,
@@ -311,6 +361,8 @@ export async function analyzeData(saveFile: SaveFile) {
         homeNationId: regionsById.get(councilor.homeRegion?.value || -1)?.nation,
         typeTemplateName: councilor.typeTemplateName,
         xp: councilor.XP,
+        effectsBaseAndTraits,
+        effectsWithOrgs,
       };
     }
   );

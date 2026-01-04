@@ -1,6 +1,6 @@
 "use client";
 
-import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
+import { ShowEffects } from "@/components/showEffects";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
@@ -24,101 +24,127 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
         </TableHeader>
         <TableBody>
           {analysis.playerCouncilors.map((councilor) => {
-            // TODO: need to figure trait effects in somewhere too - ie. SocialScientist, Teacher, etc.
-            // TODO: move all this to analysis so we can use it elsewhere
-            // we should have a "base + traits" value, and a "base + traits + orgs" value (the former for comparing with new councilors)
-            // would be nice to be able to click on a councilor and expand it to show a table of all their orgs - maybe traits too?
-            // also feels like we should try to "canonicalize" references to things named differently
-            //   ie. upper vs. lower case for traits, tech priorities, income
-            const stats = councilor.orgs.reduce<ShowEffectsProps>(
-              (acc, org) => {
-                return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
-              },
-              councilor.traitTemplates.reduce<ShowEffectsProps>(
-                (acc, trait) => {
-                  return combineEffects(acc, {
-                    incomeMoney_month: trait?.incomeMoney,
-                    incomeBoost_month: trait?.incomeBoost,
-                    incomeInfluence_month: trait?.incomeInfluence,
-                    incomeResearch_month: trait?.incomeResearch,
-                    techBonuses: trait?.techBonuses,
-                  });
-                },
-                { ...councilor.attributes }
-              )
-            );
-            for (const trait of councilor.traitTemplates) {
-              for (const { stat, operation, strValue, condition } of trait.statMods || []) {
-                if (stat && strValue && !condition && operation === "Additive") {
-                  (stats as any)[stat] = ((stats as any)[stat] || 0) + Number(strValue);
-                }
-              }
-              for (const { priority, bonus } of trait.priorityBonuses || []) {
-                if (priority && bonus) {
-                  const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
-                  (stats as any)[key] = ((stats as any)[key] || 0) + bonus;
-                }
-              }
-            }
+            const stats = councilor.effectsWithOrgs;
             return (
-              <TableRow key={councilor.id}>
-                <TableCell>{councilor.displayName}</TableCell>
-                <TableCell>
-                  <ShowEffects
-                    persuasion={stats.persuasion}
-                    command={stats.command}
-                    investigation={stats.investigation}
-                    espionage={stats.espionage}
-                    administration={stats.administration}
-                    science={stats.science}
-                    security={stats.security}
-                    Persuasion={stats.Persuasion}
-                    Command={stats.Command}
-                    Investigation={stats.Investigation}
-                    Espionage={stats.Espionage}
-                    Administration={stats.Administration}
-                    Science={stats.Science}
-                    Security={stats.Security}
-                    ApparentLoyalty={stats.ApparentLoyalty}
-                    // TODO: is there a case where we should show this?
-                    // Loyalty={stats.Loyalty}
-                  />
-                </TableCell>
-                <TableCell>
-                  <ShowEffects tier={stats.tier} />
-                </TableCell>
-                <TableCell>
-                  <ShowEffects
-                    incomeBoost_month={stats.incomeBoost_month}
-                    incomeMoney_month={stats.incomeMoney_month}
-                    incomeInfluence_month={stats.incomeInfluence_month}
-                    incomeOps_month={stats.incomeOps_month}
-                    incomeMissionControl={stats.incomeMissionControl}
-                    incomeResearch_month={stats.incomeResearch_month}
-                    projectCapacityGranted={stats.projectCapacityGranted}
-                  />
-                </TableCell>
-                <TableCell>
-                  <ShowEffects
-                    economyBonus={stats.economyBonus}
-                    welfareBonus={stats.welfareBonus}
-                    environmentBonus={stats.environmentBonus}
-                    knowledgeBonus={stats.knowledgeBonus}
-                    governmentBonus={stats.governmentBonus}
-                    unityBonus={stats.unityBonus}
-                    militaryBonus={stats.militaryBonus}
-                    oppressionBonus={stats.oppressionBonus}
-                    spoilsBonus={stats.spoilsBonus}
-                    spaceDevBonus={stats.spaceDevBonus}
-                    spaceflightBonus={stats.spaceflightBonus}
-                    MCBonus={stats.MCBonus}
-                    miningBonus={stats.miningBonus}
-                  />
-                </TableCell>
-                <TableCell>
-                  <ShowEffects techBonuses={stats.techBonuses} />
-                </TableCell>
-              </TableRow>
+              <>
+                <TableRow key={councilor.id}>
+                  <TableCell>{councilor.displayName}</TableCell>
+                  <TableCell>
+                    <ShowEffects
+                      persuasion={stats.persuasion}
+                      command={stats.command}
+                      investigation={stats.investigation}
+                      espionage={stats.espionage}
+                      administration={stats.administration}
+                      science={stats.science}
+                      security={stats.security}
+                      Persuasion={stats.Persuasion}
+                      Command={stats.Command}
+                      Investigation={stats.Investigation}
+                      Espionage={stats.Espionage}
+                      Administration={stats.Administration}
+                      Science={stats.Science}
+                      Security={stats.Security}
+                      ApparentLoyalty={stats.ApparentLoyalty}
+                      // TODO: is there a case where we should show this?
+                      // Loyalty={stats.Loyalty}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ShowEffects tier={stats.tier} />
+                  </TableCell>
+                  <TableCell>
+                    <ShowEffects
+                      incomeBoost_month={stats.incomeBoost_month}
+                      incomeMoney_month={stats.incomeMoney_month}
+                      incomeInfluence_month={stats.incomeInfluence_month}
+                      incomeOps_month={stats.incomeOps_month}
+                      incomeMissionControl={stats.incomeMissionControl}
+                      incomeResearch_month={stats.incomeResearch_month}
+                      projectCapacityGranted={stats.projectCapacityGranted}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ShowEffects
+                      economyBonus={stats.economyBonus}
+                      welfareBonus={stats.welfareBonus}
+                      environmentBonus={stats.environmentBonus}
+                      knowledgeBonus={stats.knowledgeBonus}
+                      governmentBonus={stats.governmentBonus}
+                      unityBonus={stats.unityBonus}
+                      militaryBonus={stats.militaryBonus}
+                      oppressionBonus={stats.oppressionBonus}
+                      spoilsBonus={stats.spoilsBonus}
+                      spaceDevBonus={stats.spaceDevBonus}
+                      spaceflightBonus={stats.spaceflightBonus}
+                      MCBonus={stats.MCBonus}
+                      miningBonus={stats.miningBonus}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ShowEffects techBonuses={stats.techBonuses} />
+                  </TableCell>
+                </TableRow>
+
+                <TableRow key={`${councilor.id}-base`}>
+                  <TableCell>{councilor.displayName} (Unmodified)</TableCell>
+                  <TableCell>
+                    <ShowEffects
+                      persuasion={councilor.effectsBaseAndTraits.persuasion}
+                      command={councilor.effectsBaseAndTraits.command}
+                      investigation={councilor.effectsBaseAndTraits.investigation}
+                      espionage={councilor.effectsBaseAndTraits.espionage}
+                      administration={councilor.effectsBaseAndTraits.administration}
+                      science={councilor.effectsBaseAndTraits.science}
+                      security={councilor.effectsBaseAndTraits.security}
+                      Persuasion={councilor.effectsBaseAndTraits.Persuasion}
+                      Command={councilor.effectsBaseAndTraits.Command}
+                      Investigation={councilor.effectsBaseAndTraits.Investigation}
+                      Espionage={councilor.effectsBaseAndTraits.Espionage}
+                      Administration={councilor.effectsBaseAndTraits.Administration}
+                      Science={councilor.effectsBaseAndTraits.Science}
+                      Security={councilor.effectsBaseAndTraits.Security}
+                      ApparentLoyalty={councilor.effectsBaseAndTraits.ApparentLoyalty}
+                      // TODO: is there a case where we should show this?
+                      // Loyalty={councilor.effectsBaseAndTraits.Loyalty}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ShowEffects tier={councilor.effectsBaseAndTraits.tier} />
+                  </TableCell>
+                  <TableCell>
+                    <ShowEffects
+                      incomeBoost_month={councilor.effectsBaseAndTraits.incomeBoost_month}
+                      incomeMoney_month={councilor.effectsBaseAndTraits.incomeMoney_month}
+                      incomeInfluence_month={councilor.effectsBaseAndTraits.incomeInfluence_month}
+                      incomeOps_month={councilor.effectsBaseAndTraits.incomeOps_month}
+                      incomeMissionControl={councilor.effectsBaseAndTraits.incomeMissionControl}
+                      incomeResearch_month={councilor.effectsBaseAndTraits.incomeResearch_month}
+                      projectCapacityGranted={councilor.effectsBaseAndTraits.projectCapacityGranted}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ShowEffects
+                      economyBonus={councilor.effectsBaseAndTraits.economyBonus}
+                      welfareBonus={councilor.effectsBaseAndTraits.welfareBonus}
+                      environmentBonus={councilor.effectsBaseAndTraits.environmentBonus}
+                      knowledgeBonus={councilor.effectsBaseAndTraits.knowledgeBonus}
+                      governmentBonus={councilor.effectsBaseAndTraits.governmentBonus}
+                      unityBonus={councilor.effectsBaseAndTraits.unityBonus}
+                      militaryBonus={councilor.effectsBaseAndTraits.militaryBonus}
+                      oppressionBonus={councilor.effectsBaseAndTraits.oppressionBonus}
+                      spoilsBonus={councilor.effectsBaseAndTraits.spoilsBonus}
+                      spaceDevBonus={councilor.effectsBaseAndTraits.spaceDevBonus}
+                      spaceflightBonus={councilor.effectsBaseAndTraits.spaceflightBonus}
+                      MCBonus={councilor.effectsBaseAndTraits.MCBonus}
+                      miningBonus={councilor.effectsBaseAndTraits.miningBonus}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ShowEffects techBonuses={councilor.effectsBaseAndTraits.techBonuses} />
+                  </TableCell>
+                </TableRow>
+              </>
             );
           })}
         </TableBody>
@@ -136,37 +162,7 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
         </TableHeader>
         <TableBody>
           {analysis.playerAvailableCouncilors.map((councilor) => {
-            // ie. cloning this is why we should have this in analysis
-            const stats = councilor.orgs.reduce<ShowEffectsProps>(
-              (acc, org) => {
-                return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
-              },
-              councilor.traitTemplates.reduce<ShowEffectsProps>(
-                (acc, trait) => {
-                  return combineEffects(acc, {
-                    incomeMoney_month: trait?.incomeMoney,
-                    incomeBoost_month: trait?.incomeBoost,
-                    incomeInfluence_month: trait?.incomeInfluence,
-                    incomeResearch_month: trait?.incomeResearch,
-                    techBonuses: trait?.techBonuses,
-                  });
-                },
-                { ...councilor.attributes }
-              )
-            );
-            for (const trait of councilor.traitTemplates) {
-              for (const { stat, operation, strValue, condition } of trait.statMods || []) {
-                if (stat && strValue && !condition && operation === "Additive") {
-                  (stats as any)[stat] = ((stats as any)[stat] || 0) + Number(strValue);
-                }
-              }
-              for (const { priority, bonus } of trait.priorityBonuses || []) {
-                if (priority && bonus) {
-                  const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
-                  (stats as any)[key] = ((stats as any)[key] || 0) + bonus;
-                }
-              }
-            }
+            const stats = councilor.effectsWithOrgs;
             return (
               <TableRow key={councilor.id}>
                 <TableCell>{councilor.displayName}</TableCell>
