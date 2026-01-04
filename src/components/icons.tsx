@@ -19,9 +19,12 @@ import { twMerge } from "tailwind-merge";
 
 // export const Persuasion = (props: Omit<LucideProps, "ref">) => <DollarSign {...config(props)} />;
 
-const buildIcon = (name: string, src: string, className?: string) => {
+const buildIcon = (name: string, src: string, showLightBg?: boolean) => {
+  const extraClassName = showLightBg ? 'bg-gray-700 dark:bg-transparent rounded radius-4 p-0.5 -m-0.5 -my-1.5' : undefined;
   const Icon = (props: ComponentProps<"img">) => (
-    <img src={src} title={name} {...props} className={twMerge("inline h-4 w-4 -mt-1", className, props.className)} />
+    <span className={twMerge('inline-block -my-1', extraClassName)}>
+      <img src={src} title={name} {...props} className={twMerge("h-4 w-4", props.className)} />
+    </span>
   );
   Icon.DisplayName = name;
   return Icon;
@@ -29,11 +32,11 @@ const buildIcon = (name: string, src: string, className?: string) => {
 
 export const Currency = buildIcon("Money", "https://wiki.hoodedhorse.com/images/mbhh_ti/8/80/ICO_currency.png");
 export const Influence = buildIcon("Influence", "https://wiki.hoodedhorse.com/images/mbhh_ti/3/35/ICO_influence.png");
-export const Ops = buildIcon("Ops", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/a7/ICO_ops.png");
+export const Ops = buildIcon("Ops", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/a7/ICO_ops.png", true);
 export const Boost = buildIcon("Boost", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/17/ICO_boost.png");
 export const MissionControl = buildIcon("MissionControl", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/da/ICO_mission_control.png");
 export const Research = buildIcon("Research", "https://wiki.hoodedhorse.com/images/mbhh_ti/3/36/ICO_research.png");
-export const Projects = buildIcon("Projects", "https://wiki.hoodedhorse.com/images/mbhh_ti/6/6b/ICO_projects.png", 'bg-black dark:bg-transparent');
+export const Projects = buildIcon("Projects", "https://wiki.hoodedhorse.com/images/mbhh_ti/6/6b/ICO_projects.png", true);
 export const Gears = Projects;
 export const ControlPoint = buildIcon("ControlPoint", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f9/ICO_ControlPoint_empty.png");
 export const Water = buildIcon("Water", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/90/ICO_water.png");
@@ -81,7 +84,7 @@ export const PriorityMilitary = buildIcon("Priority: Military", "https://wiki.ho
 export const PriorityFunding = buildIcon("Priority: Funding", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/52/ICO_funding_priority.png");
 export const PriorityMissionControl = buildIcon("Priority: Mission Control", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/46/ICO_missionControl_priority.png");
 export const PriorityBoost = buildIcon("Priority: Boost (TODO?)", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/17/ICO_boost.png");
-export const MiningBonus = buildIcon("Mining Bonus", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f7/ICO_core_res.png");
+export const MiningBonus = buildIcon("Mining Bonus", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f7/ICO_core_res.png", true);
 
 export const FactionResist = buildIcon("Resist", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/d4/FAC_ResistCouncil_128.png");
 export const FactionSubmit = buildIcon("Submit", "https://wiki.hoodedhorse.com/images/mbhh_ti/0/0a/FAC_SubmitCouncil_128.png");
