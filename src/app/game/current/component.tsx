@@ -18,7 +18,15 @@ function CouncilorTableHeader() {
   );
 }
 
-function CouncilorTableRow({ councilor, stats, label }: { councilor: any; stats: any; label: string }) {
+function CouncilorTableRow({
+  councilor,
+  stats,
+  label,
+}: {
+  councilor: Analysis["playerCouncilors"][number];
+  stats: Analysis["playerCouncilors"][number]["effectsWithOrgs"];
+  label: string;
+}) {
   return (
     <TableRow key={`${councilor.id}-${label}`}>
       <TableCell>{label}</TableCell>
