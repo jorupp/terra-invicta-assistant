@@ -124,6 +124,113 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
         </TableBody>
       </Table>
 
+      <h3>Available Councilors:</h3>
+      <Table>
+        <TableHeader>
+          <TableHead>Name</TableHead>
+          <TableHead>Modified Stats</TableHead>
+          <TableHead>Org Tiers</TableHead>
+          <TableHead>Monthly Effects</TableHead>
+          <TableHead>Priorities</TableHead>
+          <TableHead>Science</TableHead>
+        </TableHeader>
+        <TableBody>
+          {analysis.playerAvailableCouncilors.map((councilor) => {
+            // ie. cloning this is why we should have this in analysis
+            const stats = councilor.orgs.reduce<ShowEffectsProps>(
+              (acc, org) => {
+                return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
+              },
+              councilor.traitTemplates.reduce<ShowEffectsProps>(
+                (acc, trait) => {
+                  return combineEffects(acc, {
+                    incomeMoney_month: trait?.incomeMoney,
+                    incomeBoost_month: trait?.incomeBoost,
+                    incomeInfluence_month: trait?.incomeInfluence,
+                    incomeResearch_month: trait?.incomeResearch,
+                    techBonuses: trait?.techBonuses,
+                  });
+                },
+                { ...councilor.attributes }
+              )
+            );
+            for (const trait of councilor.traitTemplates) {
+              for (const { stat, operation, strValue, condition } of trait.statMods || []) {
+                if (stat && strValue && !condition && operation === "Additive") {
+                  (stats as any)[stat] = ((stats as any)[stat] || 0) + Number(strValue);
+                }
+              }
+              for (const { priority, bonus } of trait.priorityBonuses || []) {
+                if (priority && bonus) {
+                  const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
+                  (stats as any)[key] = ((stats as any)[key] || 0) + bonus;
+                }
+              }
+            }
+            return (
+              <TableRow key={councilor.id}>
+                <TableCell>{councilor.displayName}</TableCell>
+                <TableCell>
+                  <ShowEffects
+                    persuasion={stats.persuasion}
+                    command={stats.command}
+                    investigation={stats.investigation}
+                    espionage={stats.espionage}
+                    administration={stats.administration}
+                    science={stats.science}
+                    security={stats.security}
+                    Persuasion={stats.Persuasion}
+                    Command={stats.Command}
+                    Investigation={stats.Investigation}
+                    Espionage={stats.Espionage}
+                    Administration={stats.Administration}
+                    Science={stats.Science}
+                    Security={stats.Security}
+                    ApparentLoyalty={stats.ApparentLoyalty}
+                    // TODO: is there a case where we should show this?
+                    // Loyalty={stats.Loyalty}
+                  />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects tier={stats.tier} />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects
+                    incomeBoost_month={stats.incomeBoost_month}
+                    incomeMoney_month={stats.incomeMoney_month}
+                    incomeInfluence_month={stats.incomeInfluence_month}
+                    incomeOps_month={stats.incomeOps_month}
+                    incomeMissionControl={stats.incomeMissionControl}
+                    incomeResearch_month={stats.incomeResearch_month}
+                    projectCapacityGranted={stats.projectCapacityGranted}
+                  />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects
+                    economyBonus={stats.economyBonus}
+                    welfareBonus={stats.welfareBonus}
+                    environmentBonus={stats.environmentBonus}
+                    knowledgeBonus={stats.knowledgeBonus}
+                    governmentBonus={stats.governmentBonus}
+                    unityBonus={stats.unityBonus}
+                    militaryBonus={stats.militaryBonus}
+                    oppressionBonus={stats.oppressionBonus}
+                    spoilsBonus={stats.spoilsBonus}
+                    spaceDevBonus={stats.spaceDevBonus}
+                    spaceflightBonus={stats.spaceflightBonus}
+                    MCBonus={stats.MCBonus}
+                    miningBonus={stats.miningBonus}
+                  />
+                </TableCell>
+                <TableCell>
+                  <ShowEffects techBonuses={stats.techBonuses} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+
       <h3>Available orgs:</h3>
       <Table>
         <TableHeader>
