@@ -173,6 +173,75 @@ export async function analyzeData(saveFile: SaveFile) {
     .filter((fleet) => fleet.faction === alienFaction.ID.value)
     .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId));
 
+  const orgTemplates = new Map(
+    (await templates.orgs()).map((org) => [
+      org.dataName,
+      {
+        // may not need some of these, as they end up in the org state itself
+        dataName: org.dataName,
+        friendlyName: org.friendlyName,
+        orgType: org.orgType,
+        requiresNationality: org.requiresNationality,
+        allowedOnMarket: org.allowedOnMarket,
+        requiredOwnerTraits: org.requiredOwnerTraits,
+        prohibitedOwnerTraits: org.prohibitedOwnerTraits,
+        homeRegionMapTemplateName: org.homeRegionMapTemplateName,
+        missionsGrantedNames: org.missionsGrantedNames,
+        grantsMarked: org.grantsMarked,
+        techBonuses: org.techBonuses,
+      },
+    ])
+  );
+
+  const orgs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrgState"].map(({ Value: org }) => {
+    const template = org.templateName ? orgTemplates.get(org.templateName) : undefined;
+    return {
+      id: org.ID.value,
+      displayName: org.displayName,
+      templateName: org.templateName,
+      template,
+      assignedCouncilorId: org.assignedCouncilor?.value,
+      factionOrbitId: org.factionOrbit?.value,
+      homeRegionId: org.homeRegion?.value,
+      tier: org.tier,
+      takeoverDefense: org.takeoverDefense,
+      costMoney: org.costMoney,
+      costInfluence: org.costInfluence,
+      costOps: org.costOps,
+      costBoost: org.costBoost,
+      incomeMoney_month: org.incomeMoney_month,
+      incomeInfluence_month: org.incomeInfluence_month,
+      incomeOps_month: org.incomeOps_month,
+      incomeBoost_month: org.incomeBoost_month,
+      incomeMissionControl: org.incomeMissionControl,
+      incomeResearch_month: org.incomeResearch_month,
+      projectCapacityGranted: org.projectCapacityGranted,
+      persuasion: org.persuasion,
+      command: org.command,
+      investigation: org.investigation,
+      espionage: org.espionage,
+      administration: org.administration,
+      science: org.science,
+      security: org.security,
+      economyBonus: org.economyBonus,
+      welfareBonus: org.welfareBonus,
+      environmentBonus: org.environmentBonus,
+      knowledgeBonus: org.knowledgeBonus,
+      governmentBonus: org.governmentBonus,
+      unityBonus: org.unityBonus,
+      militaryBonus: org.militaryBonus,
+      oppressionBonus: org.oppressionBonus,
+      spoilsBonus: org.spoilsBonus,
+      spaceDevBonus: org.spaceDevBonus,
+      spaceflightBonus: org.spaceflightBonus,
+      MCBonus: org.MCBonus,
+      miningBonus: org.miningBonus,
+      XPModifier: org.XPModifier,
+    };
+  });
+  const playerUnassignedOrgs = orgs.filter((org) => playerFaction?.unassignedOrgIds.includes(org.id));
+  const playerAvailableOrgs = orgs.filter((org) => playerFaction?.availableOrgIds.includes(org.id));
+
   return {
     player,
     playerFaction,
@@ -180,6 +249,8 @@ export async function analyzeData(saveFile: SaveFile) {
     playerFleets,
     playerPlanets,
     alienFleetsToPlayerOrbits,
+    playerUnassignedOrgs,
+    playerAvailableOrgs,
   };
 }
 

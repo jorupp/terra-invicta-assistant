@@ -159,6 +159,7 @@ export interface Org {
     homeRegionMapTemplateName: string;
     requiresNationality: boolean;
     requiredOwnerTraits: string[];
+    prohibitedOwnerTraits: string[];
     affinities: string[];
     costInfluence: number;
     chanceIncomeMoney: number;
