@@ -1,3 +1,4 @@
+import { analyzeData } from "@/lib/analysis";
 import { loadSaveFile } from "@/lib/savefile";
 
 const currentGamePath = process.env.CURRENT_GAME!;
@@ -7,11 +8,12 @@ if (!currentGamePath) {
 
 export default async function DebugGame() {
   const data = await loadSaveFile(currentGamePath);
+  const analysis = await analyzeData(data);
   return (
     <div>
       <h1>Debug Templates</h1>
       <p>This is a debug page for templates.</p>
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+      <pre>{JSON.stringify(analysis, null, 2)}</pre>
     </div>
   );
 }
