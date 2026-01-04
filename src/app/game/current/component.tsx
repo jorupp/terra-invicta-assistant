@@ -5,6 +5,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Analysis } from "@/lib/analysis";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 
+function CouncilorTableHeader() {
+  return (
+    <TableHeader>
+      <TableHead>Name</TableHead>
+      <TableHead>Modified Stats</TableHead>
+      <TableHead>Org Tiers</TableHead>
+      <TableHead>Monthly Effects</TableHead>
+      <TableHead>Priorities</TableHead>
+      <TableHead>Science</TableHead>
+    </TableHeader>
+  );
+}
+
 function CouncilorTableRow({ councilor, stats, label }: { councilor: any; stats: any; label: string }) {
   return (
     <TableRow key={`${councilor.id}-${label}`}>
@@ -77,14 +90,7 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
 
       <h3>Active Councilors:</h3>
       <Table>
-        <TableHeader>
-          <TableHead>Name</TableHead>
-          <TableHead>Modified Stats</TableHead>
-          <TableHead>Org Tiers</TableHead>
-          <TableHead>Monthly Effects</TableHead>
-          <TableHead>Priorities</TableHead>
-          <TableHead>Science</TableHead>
-        </TableHeader>
+        <CouncilorTableHeader />
         <TableBody>
           {analysis.playerCouncilors.flatMap((councilor) => [
             <CouncilorTableRow
@@ -105,14 +111,7 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
 
       <h3>Available Councilors:</h3>
       <Table>
-        <TableHeader>
-          <TableHead>Name</TableHead>
-          <TableHead>Modified Stats</TableHead>
-          <TableHead>Org Tiers</TableHead>
-          <TableHead>Monthly Effects</TableHead>
-          <TableHead>Priorities</TableHead>
-          <TableHead>Science</TableHead>
-        </TableHeader>
+        <CouncilorTableHeader />
         <TableBody>
           {analysis.playerAvailableCouncilors.map((councilor) => (
             <CouncilorTableRow
