@@ -87,7 +87,7 @@ export const ShowEffects = (props: ShowEffectsProps) => {
     {costBoost !== 0 && <><Boost/> {costBoost}{spacer}</>}
     {incomeMissionControl !== 0 && <><MissionControl/> {incomeMissionControl}{spacer}</>}
     {incomeResearch !== 0 && <><Research/> {incomeResearch}{spacer}</>}
-    {projectCapacityGranted !== 0 && <>+<Projects/> {projectCapacityGranted}{spacer}</>}
+    {projectCapacityGranted !== 0 && <><Projects/> {projectCapacityGranted}{spacer}</>}
     {persuasion !== 0 && <><Persuasion/> {persuasion}{spacer}</>}
     {command !== 0 && <><Command/> {command}{spacer}</>}
     {investigation !== 0 && <><Investigation/> {investigation}{spacer}</>}
