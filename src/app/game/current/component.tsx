@@ -26,6 +26,10 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
           {analysis.playerCouncilors.map((councilor) => {
             // TODO: need to figure trait effects in somewhere too - ie. SocialScientist, Teacher, etc.
             // TODO: move all this to analysis so we can use it elsewhere
+            // we should have a "base + traits" value, and a "base + traits + orgs" value (the former for comparing with new councilors)
+            // would be nice to be able to click on a councilor and expand it to show a table of all their orgs - maybe traits too?
+            // also feels like we should try to "canonicalize" references to things named differently
+            //   ie. upper vs. lower case for traits, tech priorities, income
             const stats = councilor.orgs.reduce<ShowEffectsProps>(
               (acc, org) => {
                 return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
