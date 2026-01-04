@@ -5,15 +5,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Analysis } from "@/lib/analysis";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 
-function CouncilorTableHeader() {
+function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
     <TableHeader>
-      <TableHead>Name</TableHead>
-      <TableHead>Modified Stats</TableHead>
-      <TableHead>Org Tiers</TableHead>
-      <TableHead>Monthly Effects</TableHead>
-      <TableHead>Priorities</TableHead>
-      <TableHead>Science</TableHead>
+      <TableRow>
+        <TableHead>Name</TableHead>
+        <TableHead>Modified Stats</TableHead>
+        {hasOrgs && <TableHead>Org Tiers</TableHead>}
+        <TableHead>Monthly Effects</TableHead>
+        <TableHead>Priorities</TableHead>
+        <TableHead>Science</TableHead>
+      </TableRow>
     </TableHeader>
   );
 }
@@ -22,10 +24,12 @@ function CouncilorTableRow({
   councilor,
   stats,
   label,
+  hasOrgs,
 }: {
   councilor: Analysis["playerCouncilors"][number];
-  stats: Analysis["playerCouncilors"][number]["effectsWithOrgs"];
+  stats: Analysis["playerCouncilors"][number]["effectsWithOrgsAndAugments"];
   label: string;
+  hasOrgs?: boolean;
 }) {
   return (
     <TableRow key={`${councilor.id}-${label}`}>
@@ -51,9 +55,11 @@ function CouncilorTableRow({
           // Loyalty={stats.Loyalty}
         />
       </TableCell>
-      <TableCell>
-        <ShowEffects tier={stats.tier} />
-      </TableCell>
+      {hasOrgs && (
+        <TableCell>
+          <ShowEffects tier={stats.tier} />
+        </TableCell>
+      )}
       <TableCell>
         <ShowEffects
           incomeBoost_month={stats.incomeBoost_month}
@@ -98,22 +104,32 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
 
       <h3>Active Councilors:</h3>
       <Table>
-        <CouncilorTableHeader />
+        <CouncilorTableHeader hasOrgs />
         <TableBody>
-          {analysis.playerCouncilors.flatMap((councilor) => [
+          {analysis.playerCouncilors.map((councilor) => (
             <CouncilorTableRow
               key={councilor.id}
               councilor={councilor}
-              stats={councilor.effectsWithOrgs}
+              stats={councilor.effectsWithOrgsAndAugments}
               label={councilor.displayName!}
-            />,
+              hasOrgs
+            />
+          ))}
+        </TableBody>
+      </Table>
+
+      <h3>Unmodified Active Councilors:</h3>
+      <Table>
+        <CouncilorTableHeader />
+        <TableBody>
+          {analysis.playerCouncilors.map((councilor) => (
             <CouncilorTableRow
               key={`${councilor.id}-base`}
               councilor={councilor}
-              stats={councilor.effectsBaseAndTraits}
-              label={`${councilor.displayName} (Unmodified)`}
-            />,
-          ])}
+              stats={councilor.effectsBaseAndUnaugmentedTraits}
+              label={`${councilor.displayName}`}
+            />
+          ))}
         </TableBody>
       </Table>
 
@@ -125,7 +141,7 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
             <CouncilorTableRow
               key={councilor.id}
               councilor={councilor}
-              stats={councilor.effectsWithOrgs}
+              stats={councilor.effectsBaseAndUnaugmentedTraits}
               label={councilor.displayName!}
             />
           ))}
@@ -135,12 +151,14 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
       <h3>Available orgs:</h3>
       <Table>
         <TableHeader>
-          <TableHead>Org Name</TableHead>
-          <TableHead>Nation</TableHead>
-          <TableHead>Tier</TableHead>
-          <TableHead>Purchase</TableHead>
-          <TableHead>Monthly</TableHead>
-          <TableHead>Effects</TableHead>
+          <TableRow>
+            <TableHead>Org Name</TableHead>
+            <TableHead>Nation</TableHead>
+            <TableHead>Tier</TableHead>
+            <TableHead>Purchase</TableHead>
+            <TableHead>Monthly</TableHead>
+            <TableHead>Effects</TableHead>
+          </TableRow>
         </TableHeader>
         <TableBody>
           {analysis.playerAvailableOrgs
