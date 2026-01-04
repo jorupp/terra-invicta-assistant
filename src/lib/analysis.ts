@@ -80,6 +80,7 @@ export async function analyzeData(saveFile: SaveFile) {
     displayName: ship.displayName,
     templateName: ship.templateName,
   }));
+  // TODO: ship state has MCused
   const shipsById = new Map<number, (typeof ships)[0]>(ships.map((ship) => [ship.id, ship]));
   const fleets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceFleetState"].map(({ Value: fleet }) => {
     // TODO: can the player see the mission before it arrives?
@@ -293,9 +294,15 @@ export async function analyzeData(saveFile: SaveFile) {
     tags: trait.tags,
   }));
   const councilorTraitTemplatesByDataName = new Map(councilorTraitTemplates.map((trait) => [trait.dataName, trait]));
+  const councilorTypes = (await templates.councilorTypes()).map((type) => ({
+    dataName: type.dataName,
+    friendlyName: type.friendlyName,
+    missionNames: type.missionNames,
+  }));
+  const councilorTypesByDataName = new Map(councilorTypes.map((type) => [type.dataName, type]));
 
   function computeCouncilorEffects(
-    attributes: CouncilorAttributes,
+    attributes: ShowEffectsProps,
     traitTemplates: typeof councilorTraitTemplates,
     councilorOrgs: typeof orgs
   ): { effectsBaseAndUnaugmentedTraits: ShowEffectsProps; effectsWithOrgsAndAugments: ShowEffectsProps } {
@@ -309,6 +316,7 @@ export async function analyzeData(saveFile: SaveFile) {
             incomeInfluence_month: trait?.incomeInfluence,
             incomeResearch_month: trait?.incomeResearch,
             techBonuses: trait?.techBonuses,
+            missionsGrantedNames: trait?.missionsGrantedNames,
           });
         },
         { ...effects }
@@ -344,7 +352,11 @@ export async function analyzeData(saveFile: SaveFile) {
 
     // Add org effects to create the full effects value
     const effectsWithOrgsAndAugments = councilorOrgs.reduce<ShowEffectsProps>((acc, org) => {
-      return combineEffects(acc, { ...org, techBonuses: org.template?.techBonuses });
+      return combineEffects(acc, {
+        ...org,
+        techBonuses: org.template?.techBonuses,
+        missionsGrantedNames: org.template?.missionsGrantedNames,
+      });
     }, effectsWithAugments);
 
     return { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments };
@@ -357,17 +369,21 @@ export async function analyzeData(saveFile: SaveFile) {
       const traitTemplates = councilor.traitTemplateNames
         .map((name) => councilorTraitTemplatesByDataName.get(name))
         .filter((t): t is (typeof councilorTraitTemplates)[0] => !!t);
+      const councilorType = councilorTypesByDataName.get(councilor.typeTemplateName);
 
       const { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments } = computeCouncilorEffects(
-        councilor.attributes,
+        { ...councilor.attributes, missionsGrantedNames: councilorType?.missionNames },
         traitTemplates,
         councilorOrgs
       );
+
+      // councilor.learnedMissionsTemplateNames is always [] - ignoring
 
       return {
         id: councilor.ID.value,
         displayName: councilor.displayName,
         factionId: councilor.faction?.value,
+        councilorType,
         traitTemplateNames: councilor.traitTemplateNames,
         traitTemplates,
         attributes: councilor.attributes,
@@ -385,6 +401,13 @@ export async function analyzeData(saveFile: SaveFile) {
   const playerAvailableCouncilors = councilors.filter((councilor) =>
     playerFaction?.availableCouncilorIds.includes(councilor.id)
   );
+  const playerMissionCounts = playerCouncilors.reduce((acc, councilor) => {
+    const missionNames = councilor.effectsWithOrgsAndAugments.missionsGrantedNames || [];
+    for (const missionName of missionNames) {
+      acc.set(missionName, (acc.get(missionName) || 0) + 1);
+    }
+    return acc;
+  }, new Map<string, number>());
 
   return {
     player,
@@ -397,6 +420,7 @@ export async function analyzeData(saveFile: SaveFile) {
     playerAvailableOrgs,
     playerNationIds: [...playerNationIds],
     playerCouncilors,
+    playerMissionCounts,
     playerAvailableCouncilors,
   };
 }

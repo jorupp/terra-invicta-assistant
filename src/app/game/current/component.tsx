@@ -15,6 +15,7 @@ function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
         <TableHead>Monthly Effects</TableHead>
         <TableHead>Priorities</TableHead>
         <TableHead>Science</TableHead>
+        <TableHead>Missions</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -25,11 +26,13 @@ function CouncilorTableRow({
   stats,
   label,
   hasOrgs,
+  highlightMissionClassName,
 }: {
   councilor: Analysis["playerCouncilors"][number];
   stats: Analysis["playerCouncilors"][number]["effectsWithOrgsAndAugments"];
   label: string;
   hasOrgs?: boolean;
+  highlightMissionClassName?: (missionName: string) => string | undefined;
 }) {
   return (
     <TableRow key={`${councilor.id}-${label}`}>
@@ -91,11 +94,36 @@ function CouncilorTableRow({
       <TableCell>
         <ShowEffects techBonuses={stats.techBonuses} />
       </TableCell>
+      <TableCell>
+        <ShowEffects
+          missionsGrantedNames={stats.missionsGrantedNames}
+          highlightMissionClassName={highlightMissionClassName}
+        />
+      </TableCell>
     </TableRow>
   );
 }
 
 export default function CurrentGameComponent({ analysis }: { analysis: Analysis }) {
+  const { playerMissionCounts } = analysis;
+  function currentHighlightMissionClassName(missionName: string) {
+    // if we have exactly 2, show yellow BG, if we have 1, show red, otherwise no change to bg
+    const count = playerMissionCounts.get(missionName) || 0;
+    if (count === 2) {
+      return "bg-yellow-300/50";
+    } else if (count === 1) {
+      return "bg-red-300/50";
+    }
+  }
+  function availableHighlightMissionClassName(missionName: string) {
+    // if we have 1, show yellow BG, if we have 0, show green, otherwise no change to bg
+    const count = playerMissionCounts.get(missionName) || 0;
+    if (count === 1) {
+      return "bg-yellow-300/50";
+    } else if (count === 0) {
+      return "bg-green-300/50";
+    }
+  }
   const playerNationIds = new Set(analysis.playerNationIds);
   return (
     <div>
@@ -113,6 +141,7 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
               stats={councilor.effectsWithOrgsAndAugments}
               label={councilor.displayName!}
               hasOrgs
+              highlightMissionClassName={currentHighlightMissionClassName}
             />
           ))}
         </TableBody>
@@ -128,6 +157,7 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
               councilor={councilor}
               stats={councilor.effectsBaseAndUnaugmentedTraits}
               label={`${councilor.displayName}`}
+              highlightMissionClassName={currentHighlightMissionClassName}
             />
           ))}
         </TableBody>
@@ -143,6 +173,7 @@ export default function CurrentGameComponent({ analysis }: { analysis: Analysis 
               councilor={councilor}
               stats={councilor.effectsBaseAndUnaugmentedTraits}
               label={councilor.displayName!}
+              highlightMissionClassName={availableHighlightMissionClassName}
             />
           ))}
         </TableBody>

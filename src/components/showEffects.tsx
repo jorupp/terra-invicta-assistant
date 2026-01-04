@@ -1,9 +1,9 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
-import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
+import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
 import { Org } from "@/lib/templates";
 
 export type ShowEffectsProps = Partial<
-  Pick<Org, 'techBonuses'> &
+  Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
   CouncilorAttributes &
     Pick<
       TIOrgState,
@@ -43,7 +43,7 @@ export type ShowEffectsProps = Partial<
     >
 >;
 
-export const ShowEffects = (props: ShowEffectsProps) => {
+export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassName?: (missionName: string) => string | undefined }) => {
   const tier = props.tier || 0;
   const takeoverDefense = props.takeoverDefense || 0;
   const costMoney = (props.costMoney || 0) + (props.incomeMoney_month || 0);
@@ -76,6 +76,7 @@ export const ShowEffects = (props: ShowEffectsProps) => {
   const priorityBoostBonus = props.spaceflightBonus || 0;
   const miningBonus = props.miningBonus || 0;
   const techBonuses = props.techBonuses || [];
+  const missionsGrantedNames = props.missionsGrantedNames || [];
   const spacer = <span className="mx-0.5"> </span>;
 
   return <>
@@ -117,6 +118,13 @@ export const ShowEffects = (props: ShowEffectsProps) => {
         return TechIcon ? <span key={index}>{pct(bonus)} <TechIcon /> </span> : null;
       })}
     </>}
+
+    {missionsGrantedNames.length > 0 && <>
+      {missionsGrantedNames.map((mission, index) => {
+        const MissionIcon = MissionIcons[mission as keyof typeof MissionIcons];
+        return MissionIcon ? <><MissionIcon className={props.highlightMissionClassName?.(mission)} />{spacer}</> : null;
+      })}
+    </>}
   </>;
 };
 
@@ -124,13 +132,16 @@ export function combineEffects(p1: ShowEffectsProps, p2: ShowEffectsProps): Show
   const result: ShowEffectsProps = {...p1};
   for (const key in p2) {
     const k = key as keyof ShowEffectsProps;
-    if (k == 'techBonuses') {
+    if (k === 'techBonuses') {
       result.techBonuses = [...[...(result.techBonuses || []), ...(p2.techBonuses || [])].reduce((acc, curr) => {
         const key = curr.category;
         const existing = acc.get(key) || 0;
         acc.set(key, existing + curr.bonus);
         return acc;
       }, new Map<string, number>()).entries().map(([category, bonus]) => ({category, bonus}) )];
+    }
+    else if (k === 'missionsGrantedNames') {
+      result.missionsGrantedNames = [...new Set([...(result.missionsGrantedNames || []), ...(p2.missionsGrantedNames || [])])];
     }
     else if (typeof p2[k] === "number") {
       result[k] = (result[k] || 0) + (p2[k] || 0);

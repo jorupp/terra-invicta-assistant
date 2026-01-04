@@ -22,8 +22,8 @@ import { twMerge } from "tailwind-merge";
 const buildIcon = (name: string, src: string, showLightBg?: boolean) => {
   const extraClassName = showLightBg ? 'bg-gray-700 dark:bg-transparent' : 'bg-transparent dark:bg-gray-200';
   const Icon = (props: ComponentProps<"img">) => (
-    <span className={twMerge('inline-block rounded radius-4 p-0.5 -m-0.5 -my-1.5', extraClassName)} title={name}>
-      <img src={src} {...props} className={twMerge("h-4 w-4", props.className)} />
+    <span className={twMerge('inline-block rounded radius-4 p-0.5 -m-0.5 -my-1.5', extraClassName, props.className)} title={name}>
+      <img src={src} {...props} className={twMerge("h-4 w-4")} />
     </span>
   );
   Icon.DisplayName = name;
@@ -114,3 +114,48 @@ export const FactionIcons: { [key: string]: typeof FactionResist } = {
 };
 
 export const TierStar = buildIcon("Tier Star", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/52/ICO_mod_star_on.png");
+
+export const MissionAssassinate = buildIcon("Mission: Assassinate", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/98/ICO_assassinate_on.png");
+export const MissionAssaultalienasset = buildIcon("Mission: Assault Alien Asset", "https://wiki.hoodedhorse.com/images/mbhh_ti/0/08/ICO_assaultalienasset_on.png");
+export const MissionControlspaceasset = buildIcon("Mission: Control Space Asset", "https://wiki.hoodedhorse.com/images/mbhh_ti/e/ed/ICO_controlspaceasset_on.png");
+export const MissionCoup = buildIcon("Mission: Coup", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/1c/ICO_coup_on.png");
+export const MissionCrackdown = buildIcon("Mission: Crackdown", "https://wiki.hoodedhorse.com/images/mbhh_ti/e/e1/ICO_crackdown_on.png");
+export const MissionDetain = buildIcon("Mission: Detain", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/4a/ICO_detain_on.png");
+export const MissionExtract = buildIcon("Mission: Extract", "https://wiki.hoodedhorse.com/images/mbhh_ti/2/2c/ICO_extract_on.png");
+export const MissionGaininfluence = buildIcon("Mission: Control Nation", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/b4/ICO_gaininfluence_on.png");
+export const MissionHostiletakeover = buildIcon("Mission: Hostile Takeover", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/b2/ICO_hostiletakeover_on.png");
+export const MissionInspire = buildIcon("Mission: Inspire", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/56/ICO_inspire_on.png");
+export const MissionInvestigatecouncilor = buildIcon("Mission: Investigate Councilor", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/4e/ICO_investigatecouncilor_on.png");
+export const MissionPropaganda = buildIcon("Mission: Public Campaign", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/b6/ICO_propaganda_on.png");
+export const MissionPurge = buildIcon("Mission: Purge", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/4a/ICO_purge_on.png");
+export const MissionSabotagefacilities = buildIcon("Mission: Sabotage Facilities", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/ac/ICO_sabotagefacilities_on.png");
+export const MissionSabotagehabmodule = buildIcon("Mission: Sabotage Hab Module", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/4e/ICO_sabotagehabmodule_on.png");
+export const MissionSabotageproject = buildIcon("Mission: Sabotage Project", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/aa/ICO_sabotageproject_on.png");
+export const MissionSeizespaceasset = buildIcon("Mission: Seize Space Asset", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/be/ICO_seizespaceasset_on.png");
+export const MissionStabilize = buildIcon("Mission: Stabilize", "https://wiki.hoodedhorse.com/images/mbhh_ti/3/3d/ICO_stabilize_on.png");
+export const MissionStealproject = buildIcon("Mission: Steal Project", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/ab/ICO_stealproject_on.png");
+export const MissionTurn = buildIcon("Mission: Turn Councilor", "https://wiki.hoodedhorse.com/images/mbhh_ti/3/32/ICO_turn_on.png");
+export const MissionUnrest = buildIcon("Mission: Unrest", "https://wiki.hoodedhorse.com/images/mbhh_ti/2/2e/ICO_unrest_on.png");
+export const MissionIcons: { [key: string]: typeof MissionAssassinate } = {
+  Assassinate: MissionAssassinate,
+  AssaultAlienAsset: MissionAssaultalienasset,
+  ControlSpaceAsset: MissionControlspaceasset,
+  Coup: MissionCoup,
+  Crackdown: MissionCrackdown,
+  Detain: MissionDetain,
+  Extract: MissionExtract,
+  GainInfluence: MissionGaininfluence,
+  HostileTakeover: MissionHostiletakeover,
+  Inspire: MissionInspire,
+  InvestigateCouncilor: MissionInvestigatecouncilor,
+  Propaganda: MissionPropaganda,
+  Purge: MissionPurge,
+  SabotageFacilities: MissionSabotagefacilities,
+  SabotageHabModule: MissionSabotagehabmodule,
+  SabotageProject: MissionSabotageproject,
+  SeizeSpaceAsset: MissionSeizespaceasset,
+  Stabilize: MissionStabilize,
+  StealProject: MissionStealproject,
+  Turn: MissionTurn,
+  Unrest: MissionUnrest,
+};
