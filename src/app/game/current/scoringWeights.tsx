@@ -580,7 +580,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     incomeInfluence_month: 1 / 60,
     incomeOps_month: 1 / 30,
     incomeMissionControl: 0.1, // probably should be higher early-game
-    incomeResearch_month: 1 / 200,
+    incomeResearch_month: 1 / 100,
     projectCapacityGranted: 0.3,
 
     // IMHO, purchase costs are pretty trivial past early-game
@@ -677,7 +677,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     incomeInfluence_month: 1 / 10,
     incomeOps_month: 1 / 5,
     incomeMissionControl: 1,
-    incomeResearch_month: 1 / 200,
+    incomeResearch_month: 1 / 30,
     projectCapacityGranted: 0.3,
 
     costMoney: -1 / 400,
