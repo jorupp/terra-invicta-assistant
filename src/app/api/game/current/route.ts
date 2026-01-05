@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { watch } from "fs";
-import { stat } from "fs/promises";
+import { stat, readdir } from "fs/promises";
 import { join } from "path";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,11 @@ export async function GET(request: NextRequest) {
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
 
+  // Helper method to send SSE message
+  const sendFile = async (filename: string) => {
+    await writer.write(encoder.encode(`data: ${JSON.stringify({ filename })}\n\n`));
+  };
+
   // Track abort signal
   const abortController = new AbortController();
 
@@ -27,6 +32,32 @@ export async function GET(request: NextRequest) {
 
   // Start watching in the background
   (async () => {
+    // Send the last-modified file when the stream starts
+    try {
+      const files = await readdir(saveGameDir);
+      let lastModifiedFile: string | null = null;
+      let lastModifiedTime = 0;
+
+      for (const file of files) {
+        const fullPath = join(saveGameDir, file);
+        try {
+          const stats = await stat(fullPath);
+          if (stats.isFile() && stats.mtimeMs > lastModifiedTime) {
+            lastModifiedTime = stats.mtimeMs;
+            lastModifiedFile = file;
+          }
+        } catch (error) {
+          // Skip files we can't stat
+        }
+      }
+
+      if (lastModifiedFile) {
+        await sendFile(lastModifiedFile);
+      }
+    } catch (error) {
+      // If we can't read the directory, just continue watching
+    }
+
     const watcher = watch(saveGameDir, { signal: abortController.signal }, async (eventType, filename) => {
       if (!filename) return;
 
@@ -37,8 +68,7 @@ export async function GET(request: NextRequest) {
           // Check if file exists (it's a creation, not deletion)
           const stats = await stat(fullPath);
           if (stats.isFile()) {
-            // Send SSE formatted message
-            await writer.write(encoder.encode(`data: ${JSON.stringify({ filename })}\n\n`));
+            await sendFile(filename);
           }
         } catch (error) {
           // File might have been deleted immediately, ignore
