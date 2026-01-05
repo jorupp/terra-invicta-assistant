@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MissionDataName, TechCategory } from "@/lib/template-types-generated";
+import { InfoTooltip } from "@/components/infoTooltip";
 
 interface SavedWeightConfigs {
   current: ScoringWeights;
@@ -64,7 +65,7 @@ function NumberInput({
   value,
   onChange,
 }: {
-  label: string;
+  label: ReactNode;
   value: number | undefined;
   onChange: (v: number) => void;
 }) {
@@ -271,7 +272,14 @@ export function ScoringWeightsDialog({
                     onChange={(v) => updateWeight("security", v)}
                   />
                   <NumberInput
-                    label="XP Modifier"
+                    label={
+                      <>
+                        XP Modifier{" "}
+                        <InfoTooltip>
+                          ie. -50 means that Quick Learner (a -10% XP modifier) would be worth 5 points
+                        </InfoTooltip>
+                      </>
+                    }
                     value={editedWeights.xpModifier}
                     onChange={(v) => updateWeight("xpModifier", v)}
                   />
