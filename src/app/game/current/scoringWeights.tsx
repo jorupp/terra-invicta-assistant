@@ -176,9 +176,9 @@ export function ScoringWeightsDialog({
 
         <div className="space-y-3">
           {/* Save/Load Controls */}
-          <div className="flex gap-2 items-end border-b pb-4">
+          <div className="flex gap-2 items-center border-b pb-4">
+            <Label className="whitespace-nowrap">Load Saved Configuration</Label>
             <div className="flex-1">
-              <Label>Load Saved Configuration</Label>
               <Select value={selectedConfig} onValueChange={setSelectedConfig}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a saved configuration" />
@@ -214,9 +214,9 @@ export function ScoringWeightsDialog({
             </Button>
           </div>
 
-          <div className="flex gap-2 items-end border-b pb-4">
+          <div className="flex gap-2 items-center border-b pb-4 mt-4">
+            <Label className="whitespace-nowrap">Save Current Configuration</Label>
             <div className="flex-1">
-              <Label>Save Current Configuration</Label>
               <Input
                 placeholder="Enter configuration name"
                 value={newConfigName}
