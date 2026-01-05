@@ -66,6 +66,33 @@ export async function analyzeData(saveFile: SaveFile) {
 
   const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
 
+  const planets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceBodyState"];
+  const sol = planets.find((i) => i.Value.templateName === "Sol")?.Key.value;
+  if (!sol) {
+    throw new Error("Sol planet data not found in save file.");
+  }
+  const orbitsById = new Map(
+    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"].map(({ Value: orbit }) => [
+      orbit.ID.value,
+      {
+        id: orbit.ID.value,
+        displayName: orbit.displayName,
+        templateName: orbit.templateName,
+        barycenterId: orbit.barycenter.value,
+      },
+    ])
+  );
+  const bodiesById = new Map(
+    planets.map(({ Value: body }) => [
+      body.ID.value,
+      {
+        id: body.ID.value,
+        displayName: body.displayName,
+        templateName: body.templateName,
+      },
+    ])
+  );
+
   const shipHulls = (await templates.shipHulls()).map((h) => ({
     dataName: h.dataName,
     friendlyName: h.friendlyName,
@@ -79,15 +106,16 @@ export async function analyzeData(saveFile: SaveFile) {
     id: ship.ID.value,
     displayName: ship.displayName,
     templateName: ship.templateName,
+    missionControlConsumption: ship.missionControlConsumption,
   }));
-  // TODO: ship state has MCused
   const shipsById = new Map<number, (typeof ships)[0]>(ships.map((ship) => [ship.id, ship]));
-  const fleets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceFleetState"].map(({ Value: fleet }) => {
+
+  const fleets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceFleetState"].map(({ Value: rawFleet }) => {
     // TODO: can the player see the mission before it arrives?
-    const operation = fleet.trajectory?.arrivalTime
+    const operation = rawFleet.trajectory?.arrivalTime
       ? null
-      : sortByDateTime(fleet.currentOperations ?? [], (op) => op.startDate)?.[0] || null;
-    const fleetShips = fleet.ships
+      : sortByDateTime(rawFleet.currentOperations ?? [], (op) => op.startDate)?.[0] || null;
+    const fleetShips = rawFleet.ships
       .map(({ value: id }) => shipsById.get(id))
       .filter((s): s is (typeof ships)[0] => !!s)
       .map((ship) => {
@@ -99,24 +127,49 @@ export async function analyzeData(saveFile: SaveFile) {
           hull,
         };
       });
+
+    const totalMC = fleetShips.reduce((acc, i) => acc + i.ship.missionControlConsumption, 0);
+    const shipsByHullType = fleetShips.reduce((acc, { hull }) => {
+      if (hull) {
+        acc.set(hull.friendlyName, (acc.get(hull.friendlyName) || 0) + 1);
+      }
+      return acc;
+    }, new Map<string, number>());
+
+    // Get target orbit body name
+    const targetOrbitId = rawFleet.trajectory?.destinationOrbit?.value ?? rawFleet.orbitState?.value;
+    const targetOrbit = targetOrbitId ? orbitsById.get(targetOrbitId) : null;
+    const targetBody = targetOrbit ? bodiesById.get(targetOrbit.barycenterId) : null;
+    const targetOrbitName = targetBody?.displayName || "Unknown";
+
     return {
-      id: fleet.ID.value,
-      faction: fleet.faction.value,
-      displayName: fleet.displayNameByFaction.find((dn) => dn.Key.value === playerFaction.id)?.Value || "UNKNOWN",
+      id: rawFleet.ID.value,
+      faction: rawFleet.faction.value,
+      displayName: rawFleet.displayNameByFaction.find((dn) => dn.Key.value === playerFaction.id)?.Value || "UNKNOWN",
       // TODO: shipInfo - can the player always see this?
-      originOrbitId: fleet.trajectory?.originOrbit?.value,
-      targetOrbitId: fleet.trajectory?.destinationOrbit?.value ?? fleet.orbitState?.value,
-      arrivalTime: fleet.trajectory?.arrivalTime,
-      daysToTarget: fleet.trajectory?.arrivalTime
-        ? toDays(diffDateTime(fleet.trajectory.arrivalTime, time.currentDateTime))
+      originOrbitId: rawFleet.trajectory?.originOrbit?.value,
+      targetOrbitId,
+      targetOrbitName,
+      arrivalTime: rawFleet.trajectory?.arrivalTime,
+      arrivalTimeFormatted: rawFleet.trajectory?.arrivalTime?.day
+        ? formatDateTime(rawFleet.trajectory!.arrivalTime)
+        : null,
+      daysToTarget: rawFleet.trajectory?.arrivalTime?.day
+        ? toDays(diffDateTime(rawFleet.trajectory.arrivalTime, time.currentDateTime))
         : null,
       operation: operation?.operationDataName,
       operationComplete: operation?.completionDate ? formatDateTime(operation.completionDate) : null,
-      operationCompleteDays: operation?.completionDate
+      operationCompleteDays: operation?.completionDate?.day
         ? toDays(diffDateTime(operation.completionDate, time.currentDateTime))
         : null,
+      fleetShips,
+      totalMC,
+      shipsByHullType: [...shipsByHullType.entries()]
+        .map(([hullName, count]) => ({ hullName, count }))
+        .toSorted((a, b) => a.count - b.count),
     };
   });
+  const fleetsById = new Map<number, (typeof fleets)[0]>(fleets.map((fleet) => [fleet.id, fleet]));
   const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => ({
     id: hab.ID.value,
     faction: hab.faction.value,
@@ -145,11 +198,6 @@ export async function analyzeData(saveFile: SaveFile) {
   const habSites = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabSiteState"];
   for (const hab of playerHabs) {
     playerBarycenters.add(habSites.find((site) => site.Key.value === hab.habSiteId)?.Value.parentBody?.value);
-  }
-  const planets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceBodyState"];
-  const sol = planets.find((i) => i.Value.templateName === "Sol")?.Key.value;
-  if (!sol) {
-    throw new Error("Sol planet data not found in save file.");
   }
   const playerPlanetIds = new Set<number>(
     planets
@@ -184,9 +232,13 @@ export async function analyzeData(saveFile: SaveFile) {
   if (!alienFaction) {
     throw new Error("Alien faction data not found in save file.");
   }
-  const alienFleetsToPlayerOrbits = fleets
-    .filter((fleet) => fleet.faction === alienFaction.ID.value)
-    .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId));
+
+  const alienFleetsToPlayerOrbits = sortByDateTime(
+    fleets
+      .filter((fleet) => fleet.faction === alienFaction.ID.value)
+      .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId)),
+    (i) => i.arrivalTime
+  );
 
   const regions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIRegionState"].map(({ Value: region }) => ({
     id: region.ID.value,
@@ -428,13 +480,13 @@ export async function analyzeData(saveFile: SaveFile) {
 export type Analysis = Awaited<ReturnType<typeof analyzeData>>;
 
 function compareDateTime(a?: DateTime, b?: DateTime): number {
-  if (!a && !b) {
+  if (!a?.day && !b?.day) {
     return 0;
   }
-  if (!a) {
+  if (!a?.day) {
     return -1;
   }
-  if (!b) {
+  if (!b?.day) {
     return 1;
   }
 
