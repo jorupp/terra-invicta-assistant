@@ -347,10 +347,10 @@ interface ScoringWeights {
   miningBonus?: number;
 
   // Tech bonuses (weight per tech category)
-  techBonuses?: Record<TechCategory, number>;
+  techBonuses?: Partial<Record<TechCategory, number>>;
 
   // Missions (weight per mission name)
-  missions?: Record<MissionDataName, number>;
+  missions?: Partial<Record<MissionDataName, number>>;
 }
 
 // initial defaults based on my old scoring system for mid/late game
@@ -407,30 +407,19 @@ const defaultScoringWeights: ScoringWeights = {
 
   // Missions (weighted by utility/frequency of use)
   missions: {
-    Abductions: 0.5,
     Advise: 2.0,
-    AppeaseWin: 3.0,
     Assassinate: 2.5,
     AssaultAlienAsset: 2.0,
     AssumeControl: 3.0,
     BuildFacility: 1.5,
     Contact: 1.0,
     ControlSpaceAsset: 2.5,
-    CooperateWin: 3.0,
     Coup: 2.5,
     Crackdown: 1.5,
     DefendInterests: 2.0,
     Deorbit: 1.0,
-    DestroyWin: 3.0,
     Detain: 2.0,
     DetectCouncilActivity: 1.5,
-    DominateNation: 3.0,
-    EnthrallElites: 1.0,
-    EnthrallOrg: 1.5,
-    EnthrallPublic: 1.0,
-    EnthrallUnalignedElites: 1.0,
-    EscapeWin: 3.0,
-    ExploitWin: 3.0,
     Extract: 2.5,
     GainInfluence: 2.5,
     GoToGround: 0.5,
@@ -439,11 +428,9 @@ const defaultScoringWeights: ScoringWeights = {
     InvestigateAlienActivity: 1.5,
     InvestigateCouncilor: 1.5,
     Orbit: 1.0,
-    PassTechnology: 1.0,
     Propaganda: 1.5,
     Protect: 2.0,
     Purge: 1.5,
-    ResistWin: 3.0,
     SabotageFacilities: 2.0,
     SabotageHabModule: 1.5,
     SabotageProject: 2.0,
@@ -451,12 +438,8 @@ const defaultScoringWeights: ScoringWeights = {
     SetNationalPolicy: 2.5,
     Stabilize: 2.0,
     StealProject: 2.5,
-    SubmitWin: 3.0,
-    TerrorizeRegion: 1.0,
-    Transfer: 1.0,
     Turn: 3.0,
     Unrest: 1.5,
-    Xenoform: 0.5,
   },
 };
 
