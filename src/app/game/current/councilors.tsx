@@ -34,7 +34,7 @@ function CouncilorTableRow({
   hasOrgs,
   highlightMissionClassName,
 }: {
-  councilor: Analysis["playerCouncilors"][number] & { score: number };
+  councilor: Analysis["playerCouncilors"][number] & { score: ScoreResult };
   stats: Analysis["playerCouncilors"][number]["effectsWithOrgsAndAugments"];
   label: string;
   hasOrgs?: boolean;
@@ -106,7 +106,7 @@ function CouncilorTableRow({
           highlightMissionClassName={highlightMissionClassName}
         />
       </TableCell>
-      <TableCell>{councilor.score.toFixed(2)}</TableCell>
+      <TableCell>{councilor.score.value.toFixed(2)}</TableCell>
     </TableRow>
   );
 }
@@ -292,7 +292,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
                         highlightMissionClassName={availableHighlightMissionClassName}
                       />
                     </TableCell>
-                    <TableCell>{org.score.toFixed(2)}</TableCell>
+                    <TableCell>{org.score.value.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -451,90 +451,110 @@ const defaultScoringWeights: ScoringWeights = {
   },
 };
 
-function scoreAndSort<T>(items: T[], weights: ScoringWeights, scoreFn: (item: T, weights: ScoringWeights) => number) {
-  const scoredItems = items.map((item) => ({ ...item, score: scoreFn(item, weights) }));
-  scoredItems.sort((a, b) => b.score - a.score);
+function scoreAndSort<T>(
+  items: T[],
+  weights: ScoringWeights,
+  scoreFn: (item: T, weights: ScoringWeights) => ScoreResult
+) {
+  const scoredItems = items.map((item) => {
+    const scoreResult = scoreFn(item, weights);
+    return { ...item, score: scoreResult };
+  });
+  scoredItems.sort((a, b) => b.score.value - a.score.value);
   return scoredItems;
 }
 
-function getBaseCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): number {
+function getBaseCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): ScoreResult {
   return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights);
 }
 
-function getModifiedCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): number {
+function getModifiedCouncilorScore(
+  councilor: Analysis["playerCouncilors"][number],
+  weights: ScoringWeights
+): ScoreResult {
   return getScore(councilor.effectsWithOrgsAndAugments, weights);
 }
 
-function getOrganizationScore(org: Analysis["playerAvailableOrgs"][number], weights: ScoringWeights): number {
+function getOrganizationScore(org: Analysis["playerAvailableOrgs"][number], weights: ScoringWeights): ScoreResult {
   return getScore(
     { ...org, techBonuses: org.template?.techBonuses, missionsGrantedNames: org.template?.missionsGrantedNames || [] },
     weights
   );
 }
 
-function getScore(org: ShowEffectsProps, weights: ScoringWeights): number {
+interface ScoreResult {
+  value: number;
+  details: string;
+}
+
+function getScore(org: ShowEffectsProps, weights: ScoringWeights): ScoreResult {
   let totalScore = 0;
+  const details: string[] = [];
 
   // Helper to add score for a numeric attribute
-  const addScore = (value: number | undefined, weight: number | undefined) => {
-    if (weight !== undefined) {
-      totalScore += (value || 0) * weight;
-    }
+  const addScore = (name: string, value: number | undefined, weight: number | undefined) => {
+    const actualValue = value || 0;
+    const actualWeight = weight ?? 0;
+
+    // Skip if value is 0/undefined/null
+    if (!actualValue) return;
+
+    const contribution = actualValue * actualWeight;
+    totalScore += contribution;
+    details.push(`${name}: ${actualValue} × ${actualWeight} = ${contribution.toFixed(3)}`);
   };
 
   // Councilor attributes
-  addScore(org.persuasion, weights.persuasion);
-  addScore(org.command, weights.command);
-  addScore(org.investigation, weights.investigation);
-  addScore(org.espionage, weights.espionage);
-  addScore(org.administration, weights.administration);
-  addScore(org.science, weights.science);
-  addScore(org.security, weights.security);
-  addScore(org.Persuasion, weights.persuasion);
-  addScore(org.Command, weights.command);
-  addScore(org.Investigation, weights.investigation);
-  addScore(org.Espionage, weights.espionage);
-  addScore(org.Administration, weights.administration);
-  addScore(org.Science, weights.science);
-  addScore(org.Security, weights.security);
+  addScore("persuasion", org.persuasion, weights.persuasion);
+  addScore("command", org.command, weights.command);
+  addScore("investigation", org.investigation, weights.investigation);
+  addScore("espionage", org.espionage, weights.espionage);
+  addScore("administration", org.administration, weights.administration);
+  addScore("science", org.science, weights.science);
+  addScore("security", org.security, weights.security);
+  addScore("Persuasion", org.Persuasion, weights.persuasion);
+  addScore("Command", org.Command, weights.command);
+  addScore("Investigation", org.Investigation, weights.investigation);
+  addScore("Espionage", org.Espionage, weights.espionage);
+  addScore("Administration", org.Administration, weights.administration);
+  addScore("Science", org.Science, weights.science);
+  addScore("Security", org.Security, weights.security);
 
   // Monthly income/costs
-  addScore(org.incomeBoost_month, weights.incomeBoost_month);
-  addScore(org.incomeMoney_month, weights.incomeMoney_month);
-  addScore(org.incomeInfluence_month, weights.incomeInfluence_month);
-  addScore(org.incomeOps_month, weights.incomeOps_month);
-  addScore(org.incomeMissionControl, weights.incomeMissionControl);
-  addScore(org.incomeResearch_month, weights.incomeResearch_month);
-  addScore(org.projectCapacityGranted, weights.projectCapacityGranted);
+  addScore("incomeBoost_month", org.incomeBoost_month, weights.incomeBoost_month);
+  addScore("incomeMoney_month", org.incomeMoney_month, weights.incomeMoney_month);
+  addScore("incomeInfluence_month", org.incomeInfluence_month, weights.incomeInfluence_month);
+  addScore("incomeOps_month", org.incomeOps_month, weights.incomeOps_month);
+  addScore("incomeMissionControl", org.incomeMissionControl, weights.incomeMissionControl);
+  addScore("incomeResearch_month", org.incomeResearch_month, weights.incomeResearch_month);
+  addScore("projectCapacityGranted", org.projectCapacityGranted, weights.projectCapacityGranted);
 
   // Purchase costs
-  addScore(org.costMoney, weights.costMoney);
-  addScore(org.costInfluence, weights.costInfluence);
-  addScore(org.costOps, weights.costOps);
-  addScore(org.costBoost, weights.costBoost);
+  addScore("costMoney", org.costMoney, weights.costMoney);
+  addScore("costInfluence", org.costInfluence, weights.costInfluence);
+  addScore("costOps", org.costOps, weights.costOps);
+  addScore("costBoost", org.costBoost, weights.costBoost);
 
   // Priority bonuses
-  addScore(org.economyBonus, weights.economyBonus);
-  addScore(org.welfareBonus, weights.welfareBonus);
-  addScore(org.environmentBonus, weights.environmentBonus);
-  addScore(org.knowledgeBonus, weights.knowledgeBonus);
-  addScore(org.governmentBonus, weights.governmentBonus);
-  addScore(org.unityBonus, weights.unityBonus);
-  addScore(org.militaryBonus, weights.militaryBonus);
-  addScore(org.oppressionBonus, weights.oppressionBonus);
-  addScore(org.spoilsBonus, weights.spoilsBonus);
-  addScore(org.spaceDevBonus, weights.spaceDevBonus);
-  addScore(org.spaceflightBonus, weights.spaceflightBonus);
-  addScore(org.MCBonus, weights.MCBonus);
-  addScore(org.miningBonus, weights.miningBonus);
+  addScore("economyBonus", org.economyBonus, weights.economyBonus);
+  addScore("welfareBonus", org.welfareBonus, weights.welfareBonus);
+  addScore("environmentBonus", org.environmentBonus, weights.environmentBonus);
+  addScore("knowledgeBonus", org.knowledgeBonus, weights.knowledgeBonus);
+  addScore("governmentBonus", org.governmentBonus, weights.governmentBonus);
+  addScore("unityBonus", org.unityBonus, weights.unityBonus);
+  addScore("militaryBonus", org.militaryBonus, weights.militaryBonus);
+  addScore("oppressionBonus", org.oppressionBonus, weights.oppressionBonus);
+  addScore("spoilsBonus", org.spoilsBonus, weights.spoilsBonus);
+  addScore("spaceDevBonus", org.spaceDevBonus, weights.spaceDevBonus);
+  addScore("spaceflightBonus", org.spaceflightBonus, weights.spaceflightBonus);
+  addScore("MCBonus", org.MCBonus, weights.MCBonus);
+  addScore("miningBonus", org.miningBonus, weights.miningBonus);
 
   // Tech bonuses
   if (weights.techBonuses && org?.techBonuses) {
     for (const { category, bonus } of org.techBonuses) {
       const weight = weights.techBonuses[category];
-      if (weight !== undefined) {
-        totalScore += (bonus || 0) * weight;
-      }
+      addScore(`techBonus[${category}]`, bonus, weight);
     }
   }
 
@@ -542,13 +562,21 @@ function getScore(org: ShowEffectsProps, weights: ScoringWeights): number {
   if (weights.missions && org?.missionsGrantedNames) {
     for (const missionName of org.missionsGrantedNames) {
       const weight = weights.missions[missionName];
-      if (weight !== undefined) {
-        totalScore += weight;
-      }
+      addScore(`mission[${missionName}]`, 1, weight);
     }
   }
 
   // Divide by tier to normalize for org cost/power
   const tier = org.tier || 1;
-  return totalScore / tier;
+  const finalScore = totalScore / tier;
+
+  if (tier > 1) {
+    details.push(`Subtotal: ${totalScore.toFixed(3)}`);
+    details.push(`Divided by tier ${tier}: ${finalScore.toFixed(3)}`);
+  }
+
+  return {
+    value: finalScore,
+    details: details.join("\n"),
+  };
 }
