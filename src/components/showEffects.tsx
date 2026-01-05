@@ -1,6 +1,6 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
 import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
-import { Org, TechCategory } from "@/lib/templates";
+import { MissionDataName, Org, TechCategory } from "@/lib/templates";
 
 export type ShowEffectsProps = Partial<
   Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
@@ -43,7 +43,7 @@ export type ShowEffectsProps = Partial<
     >
 >;
 
-export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassName?: (missionName: string) => string | undefined }) => {
+export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassName?: (missionName: MissionDataName) => string | undefined }) => {
   const tier = props.tier || 0;
   const takeoverDefense = props.takeoverDefense || 0;
   const costMoney = (props.costMoney || 0) + (props.incomeMoney_month || 0);

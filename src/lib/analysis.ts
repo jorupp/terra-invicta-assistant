@@ -1,5 +1,5 @@
-import { CouncilorAttributes, DateTime, SaveFile } from "./savefile";
-import { templates } from "./templates";
+import { DateTime, SaveFile } from "./savefile";
+import { MissionDataName, templates } from "./templates";
 import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
 
 export async function analyzeData(saveFile: SaveFile) {
@@ -459,7 +459,7 @@ export async function analyzeData(saveFile: SaveFile) {
       acc.set(missionName, (acc.get(missionName) || 0) + 1);
     }
     return acc;
-  }, new Map<string, number>());
+  }, new Map<MissionDataName, number>());
 
   return {
     player,

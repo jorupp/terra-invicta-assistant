@@ -8,7 +8,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
 import { MissionDataName, TechCategory } from "@/lib/template-types-generated";
-import { get } from "http";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
@@ -39,7 +38,7 @@ function CouncilorTableRow({
   stats: Analysis["playerCouncilors"][number]["effectsWithOrgsAndAugments"];
   label: string;
   hasOrgs?: boolean;
-  highlightMissionClassName?: (missionName: string) => string | undefined;
+  highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
 }) {
   return (
     <TableRow key={`${councilor.id}-${label}`}>
@@ -133,7 +132,7 @@ export function getCouncilorsUi(analysis: Analysis) {
 
 function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
   const { playerMissionCounts } = analysis;
-  function currentHighlightMissionClassName(missionName: string) {
+  function currentHighlightMissionClassName(missionName: MissionDataName) {
     // if we have exactly 2, show yellow BG, if we have 1, show red, otherwise no change to bg
     const count = playerMissionCounts.get(missionName) || 0;
     if (count === 2) {
@@ -142,7 +141,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
       return "bg-red-300/50";
     }
   }
-  function availableHighlightMissionClassName(missionName: string) {
+  function availableHighlightMissionClassName(missionName: MissionDataName) {
     // if we have 1, show yellow BG, if we have 0, show green, otherwise no change to bg
     const count = playerMissionCounts.get(missionName) || 0;
     if (count === 1) {
@@ -163,16 +162,18 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader hasOrgs />
               <TableBody>
-                {scoreAndSort(analysis.playerCouncilors, weights, getModifiedCouncilorScore).map((councilor) => (
-                  <CouncilorTableRow
-                    key={councilor.id}
-                    councilor={councilor}
-                    stats={councilor.effectsWithOrgsAndAugments}
-                    label={councilor.displayName!}
-                    hasOrgs
-                    highlightMissionClassName={currentHighlightMissionClassName}
-                  />
-                ))}
+                {scoreAndSort(analysis.playerCouncilors, weights, playerMissionCounts, getModifiedCouncilorScore).map(
+                  (councilor) => (
+                    <CouncilorTableRow
+                      key={councilor.id}
+                      councilor={councilor}
+                      stats={councilor.effectsWithOrgsAndAugments}
+                      label={councilor.displayName!}
+                      hasOrgs
+                      highlightMissionClassName={currentHighlightMissionClassName}
+                    />
+                  )
+                )}
               </TableBody>
             </Table>
           </AccordionContent>
@@ -183,7 +184,12 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader />
               <TableBody>
-                {scoreAndSort(analysis.playerAvailableCouncilors, weights, getBaseCouncilorScore).map((councilor) => (
+                {scoreAndSort(
+                  analysis.playerAvailableCouncilors,
+                  weights,
+                  playerMissionCounts,
+                  getBaseCouncilorScore
+                ).map((councilor) => (
                   <CouncilorTableRow
                     key={councilor.id}
                     councilor={councilor}
@@ -199,15 +205,17 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader />
               <TableBody>
-                {scoreAndSort(analysis.playerCouncilors, weights, getBaseCouncilorScore).map((councilor) => (
-                  <CouncilorTableRow
-                    key={`${councilor.id}-base`}
-                    councilor={councilor}
-                    stats={councilor.effectsBaseAndUnaugmentedTraits}
-                    label={`${councilor.displayName}`}
-                    highlightMissionClassName={currentHighlightMissionClassName}
-                  />
-                ))}
+                {scoreAndSort(analysis.playerCouncilors, weights, playerMissionCounts, getBaseCouncilorScore).map(
+                  (councilor) => (
+                    <CouncilorTableRow
+                      key={`${councilor.id}-base`}
+                      councilor={councilor}
+                      stats={councilor.effectsBaseAndUnaugmentedTraits}
+                      label={`${councilor.displayName}`}
+                      highlightMissionClassName={currentHighlightMissionClassName}
+                    />
+                  )
+                )}
               </TableBody>
             </Table>
           </AccordionContent>
@@ -232,6 +240,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
                     .map((i) => ({ type: "available", ...i }))
                     .concat(analysis.playerUnassignedOrgs.map((i) => ({ type: "unassigned", ...i }))),
                   weights,
+                  playerMissionCounts,
                   getOrganizationScore
                 ).map((org) => (
                   <TableRow key={org.id}>
@@ -376,6 +385,8 @@ interface ScoringWeights {
   missions?: Partial<Record<MissionDataName, number>>;
 
   orgTierExponent: number;
+  extraWeightForMissingMissions: number;
+  extraWeightForSingleMissions: number;
 }
 
 // initial defaults based on my old scoring system for mid/late game
@@ -473,36 +484,49 @@ const defaultScoringWeights: ScoringWeights = {
   },
 
   orgTierExponent: 0.95, // slight priority to higher tiers since you don't have unlimited org slots
+  extraWeightForMissingMissions: 1, // extra weight to get missions you don't have yet
+  extraWeightForSingleMissions: 0.5, // extra weight to get missions you only have one of
 };
 
 function scoreAndSort<T>(
   items: T[],
   weights: ScoringWeights,
-  scoreFn: (item: T, weights: ScoringWeights) => ScoreResult
+  haveMissions: Map<MissionDataName, number>,
+  scoreFn: (item: T, weights: ScoringWeights, haveMissions: Map<MissionDataName, number>) => ScoreResult
 ) {
   const scoredItems = items.map((item) => {
-    const scoreResult = scoreFn(item, weights);
+    const scoreResult = scoreFn(item, weights, haveMissions);
     return { ...item, score: scoreResult };
   });
   scoredItems.sort((a, b) => b.score.value - a.score.value);
   return scoredItems;
 }
 
-function getBaseCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): ScoreResult {
-  return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights);
+function getBaseCouncilorScore(
+  councilor: Analysis["playerCouncilors"][number],
+  weights: ScoringWeights,
+  haveMissions: Map<MissionDataName, number>
+): ScoreResult {
+  return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights, haveMissions);
 }
 
 function getModifiedCouncilorScore(
   councilor: Analysis["playerCouncilors"][number],
-  weights: ScoringWeights
+  weights: ScoringWeights,
+  haveMissions: Map<MissionDataName, number>
 ): ScoreResult {
-  return getScore(councilor.effectsWithOrgsAndAugments, weights);
+  return getScore(councilor.effectsWithOrgsAndAugments, weights, haveMissions);
 }
 
-function getOrganizationScore(org: Analysis["playerAvailableOrgs"][number], weights: ScoringWeights): ScoreResult {
+function getOrganizationScore(
+  org: Analysis["playerAvailableOrgs"][number],
+  weights: ScoringWeights,
+  haveMissions: Map<MissionDataName, number>
+): ScoreResult {
   return getScore(
     { ...org, techBonuses: org.template?.techBonuses, missionsGrantedNames: org.template?.missionsGrantedNames || [] },
-    weights
+    weights,
+    haveMissions
   );
 }
 
@@ -511,7 +535,11 @@ interface ScoreResult {
   details: string;
 }
 
-function getScore(org: ShowEffectsProps, weights: ScoringWeights): ScoreResult {
+function getScore(
+  org: ShowEffectsProps,
+  weights: ScoringWeights,
+  haveMissions: Map<MissionDataName, number>
+): ScoreResult {
   let totalScore = 0;
   const details: string[] = [];
 
@@ -591,6 +619,24 @@ function getScore(org: ShowEffectsProps, weights: ScoringWeights): ScoreResult {
     for (const missionName of org.missionsGrantedNames) {
       const weight = weights.missions[missionName];
       addScore(`mission[${missionName}]`, 1, weight);
+
+      // Extra weight for missions we don't have yet or only have one councilor for
+      if (weights.extraWeightForMissingMissions && (haveMissions.get(missionName) || 0) === 0) {
+        totalScore += weights.extraWeightForMissingMissions;
+        details.push(
+          `mission[${missionName}]: missing bonus × ${parseFloat(
+            weights.extraWeightForMissingMissions.toFixed(3)
+          )} = ${weights.extraWeightForMissingMissions.toFixed(3)}`
+        );
+      }
+      if (weights.extraWeightForSingleMissions && (haveMissions.get(missionName) || 0) === 1) {
+        totalScore += weights.extraWeightForSingleMissions;
+        details.push(
+          `mission[${missionName}]: single bonus × ${parseFloat(
+            weights.extraWeightForSingleMissions.toFixed(3)
+          )} = ${weights.extraWeightForSingleMissions.toFixed(3)}`
+        );
+      }
     }
   }
 
