@@ -1,6 +1,23 @@
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { gunzipSync } from "zlib";
+import type {
+  MissionDataName,
+  TechDataName,
+  TraitDataName,
+  ProjectDataName,
+  CouncilorTypeDataName,
+  CouncilorAppearanceDataName,
+  CouncilorVoiceDataName,
+  OrgIconDataName,
+  HabModuleDataName,
+  HabSchematicDataName,
+  FormationDataName,
+  PriorityPresetDataName,
+  ArmyType,
+  DeploymentType,
+  MissionContext,
+} from "./templates";
 
 const templateDir = process.env.TEMPLATE_DIR!;
 if (!templateDir) {
@@ -285,21 +302,21 @@ export interface TICouncilorState extends BaseState {
   location: IDValue & { $type: string };
   recruitDate: DateTime | null;
   detainedReleaseDate: DateTime | null;
-  traitTemplateNames: string[];
-  learnedMissionsTemplateNames: string[];
+  traitTemplateNames: TraitDataName[];
+  learnedMissionsTemplateNames: MissionDataName[];
   attributes: CouncilorAttributes;
   knowsIveBeenSeenBy: IDValue[];
   activeMission: IDValue | null;
   completedMission: IDValue | null;
-  priorMissionTemplateName: string | null;
+  priorMissionTemplateName: MissionDataName | null;
   priorMissionTarget: IDValue | null;
   repeatOrder: boolean;
   permanentAssignment: boolean;
   permanentDefenseMode: boolean;
-  missionsExcludedFromDefenseMode: string[];
+  missionsExcludedFromDefenseMode: MissionDataName[];
   personalName: string;
   familyName: string;
-  typeTemplateName: string;
+  typeTemplateName: CouncilorTypeDataName;
   homeRegion: IDValue;
   possibleFaction: IDValue | null;
   detainingFaction: IDValue | null;
@@ -312,8 +329,8 @@ export interface TICouncilorState extends BaseState {
   ancestry: string;
   status: string;
   everBeenAvailable: boolean;
-  appearanceTemplateName: string;
-  voiceTemplateName: string | null;
+  appearanceTemplateName: CouncilorAppearanceDataName;
+  voiceTemplateName: CouncilorVoiceDataName | null;
   XP: number;
   imBeingTargeted: boolean;
   targetedLastTurn: boolean;
@@ -399,7 +416,7 @@ export interface TIFactionState extends BaseState {
   habDesigns: unknown[];
   savedHabDesigns: unknown[];
   customPresets: unknown[];
-  defaultPriorityPresetTemplateName: string;
+  defaultPriorityPresetTemplateName: PriorityPresetDataName;
   defaultHullAppearanceIndex: number;
   nextRefitNumber: number;
   shipsBuiltInClass: Record<string, number>;
@@ -433,14 +450,14 @@ export interface TIArmyState extends BaseState {
   faction: IDValue | null;
   homeRegion: IDValue;
   priorRegion: IDValue | null;
-  deploymentType: string;
+  deploymentType: DeploymentType;
   strength: number;
   controlPointIdx: number;
   createdFromTemplate: boolean;
   currentOperations: ArmyOperation[];
   operationTarget: IDValue | null;
   destroyed: boolean;
-  armyType: string;
+  armyType: ArmyType;
   gameStateSubjectCreated: boolean;
   displayNameWithArticle: string;
   AI_targetEnemyRegion: IDValue | null;
@@ -449,7 +466,7 @@ export interface TIArmyState extends BaseState {
 
 // Org State
 export interface TIOrgState extends BaseState {
-  orgIconTemplateName: string | null;
+  orgIconTemplateName: OrgIconDataName | null;
   orgIconPath: string;
   displayNameWithArticle: string;
   applyingBonuses: boolean;
@@ -576,7 +593,7 @@ export interface TIHabState extends BaseState {
     _worldRotation: Quaternion;
     _itemList: (IDValue | null)[];
   };
-  habSchematicTemplateName: string | null;
+  habSchematicTemplateName: HabSchematicDataName | null;
   HabSchematicAssignedDate: DateTime | null;
   habSchematic: IDValue | null;
   conflictFleets: IDValue[];
@@ -607,11 +624,11 @@ export interface TIHabModuleState extends BaseState {
   slot: number;
   sector: IDValue;
   destroyed: boolean;
-  defenseWeaponTemplateName: string | null;
-  defenseWeaponTemplateName_gun: string | null;
-  defenseWeaponTemplateName_plasma: string | null;
+  defenseWeaponTemplateName: HabModuleDataName | null;
+  defenseWeaponTemplateName_gun: HabModuleDataName | null;
+  defenseWeaponTemplateName_plasma: HabModuleDataName | null;
   _spaceCombatValue: number;
-  priorModuleTemplateName: string;
+  priorModuleTemplateName: HabModuleDataName;
   priorModuleCompleted: boolean;
   priorModuleCompletionDate: DateTime | null;
   abilityCooldownEnds: DateTime | null;
@@ -636,7 +653,7 @@ export interface TIHabModuleState extends BaseState {
 
 // Space Fleet State
 export interface FleetFormation {
-  patternDataName: string | null;
+  patternDataName: FormationDataName | null;
   spacing: string;
   concentration: string;
   focus: string;

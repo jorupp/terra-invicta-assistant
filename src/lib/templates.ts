@@ -7,6 +7,42 @@ if (!templateDir) {
   throw new Error("TEMPLATE_DIR environment variable is not set.");
 }
 
+// Type unions for template dataNames and categorical fields
+export type MissionDataName = string; // Will be derived from TIMissionTemplate
+export type TechDataName = string; // Will be derived from TITechTemplate
+export type TraitDataName = string; // Will be derived from TITraitTemplate
+export type ProjectDataName = string; // Will be derived from TIProjectTemplate
+export type CouncilorTypeDataName = string; // Will be derived from TICouncilorTypeTemplate
+export type CouncilorAppearanceDataName = string; // Will be derived from TICouncilorAppearanceTemplate
+export type CouncilorVoiceDataName = string; // Will be derived from TICouncilorVoiceTemplate
+export type OrgIconDataName = string; // Will be derived from TIOrgIconTemplate
+export type HabModuleDataName = string; // Will be derived from TIHabModuleTemplate
+export type HabSchematicDataName = string; // Will be derived from TIHabSchematicTemplate
+export type FormationDataName = string; // Will be derived from TIFormationTemplate
+export type PriorityPresetDataName = string; // Will be derived from TIPriorityPresetTemplate
+
+export type TechCategory =
+  | "Aerospace"
+  | "Biology"
+  | "Chemistry"
+  | "Computing"
+  | "Energy"
+  | "Engineering"
+  | "Exploration"
+  | "InformationScience"
+  | "IntelligenceServices"
+  | "Materials"
+  | "Mathematics"
+  | "MilitaryScience"
+  | "Physics"
+  | "PublicAdministration"
+  | "SocialScience"
+  | "Xenology";
+
+export type ArmyType = "Army" | "Militia" | "Regiment" | "Corps" | "Division";
+export type DeploymentType = "Garrison" | "Mobile" | "Reserve";
+export type MissionContext = "Nation" | "Region" | "Councilor" | "SpaceFleet" | "Hab" | "Army";
+
 const cachedTemplates: { [K in keyof templateMap]?: templateMap[K] } = {};
 export async function getTemplate<
   TemplateName extends keyof templateMap,
@@ -184,10 +220,10 @@ export interface Org {
   chanceSecurity: number;
   security: number;
   techBonuses: Array<{
-    category: string;
+    category: TechCategory;
     bonus: number;
   }>;
-  missionsGrantedNames: string[];
+  missionsGrantedNames: MissionDataName[];
   grantsMarked: boolean;
   iconResource: string;
 }
@@ -237,8 +273,8 @@ export interface Army {
   friendlyName: string;
   startRegionStr: string;
   homeRegionStr: string;
-  armyType: string;
-  deploymentType: string;
+  armyType: ArmyType;
+  deploymentType: DeploymentType;
   startingStrength: number;
 }
 
@@ -322,7 +358,7 @@ export interface CouncilorType {
   baseLoyalty: number;
   randLoyalty: number;
   affinities: string[];
-  missionNames: string[];
+  missionNames: MissionDataName[];
   keyStat: string[];
   antiAffinities: string[];
 }
@@ -351,7 +387,7 @@ export interface Drive {
     metals: number;
     exotics: number;
   };
-  propellant: string;
+  propellant: "Water" | "Volatiles" | "Metals" | "Fissiles" | "Antimatter";
   perTankPropellantMaterials: {
     water: number;
     volatiles: number;
@@ -366,13 +402,13 @@ export interface Drive {
 
 export interface Effect {
   dataName: string;
-  operation: string;
+  operation: "Add" | "Multiply" | "Set";
   value: number;
   effectTarget: string;
-  effectDuration: string;
+  effectDuration: "Permanent" | "Temporary" | "Mission";
   stackable: boolean;
   duration_months: number;
-  contexts: string[];
+  contexts: MissionContext[];
 }
 
 export interface FactionIdeology {
@@ -446,7 +482,7 @@ export interface Faction {
   mediumShipNameListIdx: string;
   largeShipNameListIdx: string;
   habNameListIdx: string;
-  guaranteedMissions: string[][];
+  guaranteedMissions: MissionDataName[][];
   AIValues: Array<Record<string, number>>;
   baseAnnualIncomes: Array<{
     resource: string;
@@ -456,13 +492,13 @@ export interface Faction {
     resource: string;
     value: number;
   }>;
-  firstTechNames: string[];
-  winnerTechNames: string[];
+  firstTechNames: TechDataName[];
+  winnerTechNames: TechDataName[];
   habPreferences: Record<string, number>;
 }
 
 export interface Formation {
-  dataName: string;
+  dataName: FormationDataName;
   disable: boolean;
   AICombatBaseWeight: number;
   AIMaximumAllowedShips: number;
@@ -481,8 +517,8 @@ export interface Formation {
 export interface Gun {
   dataName: string;
   friendlyName: string;
-  mount: string;
-  requiredProjectName: string;
+  mount: "Nose" | "Hull" | "Turret";
+  requiredProjectName: ProjectDataName;
   crew: number;
   attackMode: boolean;
   defenseMode: boolean;
@@ -532,7 +568,7 @@ export interface HabModule {
   noBuild: boolean;
   destroyed: boolean;
   tier: number;
-  requiredProjectName: string;
+  requiredProjectName: ProjectDataName;
   crew: number;
   power: number;
   baseMass_tons: number;
@@ -540,7 +576,10 @@ export interface HabModule {
   constructionTimeModifier: number;
   miningModifier: number;
   controlPointCapacity: number;
-  techBonuses: any[];
+  techBonuses: Array<{
+    category: TechCategory;
+    bonus: number;
+  }>;
   specialRules: string[];
   specialRulesValue: number;
   supportMaterials_month: {
@@ -612,10 +651,10 @@ export interface HeatSink {
 export interface LaserWeapon {
   dataName: string;
   friendlyName: string;
-  mount: string;
+  mount: "Nose" | "Hull" | "Turret";
   crew: number;
   sortOrder: number;
-  requiredProjectName: string;
+  requiredProjectName: ProjectDataName;
   attackMode: boolean;
   defenseMode: boolean;
   hp: number;
@@ -733,7 +772,7 @@ export interface Missile {
 }
 
 export interface Mission {
-  dataName: string;
+  dataName: MissionDataName;
   friendlyName: string;
   disable: boolean;
   baseMission: boolean;
@@ -744,7 +783,7 @@ export interface Mission {
   permanentAssignment: boolean;
   XPonSuccess: number;
   sortOrder: number;
-  missionContext: string;
+  missionContext: MissionContext;
   utilityScore: number;
   UIalertEnemyOnFail: boolean;
   AIDoubleUpAllowed: boolean;
@@ -1095,24 +1134,24 @@ export interface StartTime {
 
 export interface Tech {
   friendlyName: string;
-  dataName: string;
-  techCategory: string;
+  dataName: TechDataName;
+  techCategory: TechCategory;
   AI_techRole: string;
   AI_criticalTech: boolean;
   endGameTech: boolean;
   researchCost: number;
-  prereqs: string[];
+  prereqs: TechDataName[];
   effects: string[];
 }
 
 export interface Trait {
-  dataName: string;
+  dataName: TraitDataName;
   friendlyName: string;
   grouping?: number;
   tags?: string[];
   easilyVisible?: boolean;
   XPCost?: number;
-  upgradesFrom?: string;
+  upgradesFrom?: TraitDataName;
   opsCost?: number;
   boostCost?: number;
   incomeBoost?: number;
@@ -1120,7 +1159,7 @@ export interface Trait {
   incomeInfluence?: number;
   incomeResearch?: number;
   detectionEspBonus?: number;
-  rerollTrait?: string;
+  rerollTrait?: TraitDataName;
   rerollTraitBonus?: number;
   statMods: Array<{
     stat?: string;
@@ -1134,7 +1173,7 @@ export interface Trait {
     };
   }>;
   techBonuses: Array<{
-    category: string;
+    category: TechCategory;
     bonus: number;
   }>;
   priorityBonuses: Array<{
@@ -1146,7 +1185,7 @@ export interface Trait {
     councilorClass: string;
     chance?: number;
   }>;
-  missionsGrantedNames: string[];
+  missionsGrantedNames: MissionDataName[];
 }
 
 export interface UtilityModule {
