@@ -163,9 +163,6 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <>
-      <div className="mb-4">
-        <ScoringWeightsDialog weights={weights} onWeightsChange={setWeights} />
-      </div>
       <Accordion type="single" collapsible defaultValue="councilors">
         <AccordionItem value="councilors">
           <AccordionTrigger>Councilors</AccordionTrigger>
@@ -336,9 +333,13 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
         </AccordionItem>
       </Accordion>
 
+      <div className="my-4">
+        <ScoringWeightsDialog weights={weights} onWeightsChange={setWeights} />
+      </div>
+
       <Collapsible>
         <CollapsibleTrigger asChild>
-          <Button>Debug Data</Button>
+          <Button variant="outline">Debug Data</Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <pre>{JSON.stringify(analysis.playerCouncilors, null, 2)}</pre>
