@@ -4,6 +4,7 @@ import { ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
 import { MissionDataName, TechCategory } from "@/lib/template-types-generated";
@@ -106,7 +107,14 @@ function CouncilorTableRow({
           highlightMissionClassName={highlightMissionClassName}
         />
       </TableCell>
-      <TableCell>{councilor.score.value.toFixed(2)}</TableCell>
+      <TableCell>
+        <Tooltip>
+          <TooltipTrigger>{councilor.score.value?.toFixed(2)}</TooltipTrigger>
+          <TooltipContent align="end" className="max-w-auto">
+            <pre className="p-2">{councilor.score.details}</pre>
+          </TooltipContent>
+        </Tooltip>
+      </TableCell>
     </TableRow>
   );
 }
@@ -292,7 +300,14 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
                         highlightMissionClassName={availableHighlightMissionClassName}
                       />
                     </TableCell>
-                    <TableCell>{org.score.value.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Tooltip>
+                        <TooltipTrigger>{org.score.value?.toFixed(2)}</TooltipTrigger>
+                        <TooltipContent align="end" className="max-w-auto">
+                          <pre className="p-2">{org.score.details}</pre>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -506,7 +521,11 @@ function getScore(org: ShowEffectsProps, weights: ScoringWeights): ScoreResult {
 
     const contribution = actualValue * actualWeight;
     totalScore += contribution;
-    details.push(`${name}: ${actualValue} × ${actualWeight} = ${contribution.toFixed(3)}`);
+    details.push(
+      `${name}: ${parseFloat(actualValue.toFixed(2))} × ${parseFloat(actualWeight.toFixed(3))} = ${contribution.toFixed(
+        3
+      )}`
+    );
   };
 
   // Councilor attributes
