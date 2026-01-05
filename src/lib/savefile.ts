@@ -1,6 +1,5 @@
 import { readFile } from "fs/promises";
 import { gunzipSync } from "zlib";
-import JSON5 from "json5";
 
 const templateDir = process.env.TEMPLATE_DIR!;
 if (!templateDir) {
@@ -14,11 +13,17 @@ export async function loadSaveFile(filePath: string): Promise<SaveFile> {
   console.log(`Loaded save file in ${Date.now() - start}ms`);
 
   const decompressed = gunzipSync(buffer);
-  const content = decompressed.toString("utf8");
+  let content = decompressed.toString("utf8");
   console.log(`Loaded and decompressed save file in ${Date.now() - start}ms`);
 
+  // for some reason, there's an extra character at the start of the file - charcode 65279
+  // once we strip that, JSON.parse works fine and is _much_ faster than JSON5.parse().
+  while (content[0] !== "{" && content.length > 0) {
+    content = content.substring(1);
+  }
+
   try {
-    const rawData = JSON5.parse(content);
+    const rawData = JSON.parse(content);
     console.log(`Loaded, decompressed, and parsed save file in ${Date.now() - start}ms`);
 
     // some data is shared via $id and $ref, we need to resolve those references - common for arrivalTime for fleet trajectories
