@@ -279,6 +279,8 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
                           MCBonus={org.MCBonus}
                           miningBonus={org.miningBonus}
                           techBonuses={org.template?.techBonuses}
+                          missionsGrantedNames={org.template?.missionsGrantedNames || []}
+                          highlightMissionClassName={availableHighlightMissionClassName}
                         />
                       </TableCell>
                     </TableRow>
