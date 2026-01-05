@@ -119,8 +119,11 @@ export function ScoringWeightsDialog({
   };
 
   const handleLoad = () => {
-    if (selectedConfig && savedConfigs[selectedConfig]) {
-      setEditedWeights(savedConfigs[selectedConfig]);
+    if (selectedConfig) {
+      const config = prebuiltScoringWeights[selectedConfig] || savedConfigs[selectedConfig];
+      if (config) {
+        setEditedWeights(config);
+      }
     }
   };
 
@@ -131,7 +134,7 @@ export function ScoringWeightsDialog({
   };
 
   const handleDelete = () => {
-    if (selectedConfig && savedConfigs[selectedConfig]) {
+    if (selectedConfig && !prebuiltScoringWeights[selectedConfig] && savedConfigs[selectedConfig]) {
       const updated = { ...savedConfigs };
       delete updated[selectedConfig];
       setSavedConfigs(updated);
@@ -181,6 +184,16 @@ export function ScoringWeightsDialog({
                   <SelectValue placeholder="Select a saved configuration" />
                 </SelectTrigger>
                 <SelectContent>
+                  {Object.keys(prebuiltScoringWeights).map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                  {Object.keys(savedConfigs).length > 0 && Object.keys(prebuiltScoringWeights).length > 0 && (
+                    <SelectItem key="__separator__" value="__separator__" disabled>
+                      ──────────
+                    </SelectItem>
+                  )}
                   {Object.keys(savedConfigs).map((name) => (
                     <SelectItem key={name} value={name}>
                       {name}
@@ -192,7 +205,11 @@ export function ScoringWeightsDialog({
             <Button onClick={handleLoad} disabled={!selectedConfig}>
               Load
             </Button>
-            <Button onClick={handleDelete} variant="destructive" disabled={!selectedConfig}>
+            <Button
+              onClick={handleDelete}
+              variant="destructive"
+              disabled={!selectedConfig || !!prebuiltScoringWeights[selectedConfig]}
+            >
               Delete
             </Button>
           </div>
