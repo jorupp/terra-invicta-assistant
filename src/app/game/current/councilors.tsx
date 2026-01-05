@@ -367,7 +367,7 @@ const defaultScoringWeights: ScoringWeights = {
   persuasion: 1,
   command: 1,
   investigation: 0.7,
-  espionage: 1.7,
+  espionage: 0.7,
   administration: 0.3,
   science: 0.7,
   security: 0.3,
