@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
 import { MissionDataName, TechCategory } from "@/lib/template-types-generated";
+import { get } from "http";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
@@ -20,6 +21,7 @@ function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
         <TableHead>Priorities</TableHead>
         <TableHead>Science</TableHead>
         <TableHead>Missions</TableHead>
+        <TableHead>Score</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -32,7 +34,7 @@ function CouncilorTableRow({
   hasOrgs,
   highlightMissionClassName,
 }: {
-  councilor: Analysis["playerCouncilors"][number];
+  councilor: Analysis["playerCouncilors"][number] & { score: number };
   stats: Analysis["playerCouncilors"][number]["effectsWithOrgsAndAugments"];
   label: string;
   hasOrgs?: boolean;
@@ -104,6 +106,7 @@ function CouncilorTableRow({
           highlightMissionClassName={highlightMissionClassName}
         />
       </TableCell>
+      <TableCell>{councilor.score.toFixed(2)}</TableCell>
     </TableRow>
   );
 }
@@ -141,6 +144,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
     }
   }
   const playerNationIds = new Set(analysis.playerNationIds);
+  const weights = defaultScoringWeights;
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <>
@@ -151,7 +155,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader hasOrgs />
               <TableBody>
-                {analysis.playerCouncilors.map((councilor) => (
+                {scoreAndSort(analysis.playerCouncilors, weights, getModifiedCouncilorScore).map((councilor) => (
                   <CouncilorTableRow
                     key={councilor.id}
                     councilor={councilor}
@@ -171,7 +175,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader />
               <TableBody>
-                {analysis.playerAvailableCouncilors.map((councilor) => (
+                {scoreAndSort(analysis.playerAvailableCouncilors, weights, getBaseCouncilorScore).map((councilor) => (
                   <CouncilorTableRow
                     key={councilor.id}
                     councilor={councilor}
@@ -187,7 +191,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader />
               <TableBody>
-                {analysis.playerCouncilors.map((councilor) => (
+                {scoreAndSort(analysis.playerCouncilors, weights, getBaseCouncilorScore).map((councilor) => (
                   <CouncilorTableRow
                     key={`${councilor.id}-base`}
                     councilor={councilor}
@@ -215,78 +219,82 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {analysis.playerAvailableOrgs
-                  .map((i) => ({ type: "available", ...i }))
-                  .concat(analysis.playerUnassignedOrgs.map((i) => ({ type: "unassigned", ...i })))
-                  .map((org) => (
-                    <TableRow key={org.id}>
-                      <TableCell>{org.displayName}</TableCell>
-                      <TableCell>
-                        {org.template?.requiresNationality ? (
-                          <span className="mr-1" title={org.homeNationName || ""}>
-                            {playerNationIds.has(org.homeNationId || -1) ? (
-                              <PlusCircleIcon className="inline h-4 w-4 -mt-1" />
-                            ) : (
-                              <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
-                            )}
-                          </span>
-                        ) : (
-                          ""
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <ShowEffects tier={org.tier} />
-                      </TableCell>
-                      <TableCell>
-                        {org.type === "available" ? (
-                          <ShowEffects
-                            costMoney={org.costMoney || 0}
-                            costInfluence={org.costInfluence || 0}
-                            costOps={org.costOps || 0}
-                            costBoost={org.costBoost || 0}
-                          />
-                        ) : null}
-                      </TableCell>
-                      <TableCell>
+                {scoreAndSort(
+                  analysis.playerAvailableOrgs
+                    .map((i) => ({ type: "available", ...i }))
+                    .concat(analysis.playerUnassignedOrgs.map((i) => ({ type: "unassigned", ...i }))),
+                  weights,
+                  getOrganizationScore
+                ).map((org) => (
+                  <TableRow key={org.id}>
+                    <TableCell>{org.displayName}</TableCell>
+                    <TableCell>
+                      {org.template?.requiresNationality ? (
+                        <span className="mr-1" title={org.homeNationName || ""}>
+                          {playerNationIds.has(org.homeNationId || -1) ? (
+                            <PlusCircleIcon className="inline h-4 w-4 -mt-1" />
+                          ) : (
+                            <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
+                          )}
+                        </span>
+                      ) : (
+                        ""
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <ShowEffects tier={org.tier} />
+                    </TableCell>
+                    <TableCell>
+                      {org.type === "available" ? (
                         <ShowEffects
-                          incomeBoost_month={org.incomeBoost_month}
-                          incomeMoney_month={org.incomeMoney_month}
-                          incomeInfluence_month={org.incomeInfluence_month}
-                          incomeOps_month={org.incomeOps_month}
-                          incomeMissionControl={org.incomeMissionControl}
-                          incomeResearch_month={org.incomeResearch_month}
-                          projectCapacityGranted={org.projectCapacityGranted}
+                          costMoney={org.costMoney || 0}
+                          costInfluence={org.costInfluence || 0}
+                          costOps={org.costOps || 0}
+                          costBoost={org.costBoost || 0}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <ShowEffects
-                          persuasion={org.persuasion}
-                          command={org.command}
-                          investigation={org.investigation}
-                          espionage={org.espionage}
-                          administration={org.administration}
-                          science={org.science}
-                          security={org.security}
-                          economyBonus={org.economyBonus}
-                          welfareBonus={org.welfareBonus}
-                          environmentBonus={org.environmentBonus}
-                          knowledgeBonus={org.knowledgeBonus}
-                          governmentBonus={org.governmentBonus}
-                          unityBonus={org.unityBonus}
-                          militaryBonus={org.militaryBonus}
-                          oppressionBonus={org.oppressionBonus}
-                          spoilsBonus={org.spoilsBonus}
-                          spaceDevBonus={org.spaceDevBonus}
-                          spaceflightBonus={org.spaceflightBonus}
-                          MCBonus={org.MCBonus}
-                          miningBonus={org.miningBonus}
-                          techBonuses={org.template?.techBonuses}
-                          missionsGrantedNames={org.template?.missionsGrantedNames || []}
-                          highlightMissionClassName={availableHighlightMissionClassName}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      <ShowEffects
+                        incomeBoost_month={org.incomeBoost_month}
+                        incomeMoney_month={org.incomeMoney_month}
+                        incomeInfluence_month={org.incomeInfluence_month}
+                        incomeOps_month={org.incomeOps_month}
+                        incomeMissionControl={org.incomeMissionControl}
+                        incomeResearch_month={org.incomeResearch_month}
+                        projectCapacityGranted={org.projectCapacityGranted}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <ShowEffects
+                        persuasion={org.persuasion}
+                        command={org.command}
+                        investigation={org.investigation}
+                        espionage={org.espionage}
+                        administration={org.administration}
+                        science={org.science}
+                        security={org.security}
+                        economyBonus={org.economyBonus}
+                        welfareBonus={org.welfareBonus}
+                        environmentBonus={org.environmentBonus}
+                        knowledgeBonus={org.knowledgeBonus}
+                        governmentBonus={org.governmentBonus}
+                        unityBonus={org.unityBonus}
+                        militaryBonus={org.militaryBonus}
+                        oppressionBonus={org.oppressionBonus}
+                        spoilsBonus={org.spoilsBonus}
+                        spaceDevBonus={org.spaceDevBonus}
+                        spaceflightBonus={org.spaceflightBonus}
+                        MCBonus={org.MCBonus}
+                        miningBonus={org.miningBonus}
+                        techBonuses={org.template?.techBonuses}
+                        missionsGrantedNames={org.template?.missionsGrantedNames || []}
+                        highlightMissionClassName={availableHighlightMissionClassName}
+                      />
+                    </TableCell>
+                    <TableCell>{org.score.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </AccordionContent>
@@ -442,6 +450,12 @@ const defaultScoringWeights: ScoringWeights = {
     Unrest: 1.5,
   },
 };
+
+function scoreAndSort<T>(items: T[], weights: ScoringWeights, scoreFn: (item: T, weights: ScoringWeights) => number) {
+  const scoredItems = items.map((item) => ({ ...item, score: scoreFn(item, weights) }));
+  scoredItems.sort((a, b) => b.score - a.score);
+  return scoredItems;
+}
 
 function getBaseCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): number {
   return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights);
