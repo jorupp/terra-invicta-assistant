@@ -680,10 +680,10 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     incomeResearch_month: 1 / 200,
     projectCapacityGranted: 0.3,
 
-    costMoney: -1 / 300,
-    costInfluence: -1 / 20,
-    costOps: -1 / 20,
-    costBoost: -1 / 5,
+    costMoney: -1 / 400,
+    costInfluence: -1 / 40,
+    costOps: -1 / 40,
+    costBoost: -1 / 10,
 
     // Priority bonuses (moderate value for most)
     economyBonus: 10,
