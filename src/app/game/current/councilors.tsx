@@ -140,6 +140,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
     }
   }
   const playerNationIds = new Set(analysis.playerNationIds);
+  // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <>
       <Accordion type="single" collapsible defaultValue="councilors">
