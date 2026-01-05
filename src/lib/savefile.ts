@@ -1,4 +1,5 @@
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
+import { join } from "path";
 import { gunzipSync } from "zlib";
 
 const templateDir = process.env.TEMPLATE_DIR!;
@@ -31,6 +32,15 @@ export async function loadSaveFile(filePath: string): Promise<SaveFile> {
     return fixReferences<SaveFile>(rawData, sharedItems);
   } catch (e) {
     console.error(`Error parsing JSON from file ${filePath}:`, e);
+
+    const dumpJsonError = process.env.DUMP_JSON_ERROR;
+    if (dumpJsonError) {
+      // Write cleaned content to temp file for inspection
+      const debugFile = join(process.cwd(), dumpJsonError);
+      await writeFile(debugFile, content, "utf8");
+      console.error(`\nCleaned content written to: ${debugFile}`);
+    }
+
     throw e;
   }
 }
