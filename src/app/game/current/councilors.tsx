@@ -353,7 +353,111 @@ interface ScoringWeights {
   missions?: Record<MissionDataName, number>;
 }
 
-const defaultScoringWeights: ScoringWeights = {};
+const defaultScoringWeights: ScoringWeights = {
+  // Councilor attributes (typically valued 1-3 per point)
+  persuasion: 1.5,
+  command: 1.5,
+  investigation: 1.5,
+  espionage: 1.5,
+  administration: 1.5,
+  science: 2.0,
+  security: 1.2,
+
+  // Monthly income (valued highly as these compound over time)
+  incomeBoost_month: 2.0,
+  incomeMoney_month: 0.5,
+  incomeInfluence_month: 1.5,
+  incomeOps_month: 1.0,
+  incomeMissionControl: 3.0,
+  incomeResearch_month: 1.5,
+  projectCapacityGranted: 5.0,
+
+  // Purchase costs (negative weights since these are costs)
+  costMoney: -0.05,
+  costInfluence: -0.2,
+  costOps: -0.1,
+  costBoost: -0.3,
+
+  // Priority bonuses (moderate value for most)
+  economyBonus: 1.0,
+  welfareBonus: 0.8,
+  environmentBonus: 0.8,
+  knowledgeBonus: 1.2,
+  governmentBonus: 1.0,
+  unityBonus: 1.0,
+  militaryBonus: 1.0,
+  oppressionBonus: 0.5,
+  spoilsBonus: 0.8,
+  spaceDevBonus: 1.5,
+  spaceflightBonus: 1.5,
+  MCBonus: 2.0,
+  miningBonus: 1.2,
+
+  // Tech bonuses (higher for critical tech categories)
+  techBonuses: {
+    Energy: 1.0,
+    InformationScience: 1.2,
+    LifeScience: 0.9,
+    Materials: 1.1,
+    MilitaryScience: 1.0,
+    SocialScience: 0.8,
+    SpaceScience: 1.3,
+  },
+
+  // Missions (weighted by utility/frequency of use)
+  missions: {
+    Abductions: 0.5,
+    Advise: 2.0,
+    AppeaseWin: 3.0,
+    Assassinate: 2.5,
+    AssaultAlienAsset: 2.0,
+    AssumeControl: 3.0,
+    BuildFacility: 1.5,
+    Contact: 1.0,
+    ControlSpaceAsset: 2.5,
+    CooperateWin: 3.0,
+    Coup: 2.5,
+    Crackdown: 1.5,
+    DefendInterests: 2.0,
+    Deorbit: 1.0,
+    DestroyWin: 3.0,
+    Detain: 2.0,
+    DetectCouncilActivity: 1.5,
+    DominateNation: 3.0,
+    EnthrallElites: 1.0,
+    EnthrallOrg: 1.5,
+    EnthrallPublic: 1.0,
+    EnthrallUnalignedElites: 1.0,
+    EscapeWin: 3.0,
+    ExploitWin: 3.0,
+    Extract: 2.5,
+    GainInfluence: 2.5,
+    GoToGround: 0.5,
+    HostileTakeover: 2.0,
+    Inspire: 2.0,
+    InvestigateAlienActivity: 1.5,
+    InvestigateCouncilor: 1.5,
+    Orbit: 1.0,
+    PassTechnology: 1.0,
+    Propaganda: 1.5,
+    Protect: 2.0,
+    Purge: 1.5,
+    ResistWin: 3.0,
+    SabotageFacilities: 2.0,
+    SabotageHabModule: 1.5,
+    SabotageProject: 2.0,
+    SeizeSpaceAsset: 2.0,
+    SetNationalPolicy: 2.5,
+    Stabilize: 2.0,
+    StealProject: 2.5,
+    SubmitWin: 3.0,
+    TerrorizeRegion: 1.0,
+    Transfer: 1.0,
+    Turn: 3.0,
+    Unrest: 1.5,
+    Xenoform: 0.5,
+  },
+};
 
 function getBaseCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): number {
   return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights);
