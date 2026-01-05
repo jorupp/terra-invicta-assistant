@@ -1,6 +1,6 @@
 "use client";
 
-import { ShowEffects } from "@/components/showEffects";
+import { ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -303,4 +303,147 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
       </Collapsible>
     </>
   );
+}
+
+interface ScoringWeights {
+  // Councilor attributes
+  persuasion?: number;
+  command?: number;
+  investigation?: number;
+  espionage?: number;
+  administration?: number;
+  science?: number;
+  security?: number;
+
+  // Monthly income/costs
+  incomeBoost_month?: number;
+  incomeMoney_month?: number;
+  incomeInfluence_month?: number;
+  incomeOps_month?: number;
+  incomeMissionControl?: number;
+  incomeResearch_month?: number;
+  projectCapacityGranted?: number;
+
+  // Purchase costs (typically negative weights since costs are bad)
+  costMoney?: number;
+  costInfluence?: number;
+  costOps?: number;
+  costBoost?: number;
+
+  // Priority bonuses
+  economyBonus?: number;
+  welfareBonus?: number;
+  environmentBonus?: number;
+  knowledgeBonus?: number;
+  governmentBonus?: number;
+  unityBonus?: number;
+  militaryBonus?: number;
+  oppressionBonus?: number;
+  spoilsBonus?: number;
+  spaceDevBonus?: number;
+  spaceflightBonus?: number;
+  MCBonus?: number;
+  miningBonus?: number;
+
+  // Tech bonuses (weight per tech category)
+  techBonuses?: Record<string, number>;
+
+  // Missions (weight per mission name)
+  missions?: Record<string, number>;
+}
+
+function getBaseCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): number {
+  return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights);
+}
+
+function getModifiedCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): number {
+  return getScore(councilor.effectsWithOrgsAndAugments, weights);
+}
+
+function getOrganizationScore(org: Analysis["playerAvailableOrgs"][number], weights: ScoringWeights): number {
+  return getScore(
+    { ...org, techBonuses: org.template?.techBonuses, missionsGrantedNames: org.template?.missionsGrantedNames || [] },
+    weights
+  );
+}
+
+function getScore(org: ShowEffectsProps, weights: ScoringWeights): number {
+  let totalScore = 0;
+
+  // Helper to add score for a numeric attribute
+  const addScore = (value: number | undefined, weight: number | undefined) => {
+    if (weight !== undefined) {
+      totalScore += (value || 0) * weight;
+    }
+  };
+
+  // Councilor attributes
+  addScore(org.persuasion, weights.persuasion);
+  addScore(org.command, weights.command);
+  addScore(org.investigation, weights.investigation);
+  addScore(org.espionage, weights.espionage);
+  addScore(org.administration, weights.administration);
+  addScore(org.science, weights.science);
+  addScore(org.security, weights.security);
+  addScore(org.Persuasion, weights.persuasion);
+  addScore(org.Command, weights.command);
+  addScore(org.Investigation, weights.investigation);
+  addScore(org.Espionage, weights.espionage);
+  addScore(org.Administration, weights.administration);
+  addScore(org.Science, weights.science);
+  addScore(org.Security, weights.security);
+
+  // Monthly income/costs
+  addScore(org.incomeBoost_month, weights.incomeBoost_month);
+  addScore(org.incomeMoney_month, weights.incomeMoney_month);
+  addScore(org.incomeInfluence_month, weights.incomeInfluence_month);
+  addScore(org.incomeOps_month, weights.incomeOps_month);
+  addScore(org.incomeMissionControl, weights.incomeMissionControl);
+  addScore(org.incomeResearch_month, weights.incomeResearch_month);
+  addScore(org.projectCapacityGranted, weights.projectCapacityGranted);
+
+  // Purchase costs
+  addScore(org.costMoney, weights.costMoney);
+  addScore(org.costInfluence, weights.costInfluence);
+  addScore(org.costOps, weights.costOps);
+  addScore(org.costBoost, weights.costBoost);
+
+  // Priority bonuses
+  addScore(org.economyBonus, weights.economyBonus);
+  addScore(org.welfareBonus, weights.welfareBonus);
+  addScore(org.environmentBonus, weights.environmentBonus);
+  addScore(org.knowledgeBonus, weights.knowledgeBonus);
+  addScore(org.governmentBonus, weights.governmentBonus);
+  addScore(org.unityBonus, weights.unityBonus);
+  addScore(org.militaryBonus, weights.militaryBonus);
+  addScore(org.oppressionBonus, weights.oppressionBonus);
+  addScore(org.spoilsBonus, weights.spoilsBonus);
+  addScore(org.spaceDevBonus, weights.spaceDevBonus);
+  addScore(org.spaceflightBonus, weights.spaceflightBonus);
+  addScore(org.MCBonus, weights.MCBonus);
+  addScore(org.miningBonus, weights.miningBonus);
+
+  // Tech bonuses
+  if (weights.techBonuses && org?.techBonuses) {
+    for (const { category, bonus } of org.techBonuses) {
+      const weight = weights.techBonuses[category];
+      if (weight !== undefined) {
+        totalScore += (bonus || 0) * weight;
+      }
+    }
+  }
+
+  // Missions granted
+  if (weights.missions && org?.missionsGrantedNames) {
+    for (const missionName of org.missionsGrantedNames) {
+      const weight = weights.missions[missionName];
+      if (weight !== undefined) {
+        totalScore += weight;
+      }
+    }
+  }
+
+  // Divide by tier to normalize for org cost/power
+  const tier = org.tier || 1;
+  return totalScore / tier;
 }
