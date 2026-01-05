@@ -2,7 +2,7 @@ import { DateTime, SaveFile } from "./savefile";
 import { MissionDataName, templates } from "./templates";
 import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
 
-export async function analyzeData(saveFile: SaveFile) {
+export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const playerState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIPlayerState"].find(
     (i) => !i.Value.isAI
   )?.Value;
@@ -462,6 +462,8 @@ export async function analyzeData(saveFile: SaveFile) {
   }, new Map<MissionDataName, number>());
 
   return {
+    fileName,
+    lastModified,
     player,
     playerFaction,
     playerHabs,
