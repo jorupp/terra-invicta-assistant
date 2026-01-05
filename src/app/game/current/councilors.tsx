@@ -164,7 +164,7 @@ export function getCouncilorsUi(analysis: Analysis) {
     key: "councilors",
     tab: (
       <>
-        Councilors ({worstExisting?.toFixed(0)} vs. {bestAvailable?.toFixed(0)})) / Orgs ({bestOrg?.toFixed(2)})
+        Councilors ({worstExisting?.toFixed(0)} vs. {bestAvailable?.toFixed(0)}) / Orgs ({bestOrg?.toFixed(2)})
       </>
     ),
     content: (
