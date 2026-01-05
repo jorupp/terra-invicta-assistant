@@ -1,47 +1,33 @@
 import { readFile } from "fs/promises";
 import path from "path";
 import JSON5 from "json5";
+import type {
+  MissionDataName,
+  TraitDataName,
+  CouncilorTypeDataName,
+  HabSchematicDataName,
+  TechCategory,
+  EffectOperation,
+  EffectDuration,
+  HabType,
+} from "./template-types-generated";
+
+// Re-export the types for convenience
+export type {
+  MissionDataName,
+  TraitDataName,
+  CouncilorTypeDataName,
+  HabSchematicDataName,
+  TechCategory,
+  EffectOperation,
+  EffectDuration,
+  HabType,
+};
 
 const templateDir = process.env.TEMPLATE_DIR!;
 if (!templateDir) {
   throw new Error("TEMPLATE_DIR environment variable is not set.");
 }
-
-// Type unions for template dataNames and categorical fields
-export type MissionDataName = string; // Will be derived from TIMissionTemplate
-export type TechDataName = string; // Will be derived from TITechTemplate
-export type TraitDataName = string; // Will be derived from TITraitTemplate
-export type ProjectDataName = string; // Will be derived from TIProjectTemplate
-export type CouncilorTypeDataName = string; // Will be derived from TICouncilorTypeTemplate
-export type CouncilorAppearanceDataName = string; // Will be derived from TICouncilorAppearanceTemplate
-export type CouncilorVoiceDataName = string; // Will be derived from TICouncilorVoiceTemplate
-export type OrgIconDataName = string; // Will be derived from TIOrgIconTemplate
-export type HabModuleDataName = string; // Will be derived from TIHabModuleTemplate
-export type HabSchematicDataName = string; // Will be derived from TIHabSchematicTemplate
-export type FormationDataName = string; // Will be derived from TIFormationTemplate
-export type PriorityPresetDataName = string; // Will be derived from TIPriorityPresetTemplate
-
-export type TechCategory =
-  | "Aerospace"
-  | "Biology"
-  | "Chemistry"
-  | "Computing"
-  | "Energy"
-  | "Engineering"
-  | "Exploration"
-  | "InformationScience"
-  | "IntelligenceServices"
-  | "Materials"
-  | "Mathematics"
-  | "MilitaryScience"
-  | "Physics"
-  | "PublicAdministration"
-  | "SocialScience"
-  | "Xenology";
-
-export type ArmyType = "Army" | "Militia" | "Regiment" | "Corps" | "Division";
-export type DeploymentType = "Garrison" | "Mobile" | "Reserve";
-export type MissionContext = "Nation" | "Region" | "Councilor" | "SpaceFleet" | "Hab" | "Army";
 
 const cachedTemplates: { [K in keyof templateMap]?: templateMap[K] } = {};
 export async function getTemplate<
@@ -273,8 +259,8 @@ export interface Army {
   friendlyName: string;
   startRegionStr: string;
   homeRegionStr: string;
-  armyType: ArmyType;
-  deploymentType: DeploymentType;
+  armyType: string;
+  deploymentType: string;
   startingStrength: number;
 }
 
@@ -387,7 +373,7 @@ export interface Drive {
     metals: number;
     exotics: number;
   };
-  propellant: "Water" | "Volatiles" | "Metals" | "Fissiles" | "Antimatter";
+  propellant: string;
   perTankPropellantMaterials: {
     water: number;
     volatiles: number;
@@ -402,13 +388,13 @@ export interface Drive {
 
 export interface Effect {
   dataName: string;
-  operation: "Add" | "Multiply" | "Set";
+  operation: EffectOperation;
   value: number;
   effectTarget: string;
-  effectDuration: "Permanent" | "Temporary" | "Mission";
+  effectDuration: EffectDuration;
   stackable: boolean;
   duration_months: number;
-  contexts: MissionContext[];
+  contexts: string[];
 }
 
 export interface FactionIdeology {
@@ -492,13 +478,13 @@ export interface Faction {
     resource: string;
     value: number;
   }>;
-  firstTechNames: TechDataName[];
-  winnerTechNames: TechDataName[];
+  firstTechNames: string[];
+  winnerTechNames: string[];
   habPreferences: Record<string, number>;
 }
 
 export interface Formation {
-  dataName: FormationDataName;
+  dataName: string;
   disable: boolean;
   AICombatBaseWeight: number;
   AIMaximumAllowedShips: number;
@@ -517,8 +503,8 @@ export interface Formation {
 export interface Gun {
   dataName: string;
   friendlyName: string;
-  mount: "Nose" | "Hull" | "Turret";
-  requiredProjectName: ProjectDataName;
+  mount: string;
+  requiredProjectName: string;
   crew: number;
   attackMode: boolean;
   defenseMode: boolean;
@@ -559,7 +545,7 @@ export interface HabModule {
   dataName: string;
   friendlyName: string;
   coreModule: boolean;
-  habType: string;
+  habType: HabType;
   onePerHab: boolean;
   automated: boolean;
   allowsShipConstruction: boolean;
@@ -568,7 +554,7 @@ export interface HabModule {
   noBuild: boolean;
   destroyed: boolean;
   tier: number;
-  requiredProjectName: ProjectDataName;
+  requiredProjectName: string;
   crew: number;
   power: number;
   baseMass_tons: number;
@@ -608,7 +594,7 @@ export interface HabModule {
 export interface Hab {
   dataName: string;
   friendlyName: string;
-  habType: string;
+  habType: HabType;
   tier: number;
   habSite: string;
   alien: boolean;
@@ -651,10 +637,10 @@ export interface HeatSink {
 export interface LaserWeapon {
   dataName: string;
   friendlyName: string;
-  mount: "Nose" | "Hull" | "Turret";
+  mount: string;
   crew: number;
   sortOrder: number;
-  requiredProjectName: ProjectDataName;
+  requiredProjectName: string;
   attackMode: boolean;
   defenseMode: boolean;
   hp: number;
@@ -783,7 +769,7 @@ export interface Mission {
   permanentAssignment: boolean;
   XPonSuccess: number;
   sortOrder: number;
-  missionContext: MissionContext;
+  missionContext: string;
   utilityScore: number;
   UIalertEnemyOnFail: boolean;
   AIDoubleUpAllowed: boolean;
@@ -1134,13 +1120,13 @@ export interface StartTime {
 
 export interface Tech {
   friendlyName: string;
-  dataName: TechDataName;
+  dataName: string;
   techCategory: TechCategory;
   AI_techRole: string;
   AI_criticalTech: boolean;
   endGameTech: boolean;
   researchCost: number;
-  prereqs: TechDataName[];
+  prereqs: string[];
   effects: string[];
 }
 

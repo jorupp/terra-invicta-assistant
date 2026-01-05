@@ -1,23 +1,7 @@
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { gunzipSync } from "zlib";
-import type {
-  MissionDataName,
-  TechDataName,
-  TraitDataName,
-  ProjectDataName,
-  CouncilorTypeDataName,
-  CouncilorAppearanceDataName,
-  CouncilorVoiceDataName,
-  OrgIconDataName,
-  HabModuleDataName,
-  HabSchematicDataName,
-  FormationDataName,
-  PriorityPresetDataName,
-  ArmyType,
-  DeploymentType,
-  MissionContext,
-} from "./templates";
+import type { MissionDataName, TraitDataName, CouncilorTypeDataName, HabSchematicDataName } from "./templates";
 
 const templateDir = process.env.TEMPLATE_DIR!;
 if (!templateDir) {
@@ -329,8 +313,8 @@ export interface TICouncilorState extends BaseState {
   ancestry: string;
   status: string;
   everBeenAvailable: boolean;
-  appearanceTemplateName: CouncilorAppearanceDataName;
-  voiceTemplateName: CouncilorVoiceDataName | null;
+  appearanceTemplateName: string;
+  voiceTemplateName: string | null;
   XP: number;
   imBeingTargeted: boolean;
   targetedLastTurn: boolean;
@@ -416,7 +400,7 @@ export interface TIFactionState extends BaseState {
   habDesigns: unknown[];
   savedHabDesigns: unknown[];
   customPresets: unknown[];
-  defaultPriorityPresetTemplateName: PriorityPresetDataName;
+  defaultPriorityPresetTemplateName: string;
   defaultHullAppearanceIndex: number;
   nextRefitNumber: number;
   shipsBuiltInClass: Record<string, number>;
@@ -450,14 +434,14 @@ export interface TIArmyState extends BaseState {
   faction: IDValue | null;
   homeRegion: IDValue;
   priorRegion: IDValue | null;
-  deploymentType: DeploymentType;
+  deploymentType: string;
   strength: number;
   controlPointIdx: number;
   createdFromTemplate: boolean;
   currentOperations: ArmyOperation[];
   operationTarget: IDValue | null;
   destroyed: boolean;
-  armyType: ArmyType;
+  armyType: string;
   gameStateSubjectCreated: boolean;
   displayNameWithArticle: string;
   AI_targetEnemyRegion: IDValue | null;
@@ -466,7 +450,7 @@ export interface TIArmyState extends BaseState {
 
 // Org State
 export interface TIOrgState extends BaseState {
-  orgIconTemplateName: OrgIconDataName | null;
+  orgIconTemplateName: string | null;
   orgIconPath: string;
   displayNameWithArticle: string;
   applyingBonuses: boolean;
@@ -624,11 +608,11 @@ export interface TIHabModuleState extends BaseState {
   slot: number;
   sector: IDValue;
   destroyed: boolean;
-  defenseWeaponTemplateName: HabModuleDataName | null;
-  defenseWeaponTemplateName_gun: HabModuleDataName | null;
-  defenseWeaponTemplateName_plasma: HabModuleDataName | null;
+  defenseWeaponTemplateName: string | null;
+  defenseWeaponTemplateName_gun: string | null;
+  defenseWeaponTemplateName_plasma: string | null;
   _spaceCombatValue: number;
-  priorModuleTemplateName: HabModuleDataName;
+  priorModuleTemplateName: string;
   priorModuleCompleted: boolean;
   priorModuleCompletionDate: DateTime | null;
   abilityCooldownEnds: DateTime | null;
@@ -653,7 +637,7 @@ export interface TIHabModuleState extends BaseState {
 
 // Space Fleet State
 export interface FleetFormation {
-  patternDataName: FormationDataName | null;
+  patternDataName: string | null;
   spacing: string;
   concentration: string;
   focus: string;
