@@ -1,14 +1,20 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Analysis } from "@/lib/analysis";
 import { MissionDataName, TechCategory } from "@/lib/template-types-generated";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
+import { defaultScoringWeights, loadWeightsFromStorage, ScoringWeights, ScoringWeightsDialog } from "./scoringWeights";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
@@ -132,6 +138,12 @@ export function getCouncilorsUi(analysis: Analysis) {
 
 function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
   const { playerMissionCounts } = analysis;
+  const [weights, setWeights] = useState<ScoringWeights>(defaultScoringWeights);
+
+  useEffect(() => {
+    setWeights(loadWeightsFromStorage());
+  }, []);
+
   function currentHighlightMissionClassName(missionName: MissionDataName) {
     // if we have exactly 2, show yellow BG, if we have 1, show red, otherwise no change to bg
     const count = playerMissionCounts.get(missionName) || 0;
@@ -151,10 +163,12 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
     }
   }
   const playerNationIds = new Set(analysis.playerNationIds);
-  const weights = defaultScoringWeights;
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <>
+      <div className="mb-4">
+        <ScoringWeightsDialog weights={weights} onWeightsChange={setWeights} />
+      </div>
       <Accordion type="single" collapsible defaultValue="councilors">
         <AccordionItem value="councilors">
           <AccordionTrigger>Councilors</AccordionTrigger>
@@ -337,156 +351,6 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
     </>
   );
 }
-
-interface ScoringWeights {
-  // Councilor attributes
-  persuasion?: number;
-  command?: number;
-  investigation?: number;
-  espionage?: number;
-  administration?: number;
-  science?: number;
-  security?: number;
-
-  // Monthly income/costs
-  incomeBoost_month?: number;
-  incomeMoney_month?: number;
-  incomeInfluence_month?: number;
-  incomeOps_month?: number;
-  incomeMissionControl?: number;
-  incomeResearch_month?: number;
-  projectCapacityGranted?: number;
-
-  // Purchase costs (typically negative weights since costs are bad)
-  costMoney?: number;
-  costInfluence?: number;
-  costOps?: number;
-  costBoost?: number;
-
-  // Priority bonuses
-  economyBonus?: number;
-  welfareBonus?: number;
-  environmentBonus?: number;
-  knowledgeBonus?: number;
-  governmentBonus?: number;
-  unityBonus?: number;
-  militaryBonus?: number;
-  oppressionBonus?: number;
-  spoilsBonus?: number;
-  spaceDevBonus?: number;
-  spaceflightBonus?: number;
-  MCBonus?: number;
-  miningBonus?: number;
-
-  // Tech bonuses (weight per tech category)
-  techBonuses?: Partial<Record<TechCategory, number>>;
-
-  // Missions (weight per mission name)
-  missions?: Partial<Record<MissionDataName, number>>;
-
-  orgTierExponent: number;
-  extraWeightForMissingMissions: number;
-  extraWeightForSingleMissions: number;
-}
-
-// initial defaults based on my old scoring system for mid/late game
-const defaultScoringWeights: ScoringWeights = {
-  // Councilor attributes - based on my old scoring system
-  persuasion: 1,
-  command: 1,
-  investigation: 0.7,
-  espionage: 0.7,
-  administration: 0.3,
-  science: 0.7,
-  security: 0.3,
-
-  // Monthly income (valued highly as these compound over time)
-  incomeBoost_month: 0.15, // probably should be higher early-game
-  incomeMoney_month: 1 / 100,
-  incomeInfluence_month: 1 / 60,
-  incomeOps_month: 1 / 30,
-  incomeMissionControl: 0.1, // probably should be higher early-game
-  incomeResearch_month: 1 / 200,
-  projectCapacityGranted: 0.3,
-
-  // IMHO, purchase costs are pretty trivial past early-game
-  costMoney: 0,
-  costInfluence: 0,
-  costOps: 0,
-  costBoost: 0,
-
-  // Priority bonuses (moderate value for most)
-  economyBonus: 10,
-  welfareBonus: 10,
-  environmentBonus: 10,
-  knowledgeBonus: 10,
-  governmentBonus: 10,
-  unityBonus: 25,
-  militaryBonus: 10,
-  oppressionBonus: 10,
-  spoilsBonus: 40,
-  spaceDevBonus: 1, // funding
-  spaceflightBonus: 5, // boost maybe?
-  MCBonus: 5, // didn't have this in my old thing - no idea what it's for
-  miningBonus: 20,
-
-  // Tech bonuses - didn't have these before, will go with same as priority bonuses for now
-  techBonuses: {
-    Energy: 10,
-    InformationScience: 10,
-    LifeScience: 10,
-    Materials: 10,
-    MilitaryScience: 10,
-    SocialScience: 10,
-    SpaceScience: 10,
-  },
-
-  missions: {
-    // Missions (weighted by utility/frequency of use by ClaudeSonnet45)
-    // Advise: 2.0,
-    // Assassinate: 2.5,
-    // AssaultAlienAsset: 2.0,
-    // AssumeControl: 3.0,
-    // BuildFacility: 1.5,
-    // Contact: 1.0,
-    // ControlSpaceAsset: 2.5,
-    // Coup: 2.5,
-    // Crackdown: 1.5,
-    // DefendInterests: 2.0,
-    // Deorbit: 1.0,
-    // Detain: 2.0,
-    // DetectCouncilActivity: 1.5,
-    // Extract: 2.5,
-    // GainInfluence: 2.5,
-    // GoToGround: 0.5,
-    // HostileTakeover: 2.0,
-    // Inspire: 2.0,
-    // InvestigateAlienActivity: 1.5,
-    // InvestigateCouncilor: 1.5,
-    // Orbit: 1.0,
-    // Propaganda: 1.5,
-    // Protect: 2.0,
-    // Purge: 1.5,
-    // SabotageFacilities: 2.0,
-    // SabotageHabModule: 1.5,
-    // SabotageProject: 2.0,
-    // SeizeSpaceAsset: 2.0,
-    // SetNationalPolicy: 2.5,
-    // Stabilize: 2.0,
-    // StealProject: 2.5,
-    // Turn: 3.0,
-    // Unrest: 1.5,
-
-    // from my original scoring system
-    Inspire: 10, // rare
-    Coup: 2, // bit rare
-    AssaultAlienAsset: 2, // bit rare
-  },
-
-  orgTierExponent: 0.95, // slight priority to higher tiers since you don't have unlimited org slots
-  extraWeightForMissingMissions: 1, // extra weight to get missions you don't have yet
-  extraWeightForSingleMissions: 0.5, // extra weight to get missions you only have one of
-};
 
 function scoreAndSort<T>(
   items: T[],

@@ -1,0 +1,608 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { ShowEffects, ShowEffectsProps } from "@/components/showEffects";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Analysis } from "@/lib/analysis";
+import { MissionDataName, TechCategory } from "@/lib/template-types-generated";
+import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
+
+interface SavedWeightConfigs {
+  current: ScoringWeights;
+  saved: Record<string, ScoringWeights>;
+}
+
+const STORAGE_KEY = "councilorScoringWeights";
+
+export function loadWeightsFromStorage(): ScoringWeights {
+  if (typeof window === "undefined") return defaultScoringWeights;
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed: SavedWeightConfigs = JSON.parse(stored);
+      return parsed.current || defaultScoringWeights;
+    }
+  } catch (e) {
+    console.error("Failed to load scoring weights:", e);
+  }
+  return defaultScoringWeights;
+}
+
+function saveWeightsToStorage(weights: ScoringWeights, savedConfigs: Record<string, ScoringWeights>) {
+  if (typeof window === "undefined") return;
+
+  try {
+    const data: SavedWeightConfigs = {
+      current: weights,
+      saved: savedConfigs,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error("Failed to save scoring weights:", e);
+  }
+}
+
+function loadSavedConfigsFromStorage(): Record<string, ScoringWeights> {
+  if (typeof window === "undefined") return {};
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed: SavedWeightConfigs = JSON.parse(stored);
+      return parsed.saved || {};
+    }
+  } catch (e) {
+    console.error("Failed to load saved configs:", e);
+  }
+  return {};
+}
+
+export function ScoringWeightsDialog({
+  weights,
+  onWeightsChange,
+}: {
+  weights: ScoringWeights;
+  onWeightsChange: (weights: ScoringWeights) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [editedWeights, setEditedWeights] = useState<ScoringWeights>(weights);
+  const [savedConfigs, setSavedConfigs] = useState<Record<string, ScoringWeights>>({});
+  const [selectedConfig, setSelectedConfig] = useState<string>("");
+  const [newConfigName, setNewConfigName] = useState("");
+
+  useEffect(() => {
+    setEditedWeights(weights);
+  }, [weights]);
+
+  useEffect(() => {
+    if (open) {
+      setSavedConfigs(loadSavedConfigsFromStorage());
+    }
+  }, [open]);
+
+  const handleSave = () => {
+    if (newConfigName.trim()) {
+      const updated = { ...savedConfigs, [newConfigName.trim()]: editedWeights };
+      setSavedConfigs(updated);
+      saveWeightsToStorage(editedWeights, updated);
+      setNewConfigName("");
+      setSelectedConfig(newConfigName.trim());
+    }
+  };
+
+  const handleLoad = () => {
+    if (selectedConfig && savedConfigs[selectedConfig]) {
+      setEditedWeights(savedConfigs[selectedConfig]);
+    }
+  };
+
+  const handleApply = () => {
+    onWeightsChange(editedWeights);
+    saveWeightsToStorage(editedWeights, savedConfigs);
+    setOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (selectedConfig && savedConfigs[selectedConfig]) {
+      const updated = { ...savedConfigs };
+      delete updated[selectedConfig];
+      setSavedConfigs(updated);
+      saveWeightsToStorage(editedWeights, updated);
+      setSelectedConfig("");
+    }
+  };
+
+  const updateWeight = (key: keyof ScoringWeights, value: number) => {
+    setEditedWeights({ ...editedWeights, [key]: value });
+  };
+
+  const updateTechBonus = (category: TechCategory, value: number) => {
+    setEditedWeights({
+      ...editedWeights,
+      techBonuses: { ...editedWeights.techBonuses, [category]: value },
+    });
+  };
+
+  const updateMissionWeight = (mission: MissionDataName, value: number) => {
+    setEditedWeights({
+      ...editedWeights,
+      missions: { ...editedWeights.missions, [mission]: value },
+    });
+  };
+
+  const NumberInput = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: number | undefined;
+    onChange: (v: number) => void;
+  }) => (
+    <div className="grid grid-cols-2 items-center gap-2">
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type="number"
+        step="0.001"
+        value={value ?? 0}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        className="h-8"
+      />
+    </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Configure Scoring</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Configure Scoring Weights</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Save/Load Controls */}
+          <div className="flex gap-2 items-end border-b pb-4">
+            <div className="flex-1">
+              <Label>Load Saved Configuration</Label>
+              <Select value={selectedConfig} onValueChange={setSelectedConfig}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a saved configuration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(savedConfigs).map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleLoad} disabled={!selectedConfig}>
+              Load
+            </Button>
+            <Button onClick={handleDelete} variant="destructive" disabled={!selectedConfig}>
+              Delete
+            </Button>
+          </div>
+
+          <div className="flex gap-2 items-end border-b pb-4">
+            <div className="flex-1">
+              <Label>Save Current Configuration</Label>
+              <Input
+                placeholder="Enter configuration name"
+                value={newConfigName}
+                onChange={(e) => setNewConfigName(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleSave} disabled={!newConfigName.trim()}>
+              Save
+            </Button>
+          </div>
+
+          {/* Councilor Attributes */}
+          <div>
+            <h3 className="font-semibold mb-2">Councilor Attributes</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <NumberInput
+                label="Persuasion"
+                value={editedWeights.persuasion}
+                onChange={(v) => updateWeight("persuasion", v)}
+              />
+              <NumberInput label="Command" value={editedWeights.command} onChange={(v) => updateWeight("command", v)} />
+              <NumberInput
+                label="Investigation"
+                value={editedWeights.investigation}
+                onChange={(v) => updateWeight("investigation", v)}
+              />
+              <NumberInput
+                label="Espionage"
+                value={editedWeights.espionage}
+                onChange={(v) => updateWeight("espionage", v)}
+              />
+              <NumberInput
+                label="Administration"
+                value={editedWeights.administration}
+                onChange={(v) => updateWeight("administration", v)}
+              />
+              <NumberInput label="Science" value={editedWeights.science} onChange={(v) => updateWeight("science", v)} />
+              <NumberInput
+                label="Security"
+                value={editedWeights.security}
+                onChange={(v) => updateWeight("security", v)}
+              />
+            </div>
+          </div>
+
+          {/* Monthly Income */}
+          <div>
+            <h3 className="font-semibold mb-2">Monthly Income</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <NumberInput
+                label="Boost (month)"
+                value={editedWeights.incomeBoost_month}
+                onChange={(v) => updateWeight("incomeBoost_month", v)}
+              />
+              <NumberInput
+                label="Money (month)"
+                value={editedWeights.incomeMoney_month}
+                onChange={(v) => updateWeight("incomeMoney_month", v)}
+              />
+              <NumberInput
+                label="Influence (month)"
+                value={editedWeights.incomeInfluence_month}
+                onChange={(v) => updateWeight("incomeInfluence_month", v)}
+              />
+              <NumberInput
+                label="Ops (month)"
+                value={editedWeights.incomeOps_month}
+                onChange={(v) => updateWeight("incomeOps_month", v)}
+              />
+              <NumberInput
+                label="Mission Control"
+                value={editedWeights.incomeMissionControl}
+                onChange={(v) => updateWeight("incomeMissionControl", v)}
+              />
+              <NumberInput
+                label="Research (month)"
+                value={editedWeights.incomeResearch_month}
+                onChange={(v) => updateWeight("incomeResearch_month", v)}
+              />
+              <NumberInput
+                label="Project Capacity"
+                value={editedWeights.projectCapacityGranted}
+                onChange={(v) => updateWeight("projectCapacityGranted", v)}
+              />
+            </div>
+          </div>
+
+          {/* Purchase Costs */}
+          <div>
+            <h3 className="font-semibold mb-2">Purchase Costs</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <NumberInput
+                label="Money Cost"
+                value={editedWeights.costMoney}
+                onChange={(v) => updateWeight("costMoney", v)}
+              />
+              <NumberInput
+                label="Influence Cost"
+                value={editedWeights.costInfluence}
+                onChange={(v) => updateWeight("costInfluence", v)}
+              />
+              <NumberInput
+                label="Ops Cost"
+                value={editedWeights.costOps}
+                onChange={(v) => updateWeight("costOps", v)}
+              />
+              <NumberInput
+                label="Boost Cost"
+                value={editedWeights.costBoost}
+                onChange={(v) => updateWeight("costBoost", v)}
+              />
+            </div>
+          </div>
+
+          {/* Priority Bonuses */}
+          <div>
+            <h3 className="font-semibold mb-2">Priority Bonuses</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <NumberInput
+                label="Economy"
+                value={editedWeights.economyBonus}
+                onChange={(v) => updateWeight("economyBonus", v)}
+              />
+              <NumberInput
+                label="Welfare"
+                value={editedWeights.welfareBonus}
+                onChange={(v) => updateWeight("welfareBonus", v)}
+              />
+              <NumberInput
+                label="Environment"
+                value={editedWeights.environmentBonus}
+                onChange={(v) => updateWeight("environmentBonus", v)}
+              />
+              <NumberInput
+                label="Knowledge"
+                value={editedWeights.knowledgeBonus}
+                onChange={(v) => updateWeight("knowledgeBonus", v)}
+              />
+              <NumberInput
+                label="Government"
+                value={editedWeights.governmentBonus}
+                onChange={(v) => updateWeight("governmentBonus", v)}
+              />
+              <NumberInput
+                label="Unity"
+                value={editedWeights.unityBonus}
+                onChange={(v) => updateWeight("unityBonus", v)}
+              />
+              <NumberInput
+                label="Military"
+                value={editedWeights.militaryBonus}
+                onChange={(v) => updateWeight("militaryBonus", v)}
+              />
+              <NumberInput
+                label="Oppression"
+                value={editedWeights.oppressionBonus}
+                onChange={(v) => updateWeight("oppressionBonus", v)}
+              />
+              <NumberInput
+                label="Spoils"
+                value={editedWeights.spoilsBonus}
+                onChange={(v) => updateWeight("spoilsBonus", v)}
+              />
+              <NumberInput
+                label="Space Dev"
+                value={editedWeights.spaceDevBonus}
+                onChange={(v) => updateWeight("spaceDevBonus", v)}
+              />
+              <NumberInput
+                label="Spaceflight"
+                value={editedWeights.spaceflightBonus}
+                onChange={(v) => updateWeight("spaceflightBonus", v)}
+              />
+              <NumberInput
+                label="Mission Control"
+                value={editedWeights.MCBonus}
+                onChange={(v) => updateWeight("MCBonus", v)}
+              />
+              <NumberInput
+                label="Mining"
+                value={editedWeights.miningBonus}
+                onChange={(v) => updateWeight("miningBonus", v)}
+              />
+            </div>
+          </div>
+
+          {/* Tech Bonuses */}
+          <div>
+            <h3 className="font-semibold mb-2">Tech Bonuses</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              {[
+                "Energy",
+                "InformationScience",
+                "LifeScience",
+                "Materials",
+                "MilitaryScience",
+                "SocialScience",
+                "SpaceScience",
+              ].map((cat) => (
+                <NumberInput
+                  key={cat}
+                  label={cat}
+                  value={editedWeights.techBonuses?.[cat as TechCategory]}
+                  onChange={(v) => updateTechBonus(cat as TechCategory, v)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Special Missions */}
+          <div>
+            <h3 className="font-semibold mb-2">Mission Weights</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              {Object.keys(editedWeights.missions || {}).map((mission) => (
+                <NumberInput
+                  key={mission}
+                  label={mission}
+                  value={editedWeights.missions?.[mission as MissionDataName]}
+                  onChange={(v) => updateMissionWeight(mission as MissionDataName, v)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Other Settings */}
+          <div>
+            <h3 className="font-semibold mb-2">Other Settings</h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <NumberInput
+                label="Org Tier Exponent"
+                value={editedWeights.orgTierExponent}
+                onChange={(v) => updateWeight("orgTierExponent", v)}
+              />
+              <NumberInput
+                label="Extra Weight for Missing Missions"
+                value={editedWeights.extraWeightForMissingMissions}
+                onChange={(v) => updateWeight("extraWeightForMissingMissions", v)}
+              />
+              <NumberInput
+                label="Extra Weight for Single Missions"
+                value={editedWeights.extraWeightForSingleMissions}
+                onChange={(v) => updateWeight("extraWeightForSingleMissions", v)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleApply}>Apply</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export interface ScoringWeights {
+  // Councilor attributes
+  persuasion?: number;
+  command?: number;
+  investigation?: number;
+  espionage?: number;
+  administration?: number;
+  science?: number;
+  security?: number;
+
+  // Monthly income/costs
+  incomeBoost_month?: number;
+  incomeMoney_month?: number;
+  incomeInfluence_month?: number;
+  incomeOps_month?: number;
+  incomeMissionControl?: number;
+  incomeResearch_month?: number;
+  projectCapacityGranted?: number;
+
+  // Purchase costs (typically negative weights since costs are bad)
+  costMoney?: number;
+  costInfluence?: number;
+  costOps?: number;
+  costBoost?: number;
+
+  // Priority bonuses
+  economyBonus?: number;
+  welfareBonus?: number;
+  environmentBonus?: number;
+  knowledgeBonus?: number;
+  governmentBonus?: number;
+  unityBonus?: number;
+  militaryBonus?: number;
+  oppressionBonus?: number;
+  spoilsBonus?: number;
+  spaceDevBonus?: number;
+  spaceflightBonus?: number;
+  MCBonus?: number;
+  miningBonus?: number;
+
+  // Tech bonuses (weight per tech category)
+  techBonuses?: Partial<Record<TechCategory, number>>;
+
+  // Missions (weight per mission name)
+  missions?: Partial<Record<MissionDataName, number>>;
+
+  orgTierExponent: number;
+  extraWeightForMissingMissions: number;
+  extraWeightForSingleMissions: number;
+}
+
+// initial defaults based on my old scoring system for mid/late game
+export const defaultScoringWeights: ScoringWeights = {
+  // Councilor attributes - based on my old scoring system
+  persuasion: 1,
+  command: 1,
+  investigation: 0.7,
+  espionage: 0.7,
+  administration: 0.3,
+  science: 0.7,
+  security: 0.3,
+
+  // Monthly income (valued highly as these compound over time)
+  incomeBoost_month: 0.15, // probably should be higher early-game
+  incomeMoney_month: 1 / 100,
+  incomeInfluence_month: 1 / 60,
+  incomeOps_month: 1 / 30,
+  incomeMissionControl: 0.1, // probably should be higher early-game
+  incomeResearch_month: 1 / 200,
+  projectCapacityGranted: 0.3,
+
+  // IMHO, purchase costs are pretty trivial past early-game
+  costMoney: 0,
+  costInfluence: 0,
+  costOps: 0,
+  costBoost: 0,
+
+  // Priority bonuses (moderate value for most)
+  economyBonus: 10,
+  welfareBonus: 10,
+  environmentBonus: 10,
+  knowledgeBonus: 10,
+  governmentBonus: 10,
+  unityBonus: 25,
+  militaryBonus: 10,
+  oppressionBonus: 10,
+  spoilsBonus: 40,
+  spaceDevBonus: 1, // funding
+  spaceflightBonus: 5, // boost maybe?
+  MCBonus: 5, // didn't have this in my old thing - no idea what it's for
+  miningBonus: 20,
+
+  // Tech bonuses - didn't have these before, will go with same as priority bonuses for now
+  techBonuses: {
+    Energy: 10,
+    InformationScience: 10,
+    LifeScience: 10,
+    Materials: 10,
+    MilitaryScience: 10,
+    SocialScience: 10,
+    SpaceScience: 10,
+  },
+
+  missions: {
+    // Missions (weighted by utility/frequency of use by ClaudeSonnet45)
+    // Advise: 2.0,
+    // Assassinate: 2.5,
+    // AssaultAlienAsset: 2.0,
+    // AssumeControl: 3.0,
+    // BuildFacility: 1.5,
+    // Contact: 1.0,
+    // ControlSpaceAsset: 2.5,
+    // Coup: 2.5,
+    // Crackdown: 1.5,
+    // DefendInterests: 2.0,
+    // Deorbit: 1.0,
+    // Detain: 2.0,
+    // DetectCouncilActivity: 1.5,
+    // Extract: 2.5,
+    // GainInfluence: 2.5,
+    // GoToGround: 0.5,
+    // HostileTakeover: 2.0,
+    // Inspire: 2.0,
+    // InvestigateAlienActivity: 1.5,
+    // InvestigateCouncilor: 1.5,
+    // Orbit: 1.0,
+    // Propaganda: 1.5,
+    // Protect: 2.0,
+    // Purge: 1.5,
+    // SabotageFacilities: 2.0,
+    // SabotageHabModule: 1.5,
+    // SabotageProject: 2.0,
+    // SeizeSpaceAsset: 2.0,
+    // SetNationalPolicy: 2.5,
+    // Stabilize: 2.0,
+    // StealProject: 2.5,
+    // Turn: 3.0,
+    // Unrest: 1.5,
+
+    // from my original scoring system
+    Inspire: 10, // rare
+    Coup: 2, // bit rare
+    AssaultAlienAsset: 2, // bit rare
+  },
+
+  orgTierExponent: 0.95, // slight priority to higher tiers since you don't have unlimited org slots
+  extraWeightForMissingMissions: 1, // extra weight to get missions you don't have yet
+  extraWeightForSingleMissions: 0.5, // extra weight to get missions you only have one of
+};
