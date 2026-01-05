@@ -122,7 +122,7 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {missionsGrantedNames.length > 0 && <>
       {missionsGrantedNames.map((mission, index) => {
         const MissionIcon = MissionIcons[mission as keyof typeof MissionIcons];
-        return MissionIcon ? <><MissionIcon className={props.highlightMissionClassName?.(mission)} />{spacer}</> : null;
+        return MissionIcon ? <span key={index}><MissionIcon className={props.highlightMissionClassName?.(mission)} />{spacer}</span> : null;
       })}
     </>}
   </>;
