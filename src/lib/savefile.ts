@@ -23,6 +23,10 @@ export async function loadSaveFile(filePath: string): Promise<SaveFile> {
     content = content.substring(1);
   }
 
+  // this file can also contain +/-Infinity values (though maybe that's caused by 0.4.90 -> RC25 migration), which we need to fix:
+  content = content.replace(/": -Infinity/g, '": -1e+300');
+  content = content.replace(/": Infinity/g, '": 1e+300');
+
   try {
     const rawData = JSON.parse(content);
     console.log(`Loaded, decompressed, and parsed save file in ${Date.now() - start}ms`);
