@@ -2,7 +2,7 @@ import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { sortByDateTime } from "@/lib/utils";
+import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
 
 export function getFleetsUi(analysis: Analysis) {
   const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
@@ -15,8 +15,11 @@ export function getFleetsUi(analysis: Analysis) {
   }, new Map<string, typeof analysis.alienFleetsToPlayerOrbits>());
   const label = [
     ...byTarget.entries().map(([target, fleets]) => {
+      // now that we know the arrival of the first one, find all arriving within 14 days to summarize MC
       const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime)[0];
-      return `${target}: x${fleets.length}, ${firstFleet.daysToTarget?.toFixed(0)}d`;
+      const firstFleets = fleets.filter((f) => toDays(diffDateTime(f.arrivalTime!, firstFleet.arrivalTime!)) < 14);
+      const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
+      return `${target}: x${fleets.length}, 1st ${firstFleet.daysToTarget?.toFixed(0)}d w/ ${firstMc.toFixed(0)} MC`;
     }),
   ].join(", ");
 
