@@ -1137,6 +1137,7 @@ export interface Trait {
   tags?: string[];
   easilyVisible?: boolean;
   XPCost?: number;
+  XPModifier?: number;
   upgradesFrom?: TraitDataName;
   opsCost?: number;
   boostCost?: number;

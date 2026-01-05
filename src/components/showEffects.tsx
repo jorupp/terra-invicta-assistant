@@ -1,8 +1,10 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
 import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
-import { MissionDataName, Org, TechCategory } from "@/lib/templates";
+import { MissionDataName, Org, TechCategory, Trait } from "@/lib/templates";
+import { Analysis } from "@/lib/analysis";
 
 export type ShowEffectsProps = Partial<
+  { xpModifier: number } &
   Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
   CouncilorAttributes &
     Pick<
@@ -62,6 +64,7 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const security = (props.security || 0) + (props.Security || 0);
   const apparentLoyalty = props.ApparentLoyalty || 0;
   const loyalty = props.Loyalty || 0;
+  const xpModifier = props.xpModifier || 0;
   const priorityEconomyBonus = props.economyBonus || 0;
   const priorityWelfareBonus = props.welfareBonus || 0;
   const priorityEnvironmentBonus = props.environmentBonus || 0;
@@ -98,6 +101,7 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {security !== 0 && <><Security/> {security}{spacer}</>}
     {apparentLoyalty !== 0 && <><Loyalty/> {apparentLoyalty}{spacer}</>}
     {loyalty !== 0 && <><Loyalty/> {loyalty}{spacer}</>}
+    {xpModifier !== 0 && <>{pct(xpModifier)} XP{spacer}</>}
     {priorityEconomyBonus !== 0 && <><PriorityEconomy/> {pct(priorityEconomyBonus)}{spacer}</>}
     {priorityWelfareBonus !== 0 && <><PriorityWelfare/> {pct(priorityWelfareBonus)}{spacer}</>}
     {priorityEnvironmentBonus !== 0 && <><PriorityEnvironment/> {pct(priorityEnvironmentBonus)}{spacer}</>}

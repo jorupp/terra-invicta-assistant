@@ -331,6 +331,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     dataName: trait.dataName,
     friendlyName: trait.friendlyName,
     xpCost: trait.XPCost,
+    xpModifier: trait.XPModifier,
     upgradesFrom: trait.upgradesFrom,
     boostCost: trait.boostCost,
     opsCost: trait.opsCost,
@@ -369,6 +370,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             incomeResearch_month: trait?.incomeResearch,
             techBonuses: trait?.techBonuses,
             missionsGrantedNames: trait?.missionsGrantedNames,
+            xpModifier: trait?.xpModifier,
           });
         },
         { ...effects }

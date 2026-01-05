@@ -62,6 +62,7 @@ function CouncilorTableRow({
           Science={stats.Science}
           Security={stats.Security}
           ApparentLoyalty={stats.ApparentLoyalty}
+          xpModifier={stats.xpModifier}
           // TODO: is there a case where we should show this?
           // Loyalty={stats.Loyalty}
         />
