@@ -374,6 +374,8 @@ interface ScoringWeights {
 
   // Missions (weight per mission name)
   missions?: Partial<Record<MissionDataName, number>>;
+
+  orgTierExponent: number;
 }
 
 // initial defaults based on my old scoring system for mid/late game
@@ -469,6 +471,8 @@ const defaultScoringWeights: ScoringWeights = {
     Coup: 2, // bit rare
     AssaultAlienAsset: 2, // bit rare
   },
+
+  orgTierExponent: 0.95, // slight priority to higher tiers since you don't have unlimited org slots
 };
 
 function scoreAndSort<T>(
@@ -592,11 +596,12 @@ function getScore(org: ShowEffectsProps, weights: ScoringWeights): ScoreResult {
 
   // Divide by tier to normalize for org cost/power
   const tier = org.tier || 1;
-  const finalScore = totalScore / tier;
+  const tierFactor = Math.pow(tier, weights.orgTierExponent);
+  const finalScore = totalScore / tierFactor;
 
   if (tier > 1) {
     details.push(`Subtotal: ${totalScore.toFixed(3)}`);
-    details.push(`Divided by tier ${tier}: ${finalScore.toFixed(3)}`);
+    details.push(`Divided by ${tierFactor.toFixed(2)} for tier ${tier}: ${finalScore.toFixed(3)}`);
   }
 
   return {
