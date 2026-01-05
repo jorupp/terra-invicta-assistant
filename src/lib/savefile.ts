@@ -8,15 +8,18 @@ if (!templateDir) {
 }
 
 export async function loadSaveFile(filePath: string): Promise<SaveFile> {
-  // Read the file content as a buffer
-  const buffer = await readFile(filePath);
+  const start = Date.now();
 
-  // Decompress the gzipped content
+  const buffer = await readFile(filePath);
+  console.log(`Loaded save file in ${Date.now() - start}ms`);
+
   const decompressed = gunzipSync(buffer);
   const content = decompressed.toString("utf8");
+  console.log(`Loaded and decompressed save file in ${Date.now() - start}ms`);
 
   try {
     const rawData = JSON5.parse(content);
+    console.log(`Loaded, decompressed, and parsed save file in ${Date.now() - start}ms`);
 
     // some data is shared via $id and $ref, we need to resolve those references - common for arrivalTime for fleet trajectories
     const sharedItems = findSharedItems(rawData);
