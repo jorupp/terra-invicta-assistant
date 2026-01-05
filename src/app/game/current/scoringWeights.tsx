@@ -270,6 +270,11 @@ export function ScoringWeightsDialog({
                     value={editedWeights.security}
                     onChange={(v) => updateWeight("security", v)}
                   />
+                  <NumberInput
+                    label="XP Modifier"
+                    value={editedWeights.xpModifier}
+                    onChange={(v) => updateWeight("xpModifier", v)}
+                  />
                 </div>
               </div>
 
@@ -503,6 +508,7 @@ export interface ScoringWeights {
   administration?: number;
   science?: number;
   security?: number;
+  xpModifier?: number;
 
   // Monthly income/costs
   incomeBoost_month?: number;
@@ -556,6 +562,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     administration: 0.3,
     science: 0.7,
     security: 0.3,
+    xpModifier: -50, // -.1 (quick learner) is worth about 1 level every 2 years, so we want it to be worth 5
 
     // Monthly income (valued highly as these compound over time)
     incomeBoost_month: 0.15, // probably should be higher early-game

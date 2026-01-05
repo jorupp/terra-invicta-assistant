@@ -368,7 +368,7 @@ function getBaseCouncilorScore(
   weights: ScoringWeights,
   haveMissions: Map<MissionDataName, number>
 ): ScoreResult {
-  return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights, haveMissions);
+  return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights, haveMissions, true);
 }
 
 function getModifiedCouncilorScore(
@@ -376,7 +376,7 @@ function getModifiedCouncilorScore(
   weights: ScoringWeights,
   haveMissions: Map<MissionDataName, number>
 ): ScoreResult {
-  return getScore(councilor.effectsWithOrgsAndAugments, weights, haveMissions);
+  return getScore(councilor.effectsWithOrgsAndAugments, weights, haveMissions, true);
 }
 
 function getOrganizationScore(
@@ -399,7 +399,8 @@ interface ScoreResult {
 function getScore(
   org: ShowEffectsProps,
   weights: ScoringWeights,
-  haveMissions: Map<MissionDataName, number>
+  haveMissions: Map<MissionDataName, number>,
+  ignoreTier: boolean = false
 ): ScoreResult {
   let totalScore = 0;
   const details: string[] = [];
@@ -409,8 +410,8 @@ function getScore(
     const actualValue = value || 0;
     const actualWeight = weight ?? 0;
 
-    // Skip if value is 0/undefined/null
-    if (!actualValue) return;
+    // Skip if value or weight is 0/undefined/null
+    if (!actualValue || !actualWeight) return;
 
     const contribution = actualValue * actualWeight;
     totalScore += contribution;
@@ -436,6 +437,7 @@ function getScore(
   addScore("Administration", org.Administration, weights.administration);
   addScore("Science", org.Science, weights.science);
   addScore("Security", org.Security, weights.security);
+  addScore("xpModifier", org.xpModifier, weights.xpModifier);
 
   // Monthly income/costs
   addScore("incomeBoost_month", org.incomeBoost_month, weights.incomeBoost_month);
@@ -503,10 +505,11 @@ function getScore(
 
   // Divide by tier to normalize for org cost/power
   const tier = org.tier || 1;
-  const tierFactor = Math.pow(tier, weights.orgTierExponent);
-  const finalScore = totalScore / tierFactor;
+  let finalScore = totalScore;
 
-  if (tier > 1) {
+  if (tier > 1 && !ignoreTier) {
+    const tierFactor = Math.pow(tier, weights.orgTierExponent);
+    finalScore = totalScore / tierFactor;
     details.push(`Subtotal: ${totalScore.toFixed(3)}`);
     details.push(`Divided by ${tierFactor.toFixed(2)} for tier ${tier}: ${finalScore.toFixed(3)}`);
   }
