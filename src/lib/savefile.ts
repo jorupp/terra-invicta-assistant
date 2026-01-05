@@ -16,12 +16,56 @@ export async function loadSaveFile(filePath: string): Promise<SaveFile> {
   const content = decompressed.toString("utf8");
 
   try {
-    const data: SaveFile = JSON5.parse(content);
-    return data;
+    const rawData = JSON5.parse(content);
+
+    // some data is shared via $id and $ref, we need to resolve those references - common for arrivalTime for fleet trajectories
+    const sharedItems = findSharedItems(rawData);
+    return fixReferences<SaveFile>(rawData, sharedItems);
   } catch (e) {
     console.error(`Error parsing JSON from file ${filePath}:`, e);
     throw e;
   }
+}
+
+function findSharedItems(obj: any, sharedItems: Map<string, any> = new Map()): Map<string, any> {
+  if (!obj) return sharedItems;
+  if (typeof obj === "object") {
+    if (obj["$id"]) {
+      sharedItems.set(obj["$id"], obj);
+    }
+    for (const key in obj) {
+      const value = obj[key];
+      findSharedItems(value, sharedItems);
+    }
+  } else if (Array.isArray(obj)) {
+    obj.forEach((item) => findSharedItems(item, sharedItems));
+  }
+  return sharedItems;
+}
+
+function fixReferences<T>(obj: any, sharedItems: Map<string, any>): T {
+  if (!obj) return obj;
+  if (typeof obj === "object") {
+    if (obj["$ref"]) {
+      return sharedItems.get(obj["$ref"]);
+    }
+    for (const key in obj) {
+      const value = obj[key];
+      const newValue = fixReferences(value, sharedItems);
+      if (newValue !== value) {
+        obj[key] = newValue;
+      }
+    }
+  } else if (Array.isArray(obj)) {
+    for (var i = 0; i < obj.length; i++) {
+      const value = obj[i];
+      const newValue = fixReferences(value, sharedItems);
+      if (newValue !== value) {
+        obj[i] = newValue;
+      }
+    }
+  }
+  return obj;
 }
 
 // Base types
