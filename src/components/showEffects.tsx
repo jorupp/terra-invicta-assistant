@@ -1,6 +1,6 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
 import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
-import { Org } from "@/lib/templates";
+import { Org, TechCategory } from "@/lib/templates";
 
 export type ShowEffectsProps = Partial<
   Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
@@ -138,7 +138,7 @@ export function combineEffects(p1: ShowEffectsProps, p2: ShowEffectsProps): Show
         const existing = acc.get(key) || 0;
         acc.set(key, existing + curr.bonus);
         return acc;
-      }, new Map<string, number>()).entries().map(([category, bonus]) => ({category, bonus}) )];
+      }, new Map<TechCategory, number>()).entries().map(([category, bonus]) => ({category, bonus}) )];
     }
     else if (k === 'missionsGrantedNames') {
       result.missionsGrantedNames = [...new Set([...(result.missionsGrantedNames || []), ...(p2.missionsGrantedNames || [])])];

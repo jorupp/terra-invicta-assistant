@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
+import { MissionDataName, TechCategory } from "@/lib/template-types-generated";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
@@ -346,11 +347,13 @@ interface ScoringWeights {
   miningBonus?: number;
 
   // Tech bonuses (weight per tech category)
-  techBonuses?: Record<string, number>;
+  techBonuses?: Record<TechCategory, number>;
 
   // Missions (weight per mission name)
-  missions?: Record<string, number>;
+  missions?: Record<MissionDataName, number>;
 }
+
+const defaultScoringWeights: ScoringWeights = {};
 
 function getBaseCouncilorScore(councilor: Analysis["playerCouncilors"][number], weights: ScoringWeights): number {
   return getScore(councilor.effectsBaseAndUnaugmentedTraits, weights);
