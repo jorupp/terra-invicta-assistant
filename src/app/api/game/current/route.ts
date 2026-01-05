@@ -65,6 +65,8 @@ export async function GET(request: NextRequest) {
       if (eventType === "rename") {
         try {
           const fullPath = join(saveGameDir, filename);
+          // wait a little bit to make sure the save is complete
+          await new Promise((resolve) => setTimeout(resolve, 200));
           // Check if file exists (it's a creation, not deletion)
           const stats = await stat(fullPath);
           if (stats.isFile()) {
