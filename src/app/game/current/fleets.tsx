@@ -2,11 +2,27 @@ import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { sortByDateTime } from "@/lib/utils";
 
 export function getFleetsUi(analysis: Analysis) {
+  const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
+    const key = fleet.targetOrbitName || "Unknown Orbit";
+    if (!acc.has(key)) {
+      acc.set(key, []);
+    }
+    acc.get(key)!.push(fleet);
+    return acc;
+  }, new Map<string, typeof analysis.alienFleetsToPlayerOrbits>());
+  const label = [
+    ...byTarget.entries().map(([target, fleets]) => {
+      const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime)[0];
+      return `${target}: x${fleets.length}, ${firstFleet.daysToTarget?.toFixed(0)}d`;
+    }),
+  ].join(", ");
+
   return {
     key: "fleets",
-    tab: <>Alien Fleets ({analysis.alienFleetsToPlayerOrbits.length})</>,
+    tab: <>Alien Fleets{label ? ` (${label})` : ""}</>,
     content: <FleetsComponent analysis={analysis} />,
   };
 }

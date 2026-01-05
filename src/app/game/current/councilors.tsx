@@ -122,24 +122,85 @@ function CouncilorTableRow({
 }
 
 export function getCouncilorsUi(analysis: Analysis) {
-  return {
-    key: "councilors",
-    tab: (
-      <>
-        Councilors ({analysis.playerCouncilors.length}) / Orgs ({analysis.playerUnassignedOrgs.length})
-      </>
-    ),
-    content: <CouncilorsComponent analysis={analysis} />,
-  };
-}
-
-function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
   const { playerMissionCounts } = analysis;
   const [weights, setWeights] = useState<ScoringWeights>(defaultScoringWeights);
 
   useEffect(() => {
     setWeights(loadWeightsFromStorage());
   }, []);
+
+  const scoredModifiedCouncilors = scoreAndSort(
+    analysis.playerCouncilors,
+    weights,
+    playerMissionCounts,
+    getModifiedCouncilorScore
+  );
+  const scoredAvailableCouncilors = scoreAndSort(
+    analysis.playerAvailableCouncilors,
+    weights,
+    playerMissionCounts,
+    getBaseCouncilorScore
+  );
+  const scoredBaseCouncilors = scoreAndSort(
+    analysis.playerCouncilors,
+    weights,
+    playerMissionCounts,
+    getBaseCouncilorScore
+  );
+  const scoredOrgs = scoreAndSort(
+    analysis.playerAvailableOrgs
+      .map((i) => ({ type: "available", ...i }))
+      .concat(analysis.playerUnassignedOrgs.map((i) => ({ type: "unassigned", ...i }))),
+    weights,
+    playerMissionCounts,
+    getOrganizationScore
+  );
+
+  const bestAvailable = scoredAvailableCouncilors[0]?.score.value;
+  const worstExisting = scoredBaseCouncilors[scoredBaseCouncilors.length - 1]?.score.value;
+  const bestOrg = scoredOrgs[0]?.score.value;
+
+  return {
+    key: "councilors",
+    tab: (
+      <>
+        Councilors ({worstExisting?.toFixed(0)} vs. {bestAvailable?.toFixed(0)})) / Orgs ({bestOrg?.toFixed(2)})
+      </>
+    ),
+    content: (
+      <CouncilorsComponent
+        {...{
+          analysis,
+          weights,
+          setWeights,
+          scoredModifiedCouncilors,
+          scoredAvailableCouncilors,
+          scoredBaseCouncilors,
+          scoredOrgs,
+        }}
+      />
+    ),
+  };
+}
+
+function CouncilorsComponent({
+  analysis,
+  weights,
+  setWeights,
+  scoredModifiedCouncilors,
+  scoredAvailableCouncilors,
+  scoredBaseCouncilors,
+  scoredOrgs,
+}: {
+  analysis: Analysis;
+  weights: ScoringWeights;
+  setWeights: (weights: ScoringWeights) => void;
+  scoredModifiedCouncilors: (Analysis["playerCouncilors"][number] & { score: ScoreResult })[];
+  scoredAvailableCouncilors: (Analysis["playerAvailableCouncilors"][number] & { score: ScoreResult })[];
+  scoredBaseCouncilors: (Analysis["playerCouncilors"][number] & { score: ScoreResult })[];
+  scoredOrgs: (Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult })[];
+}) {
+  const { playerMissionCounts } = analysis;
 
   function currentHighlightMissionClassName(missionName: MissionDataName) {
     // if we have exactly 2, show yellow BG, if we have 1, show red, otherwise no change to bg
@@ -170,18 +231,16 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader hasOrgs />
               <TableBody>
-                {scoreAndSort(analysis.playerCouncilors, weights, playerMissionCounts, getModifiedCouncilorScore).map(
-                  (councilor) => (
-                    <CouncilorTableRow
-                      key={councilor.id}
-                      councilor={councilor}
-                      stats={councilor.effectsWithOrgsAndAugments}
-                      label={councilor.displayName!}
-                      hasOrgs
-                      highlightMissionClassName={currentHighlightMissionClassName}
-                    />
-                  )
-                )}
+                {scoredModifiedCouncilors.map((councilor) => (
+                  <CouncilorTableRow
+                    key={councilor.id}
+                    councilor={councilor}
+                    stats={councilor.effectsWithOrgsAndAugments}
+                    label={councilor.displayName!}
+                    hasOrgs
+                    highlightMissionClassName={currentHighlightMissionClassName}
+                  />
+                ))}
               </TableBody>
             </Table>
           </AccordionContent>
@@ -192,12 +251,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader />
               <TableBody>
-                {scoreAndSort(
-                  analysis.playerAvailableCouncilors,
-                  weights,
-                  playerMissionCounts,
-                  getBaseCouncilorScore
-                ).map((councilor) => (
+                {scoredAvailableCouncilors.map((councilor) => (
                   <CouncilorTableRow
                     key={councilor.id}
                     councilor={councilor}
@@ -213,17 +267,15 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <CouncilorTableHeader />
               <TableBody>
-                {scoreAndSort(analysis.playerCouncilors, weights, playerMissionCounts, getBaseCouncilorScore).map(
-                  (councilor) => (
-                    <CouncilorTableRow
-                      key={`${councilor.id}-base`}
-                      councilor={councilor}
-                      stats={councilor.effectsBaseAndUnaugmentedTraits}
-                      label={`${councilor.displayName}`}
-                      highlightMissionClassName={currentHighlightMissionClassName}
-                    />
-                  )
-                )}
+                {scoredBaseCouncilors.map((councilor) => (
+                  <CouncilorTableRow
+                    key={`${councilor.id}-base`}
+                    councilor={councilor}
+                    stats={councilor.effectsBaseAndUnaugmentedTraits}
+                    label={`${councilor.displayName}`}
+                    highlightMissionClassName={currentHighlightMissionClassName}
+                  />
+                ))}
               </TableBody>
             </Table>
           </AccordionContent>
@@ -243,14 +295,7 @@ function CouncilorsComponent({ analysis }: { analysis: Analysis }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {scoreAndSort(
-                  analysis.playerAvailableOrgs
-                    .map((i) => ({ type: "available", ...i }))
-                    .concat(analysis.playerUnassignedOrgs.map((i) => ({ type: "unassigned", ...i }))),
-                  weights,
-                  playerMissionCounts,
-                  getOrganizationScore
-                ).map((org) => (
+                {scoredOrgs.map((org) => (
                   <TableRow key={org.id}>
                     <TableCell>{org.displayName}</TableCell>
                     <TableCell>
