@@ -276,7 +276,9 @@ export function ScoringWeightsDialog({
                       <>
                         XP Modifier{" "}
                         <InfoTooltip>
-                          ie. -50 means that Quick Learner (a -10% XP modifier) would be worth 5 points
+                          Assuming 4 XP per mission and 24 missions/year, this means a Quick Learner councilor would
+                          gain about 1 extra level every ~2 years, so <code>-50</code> makes Quick Learner worth about 5
+                          points over a ~10-year period (and Striver worth 10 points over the same period).
                         </InfoTooltip>
                       </>
                     }
@@ -657,6 +659,105 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
 
     orgTierExponent: 0.95, // slight priority to higher tiers since you don't have unlimited org slots
     extraWeightForMissingMissions: 1, // extra weight to get missions you don't have yet
+    extraWeightForSingleMissions: 0.5, // extra weight to get missions you only have one of
+  },
+  "Preconfigured: Early Game": {
+    // bunch of guesses here - emphasis on income and persuasion/command for early game
+    persuasion: 1.5,
+    command: 1,
+    investigation: 0.7,
+    espionage: 0.7,
+    administration: 1,
+    science: 0.7,
+    security: 0.3,
+    xpModifier: -75, // if we can get one of these early, that'd be great
+
+    incomeBoost_month: 1,
+    incomeMoney_month: 1 / 20,
+    incomeInfluence_month: 1 / 10,
+    incomeOps_month: 1 / 5,
+    incomeMissionControl: 1,
+    incomeResearch_month: 1 / 200,
+    projectCapacityGranted: 0.3,
+
+    costMoney: -1 / 300,
+    costInfluence: -1 / 20,
+    costOps: -1 / 20,
+    costBoost: -1 / 5,
+
+    // Priority bonuses (moderate value for most)
+    economyBonus: 10,
+    welfareBonus: 10,
+    environmentBonus: 10,
+    knowledgeBonus: 10,
+    governmentBonus: 10,
+    unityBonus: 10,
+    militaryBonus: 10,
+    oppressionBonus: 10,
+    spoilsBonus: 20,
+    spaceDevBonus: 3, // funding
+    spaceflightBonus: 7,
+    MCBonus: 7,
+    miningBonus: 1,
+
+    // Tech bonuses - going a bit higher here since we won't have habs online yet
+    techBonuses: {
+      Energy: 15,
+      InformationScience: 15,
+      LifeScience: 15,
+      Materials: 15,
+      MilitaryScience: 15,
+      SocialScience: 15,
+      SpaceScience: 15,
+    },
+
+    missions: {
+      // Missions (weighted by utility/frequency of use by ClaudeSonnet45)
+      // Advise: 2.0,
+      // Assassinate: 2.5,
+      // AssaultAlienAsset: 2.0,
+      // AssumeControl: 3.0,
+      // BuildFacility: 1.5,
+      // Contact: 1.0,
+      // ControlSpaceAsset: 2.5,
+      // Coup: 2.5,
+      // Crackdown: 1.5,
+      // DefendInterests: 2.0,
+      // Deorbit: 1.0,
+      // Detain: 2.0,
+      // DetectCouncilActivity: 1.5,
+      // Extract: 2.5,
+      // GainInfluence: 2.5,
+      // GoToGround: 0.5,
+      // HostileTakeover: 2.0,
+      // Inspire: 2.0,
+      // InvestigateAlienActivity: 1.5,
+      // InvestigateCouncilor: 1.5,
+      // Orbit: 1.0,
+      // Propaganda: 1.5,
+      // Protect: 2.0,
+      // Purge: 1.5,
+      // SabotageFacilities: 2.0,
+      // SabotageHabModule: 1.5,
+      // SabotageProject: 2.0,
+      // SeizeSpaceAsset: 2.0,
+      // SetNationalPolicy: 2.5,
+      // Stabilize: 2.0,
+      // StealProject: 2.5,
+      // Turn: 3.0,
+      // Unrest: 1.5,
+
+      // from my original scoring system
+      Inspire: 10, // rare
+      Coup: 2, // bit rare
+      AssaultAlienAsset: 2, // bit rare
+      // public campaign and control nation are critical early game
+      GainInfluence: 3,
+      Propaganda: 3,
+    },
+
+    orgTierExponent: 1, // not using up all slots yet, so equal weighting
+    extraWeightForMissingMissions: 1.5, // extra weight to get missions you don't have yet
     extraWeightForSingleMissions: 0.5, // extra weight to get missions you only have one of
   },
 };
