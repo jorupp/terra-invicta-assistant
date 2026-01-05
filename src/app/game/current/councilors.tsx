@@ -353,55 +353,56 @@ interface ScoringWeights {
   missions?: Record<MissionDataName, number>;
 }
 
+// initial defaults based on my old scoring system for mid/late game
 const defaultScoringWeights: ScoringWeights = {
-  // Councilor attributes (typically valued 1-3 per point)
-  persuasion: 1.5,
-  command: 1.5,
-  investigation: 1.5,
-  espionage: 1.5,
-  administration: 1.5,
-  science: 2.0,
-  security: 1.2,
+  // Councilor attributes - based on my old scoring system
+  persuasion: 1,
+  command: 1,
+  investigation: 0.7,
+  espionage: 1.7,
+  administration: 0.3,
+  science: 0.7,
+  security: 0.3,
 
   // Monthly income (valued highly as these compound over time)
-  incomeBoost_month: 2.0,
-  incomeMoney_month: 0.5,
-  incomeInfluence_month: 1.5,
-  incomeOps_month: 1.0,
-  incomeMissionControl: 3.0,
-  incomeResearch_month: 1.5,
-  projectCapacityGranted: 5.0,
+  incomeBoost_month: 0.15, // probably should be higher early-game
+  incomeMoney_month: 1 / 100,
+  incomeInfluence_month: 1 / 60,
+  incomeOps_month: 1 / 30,
+  incomeMissionControl: 0.1, // probably should be higher early-game
+  incomeResearch_month: 1 / 200,
+  projectCapacityGranted: 0.3,
 
-  // Purchase costs (negative weights since these are costs)
-  costMoney: -0.05,
-  costInfluence: -0.2,
-  costOps: -0.1,
-  costBoost: -0.3,
+  // IMHO, purchase costs are pretty trivial past early-game
+  costMoney: 0,
+  costInfluence: 0,
+  costOps: 0,
+  costBoost: 0,
 
   // Priority bonuses (moderate value for most)
-  economyBonus: 1.0,
-  welfareBonus: 0.8,
-  environmentBonus: 0.8,
-  knowledgeBonus: 1.2,
-  governmentBonus: 1.0,
-  unityBonus: 1.0,
-  militaryBonus: 1.0,
-  oppressionBonus: 0.5,
-  spoilsBonus: 0.8,
-  spaceDevBonus: 1.5,
-  spaceflightBonus: 1.5,
-  MCBonus: 2.0,
-  miningBonus: 1.2,
+  economyBonus: 10,
+  welfareBonus: 10,
+  environmentBonus: 10,
+  knowledgeBonus: 10,
+  governmentBonus: 10,
+  unityBonus: 25,
+  militaryBonus: 10,
+  oppressionBonus: 10,
+  spoilsBonus: 40,
+  spaceDevBonus: 1, // funding
+  spaceflightBonus: 5, // boost maybe?
+  MCBonus: 5, // didn't have this in my old thing - no idea what it's for
+  miningBonus: 20,
 
-  // Tech bonuses (higher for critical tech categories)
+  // Tech bonuses - didn't have these before, will go with same as priority bonuses for now
   techBonuses: {
-    Energy: 1.0,
-    InformationScience: 1.2,
-    LifeScience: 0.9,
-    Materials: 1.1,
-    MilitaryScience: 1.0,
-    SocialScience: 0.8,
-    SpaceScience: 1.3,
+    Energy: 10,
+    InformationScience: 10,
+    LifeScience: 10,
+    Materials: 10,
+    MilitaryScience: 10,
+    SocialScience: 10,
+    SpaceScience: 10,
   },
 
   // Missions (weighted by utility/frequency of use)
