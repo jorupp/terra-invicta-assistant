@@ -153,7 +153,7 @@ export const MissionGotoGround = buildIcon("Mission: Gotoground", "https://wiki.
 export const MissionInvestigateAlienActivity = buildIcon("Mission: Investigatealienactivity", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f6/ICO_investigatealienactivity_on.png");
 export const MissionOrbit = buildIcon("Mission: Orbit", "https://wiki.hoodedhorse.com/images/mbhh_ti/8/80/ICO_orbit_on.png");
 export const MissionProtect = buildIcon("Mission: Protect", "https://wiki.hoodedhorse.com/images/mbhh_ti/2/28/ICO_protect_on.png");
-export const MissionSetNationalPolicy = buildIcon("Mission: Setnationalpolicy", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f9/ICO_setnationalpolicy_on.png");
+export const MissionSetNationalPolicy = buildIcon("Mission: Set National Policy", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f9/ICO_setnationalpolicy_on.png");
 export const MissionTransfer = buildIcon("Mission: Transfer", "https://wiki.hoodedhorse.com/images/mbhh_ti/6/6d/ICO_transfer_on.png");
 
 export const MissionIcons: { [key: string]: typeof MissionAssassinate } = {
