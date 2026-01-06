@@ -222,6 +222,7 @@ function CouncilorsComponent({
     }
   }
   const playerNationIds = new Set(analysis.playerNationIds);
+  const playerTraits = new Set(analysis.playerCouncilors.flatMap((i) => i.traitTemplateNames));
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <>
@@ -288,7 +289,7 @@ function CouncilorsComponent({
               <TableHeader>
                 <TableRow>
                   <TableHead>Org Name</TableHead>
-                  <TableHead>Nation</TableHead>
+                  <TableHead>Requirements</TableHead>
                   <TableHead>Tier</TableHead>
                   <TableHead>Purchase</TableHead>
                   <TableHead>Monthly</TableHead>
@@ -300,16 +301,38 @@ function CouncilorsComponent({
                   <TableRow key={org.id}>
                     <TableCell>{org.displayName}</TableCell>
                     <TableCell>
-                      {org.template?.requiresNationality ? (
-                        <span className="mr-1" title={org.homeNationName || ""}>
+                      {org.template?.requiresNationality && (
+                        <span className="mr-1" title={"Required Home Nation: " + org.homeNationName || ""}>
                           {playerNationIds.has(org.homeNationId || -1) ? (
-                            <PlusCircleIcon className="inline h-4 w-4 -mt-1" />
+                            <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
                           ) : (
                             <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
                           )}
                         </span>
-                      ) : (
-                        ""
+                      )}
+                      {org.template?.requiredOwnerTraits && (
+                        <span
+                          className="mr-1"
+                          title={"Required Traits: " + org.template.requiredOwnerTraits.join(", ")}
+                        >
+                          {org.template.requiredOwnerTraits.every((t) => playerTraits.has(t)) ? (
+                            <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
+                          ) : (
+                            <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
+                          )}
+                        </span>
+                      )}
+                      {org.template?.prohibitedOwnerTraits && (
+                        <span
+                          className="mr-1"
+                          title={"Prohibited Traits: " + org.template.prohibitedOwnerTraits.join(", ")}
+                        >
+                          {org.template.prohibitedOwnerTraits.every((t) => playerTraits.has(t)) ? (
+                            <PlusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
+                          ) : (
+                            <MinusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
+                          )}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -390,6 +413,8 @@ function CouncilorsComponent({
         <CollapsibleContent>
           <pre>{JSON.stringify(analysis.playerCouncilors, null, 2)}</pre>
           <pre>{JSON.stringify(analysis.playerAvailableCouncilors, null, 2)}</pre>
+          <pre>{JSON.stringify(analysis.playerAvailableOrgs, null, 2)}</pre>
+          <pre>{JSON.stringify(analysis.playerUnassignedOrgs, null, 2)}</pre>
         </CollapsibleContent>
       </Collapsible>
     </>

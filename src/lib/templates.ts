@@ -183,8 +183,8 @@ export interface Org {
   allowedOnMarket: boolean;
   homeRegionMapTemplateName: string;
   requiresNationality: boolean;
-  requiredOwnerTraits: string[];
-  prohibitedOwnerTraits: string[];
+  requiredOwnerTraits: TraitDataName[];
+  prohibitedOwnerTraits: TraitDataName[];
   affinities: string[];
   costInfluence: number;
   chanceIncomeMoney: number;
