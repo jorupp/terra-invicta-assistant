@@ -55,7 +55,7 @@ export const Science = buildIcon("Science", "https://wiki.hoodedhorse.com/images
 export const Security = buildIcon("Security", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/45/ICO_security.png");
 export const Loyalty = buildIcon("Loyalty", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/5e/ICO_loyalty.png");
 export const TechEnergy = buildIcon("Tech: Energy", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/af/Tech_energy_icon.png");
-export const TechMaterial = buildIcon("Tech: Material", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/dd/Tech_material_icon.png");
+export const TechMaterials = buildIcon("Tech: Material", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/dd/Tech_material_icon.png");
 export const TechSpace = buildIcon("Tech: Space", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/d1/Tech_space_icon.png");
 export const TechLife = buildIcon("Tech: Life", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/b5/Tech_life_icon.png");
 export const TechSocial = buildIcon("Tech: Social", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/dc/Tech_social_icon.png");
@@ -64,7 +64,7 @@ export const TechInformation = buildIcon("Tech: Information Science", "https://w
 export const TechXeno = buildIcon("Tech: Xeno", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/50/Tech_xeno_icon.png");
 export const TechIcons = {
   EnergyScience: TechEnergy,
-  MaterialScience: TechMaterial,
+  MaterialsScience: TechMaterials,
   SpaceScience: TechSpace,
   LifeScience: TechLife,
   SocialScience: TechSocial,
@@ -72,7 +72,7 @@ export const TechIcons = {
   InformationScience: TechInformation,
   XenoScience: TechXeno,
   Energy: TechEnergy,
-  Material: TechMaterial,
+  Materials: TechMaterials,
   Space: TechSpace,
   Life: TechLife,
   Social: TechSocial,
