@@ -60,7 +60,7 @@ export const TechSpace = buildIcon("Tech: Space", "https://wiki.hoodedhorse.com/
 export const TechLife = buildIcon("Tech: Life", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/b5/Tech_life_icon.png");
 export const TechSocial = buildIcon("Tech: Social", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/dc/Tech_social_icon.png");
 export const TechMilitary = buildIcon("Tech: Military", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/9c/Tech_military_icon.png");
-export const TechInfo = buildIcon("Tech: Info", "https://wiki.hoodedhorse.com/images/mbhh_ti/0/00/Tech_info_icon.png");
+export const TechInformation = buildIcon("Tech: Information Science", "https://wiki.hoodedhorse.com/images/mbhh_ti/0/00/Tech_info_icon.png");
 export const TechXeno = buildIcon("Tech: Xeno", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/50/Tech_xeno_icon.png");
 export const TechIcons = {
   EnergyScience: TechEnergy,
@@ -69,7 +69,7 @@ export const TechIcons = {
   LifeScience: TechLife,
   SocialScience: TechSocial,
   MilitaryScience: TechMilitary,
-  InfoScience: TechInfo,
+  InformationScience: TechInformation,
   XenoScience: TechXeno,
   Energy: TechEnergy,
   Material: TechMaterial,
@@ -77,7 +77,7 @@ export const TechIcons = {
   Life: TechLife,
   Social: TechSocial,
   Military: TechMilitary,
-  Info: TechInfo,
+  Information: TechInformation,
   Xeno: TechXeno,
 };
 export const PriorityEconomy = buildIcon("Priority: Economy", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/92/ICO_economy_priority.png");
@@ -146,7 +146,7 @@ export const MissionTurn = buildIcon("Mission: Turn Councilor", "https://wiki.ho
 export const MissionUnrest = buildIcon("Mission: Unrest", "https://wiki.hoodedhorse.com/images/mbhh_ti/2/2e/ICO_unrest_on.png");
 export const MissionAdvise = buildIcon("Mission: Advise", "https://wiki.hoodedhorse.com/images/mbhh_ti/2/2e/ICO_advise_on.png");
 export const MissionContact = buildIcon("Mission: Contact", "https://wiki.hoodedhorse.com/images/mbhh_ti/c/cd/ICO_contact_on.png");
-export const MissionDefendinterest = buildIcon("Mission: Defendinterest", "https://wiki.hoodedhorse.com/images/mbhh_ti/c/c2/ICO_defendinterest_on.png");
+export const MissionDefendInterests = buildIcon("Mission: Defend Interests", "https://wiki.hoodedhorse.com/images/mbhh_ti/c/c2/ICO_defendinterest_on.png");
 export const MissionDeorbit = buildIcon("Mission: Deorbit", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/17/ICO_deorbit_on.png");
 export const MissionDetectCouncilActivity = buildIcon("Mission: Detectcouncilactivity", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/ac/ICO_detectcouncilactivity_on.png");
 export const MissionGotoGround = buildIcon("Mission: Gotoground", "https://wiki.hoodedhorse.com/images/mbhh_ti/3/3a/ICO_gotoground_on.png");
@@ -180,7 +180,7 @@ export const MissionIcons: { [key: string]: typeof MissionAssassinate } = {
   Unrest: MissionUnrest,
   Advise: MissionAdvise,
   Contact: MissionContact,
-  Defendinterest: MissionDefendinterest,
+  DefendInterests: MissionDefendInterests,
   Deorbit: MissionDeorbit,
   DetectCouncilActivity: MissionDetectCouncilActivity,
   GotoGround: MissionGotoGround,
