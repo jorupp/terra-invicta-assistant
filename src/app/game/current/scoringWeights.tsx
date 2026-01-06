@@ -754,8 +754,8 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
       Inspire: 2, // rare - boost this manually if you're having trouble getting it
       Coup: 1.5, // bit rare
       AssaultAlienAsset: 1.5, // bit rare
-      // public campaign and control nation are critical early game
-      GainInfluence: 3,
+      // public campaign and control nation are critical early game, but control nation is _really_ common
+      GainInfluence: 0.2,
       Propaganda: 3,
     },
 
