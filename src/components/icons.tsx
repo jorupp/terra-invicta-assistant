@@ -91,7 +91,7 @@ export const PrioritySpoils = buildIcon("Priority: Spoils", "https://wiki.hooded
 export const PriorityMilitary = buildIcon("Priority: Military", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/a6/ICO_military_priority.png");
 export const PriorityFunding = buildIcon("Priority: Funding", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/52/ICO_funding_priority.png");
 export const PriorityMissionControl = buildIcon("Priority: Mission Control", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/46/ICO_missionControl_priority.png");
-export const PriorityBoost = buildIcon("Priority: Boost (TODO?)", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/17/ICO_boost.png");
+export const PriorityBoost = buildIcon("Priority: Boost/Space Program", "https://wiki.hoodedhorse.com/images/mbhh_ti/1/1e/ICO_launchFacilities_Priority.png");
 export const MiningBonus = buildIcon("Mining Bonus", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f7/ICO_core_res.png", true);
 
 export const FactionResist = buildIcon("Resist", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/d4/FAC_ResistCouncil_128.png");

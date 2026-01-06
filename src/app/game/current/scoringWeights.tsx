@@ -603,7 +603,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     oppressionBonus: 10,
     spoilsBonus: 40,
     spaceDevBonus: 1, // funding
-    spaceflightBonus: 5, // boost maybe?
+    spaceflightBonus: 5, // seems to be both "build boost" and "create space program"
     MCBonus: 5, // didn't have this in my old thing - no idea what it's for
     miningBonus: 20,
 
@@ -700,7 +700,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     oppressionBonus: 10,
     spoilsBonus: 20,
     spaceDevBonus: 3, // funding
-    spaceflightBonus: 7,
+    spaceflightBonus: 7, // seems to be both "build boost" and "create space program"
     MCBonus: 7,
     miningBonus: 1,
 
