@@ -39,6 +39,11 @@ export async function GET(request: NextRequest) {
       let lastModifiedTime = 0;
 
       for (const file of files) {
+        // Only process .gz and .json files
+        if (!file.endsWith(".gz") && !file.endsWith(".json")) {
+          continue;
+        }
+
         const fullPath = join(saveGameDir, file);
         try {
           const stats = await stat(fullPath);
@@ -60,6 +65,11 @@ export async function GET(request: NextRequest) {
 
     const watcher = watch(saveGameDir, { signal: abortController.signal }, async (eventType, filename) => {
       if (!filename) return;
+
+      // Only process .gz and .json files
+      if (!filename.endsWith(".gz") && !filename.endsWith(".json")) {
+        return;
+      }
 
       // Only process 'rename' events (which includes file creation)
       if (eventType === "rename") {
