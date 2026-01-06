@@ -302,7 +302,7 @@ function CouncilorsComponent({
                     <TableCell>{org.displayName}</TableCell>
                     <TableCell>
                       {org.template?.requiresNationality && (
-                        <span className="mr-1" title={"Required Home Nation: " + org.homeNationName || ""}>
+                        <span className="mr-1" title={`Required Home Nation: ${org.homeNationName || ""}`}>
                           {playerNationIds.has(org.homeNationId || -1) ? (
                             <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
                           ) : (

@@ -61,9 +61,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     defended: cp.defended,
     // TODO: can we get a CP cost somewhere?
   }));
-  const playerNationIds = new Set<number>(
-    controlPoints.filter((cp) => cp.factionId === playerFaction.id && cp.nationId).map((cp) => cp.nationId!)
-  );
 
   const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
 
@@ -457,6 +454,13 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     }
   );
   const playerCouncilors = councilors.filter((councilor) => playerFaction?.councilorIds.includes(councilor.id));
+  const playerNationIds = new Set<number>(
+    controlPoints
+      .filter((cp) => cp.factionId === playerFaction.id && cp.nationId)
+      .map((cp) => cp.nationId!)
+      .concat(playerCouncilors.map((c) => c.homeNationId).filter((id): id is number => !!id))
+  );
+
   const playerAvailableCouncilors = councilors.filter((councilor) =>
     playerFaction?.availableCouncilorIds.includes(councilor.id)
   );
