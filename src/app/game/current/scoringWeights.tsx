@@ -751,10 +751,9 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
       // Turn: 3.0,
       // Unrest: 1.5,
 
-      // from my original scoring system
-      Inspire: 10, // rare
-      Coup: 2, // bit rare
-      AssaultAlienAsset: 2, // bit rare
+      Inspire: 2, // rare - boost this manually if you're having trouble getting it
+      Coup: 1.5, // bit rare
+      AssaultAlienAsset: 1.5, // bit rare
       // public campaign and control nation are critical early game
       GainInfluence: 3,
       Propaganda: 3,
