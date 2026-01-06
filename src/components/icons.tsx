@@ -81,7 +81,7 @@ export const TechIcons = {
   Xeno: TechXeno,
 };
 export const PriorityEconomy = buildIcon("Priority: Economy", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/92/ICO_economy_priority.png");
-export const PriorityEnvironment = buildIcon("Priority: Environment", "https://wiki.hoodedhorse.com/images/mbhh_ti/8/8e/ICO_environment_priority.png");
+export const PriorityEnvironment = buildIcon("Priority: Environment", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/b0/ICO_environment_priority.png");
 export const PriorityWelfare = buildIcon("Priority: Welfare", "https://wiki.hoodedhorse.com/images/mbhh_ti/6/61/ICO_welfare_priority.png");
 export const PriorityKnowledge = buildIcon("Priority: Knowledge", "https://wiki.hoodedhorse.com/images/mbhh_ti/0/00/ICO_knowledge_priority.png");
 export const PriorityGovernment = buildIcon("Priority: Government", "https://wiki.hoodedhorse.com/images/mbhh_ti/e/e4/ICO_government_priority.png");
