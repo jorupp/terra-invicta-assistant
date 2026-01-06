@@ -69,8 +69,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
   const planets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceBodyState"];
   const sol = planets.find((i) => i.Value.templateName === "Sol")?.Key.value;
+  const earth = planets.find((i) => i.Value.templateName === "Earth")?.Key.value;
   if (!sol) {
     throw new Error("Sol planet data not found in save file.");
+  }
+  if (!earth) {
+    throw new Error("Earth planet data not found in save file.");
   }
   const orbitsById = new Map(
     saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"].map(({ Value: orbit }) => [
@@ -217,9 +221,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     }));
 
   const playerInterestedBodyIds = new Set<number>(
-    [...playerPlanetIds].concat(
-      planets.filter((i) => playerPlanetIds.has(i.Value.barycenter?.value ?? 0)).map((i) => i.Key.value)
-    )
+    [...playerPlanetIds]
+      .concat(planets.filter((i) => playerPlanetIds.has(i.Value.barycenter?.value ?? 0)).map((i) => i.Key.value))
+      .concat([earth])
   );
   const playerInterestedOrbitIds = new Set<number>(
     saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"]
