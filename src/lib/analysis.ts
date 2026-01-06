@@ -427,7 +427,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const councilorType = councilorTypesByDataName.get(councilor.typeTemplateName);
 
       const { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments } = computeCouncilorEffects(
-        { ...councilor.attributes, missionsGrantedNames: councilorType?.missionNames },
+        { ...councilor.attributes, missionsGrantedNames: councilorType?.missionNames, xp: councilor.XP },
         traitTemplates,
         councilorOrgs
       );

@@ -63,6 +63,7 @@ function CouncilorTableRow({
           Security={stats.Security}
           ApparentLoyalty={stats.ApparentLoyalty}
           xpModifier={stats.xpModifier}
+          xp={stats.xp}
           // TODO: is there a case where we should show this?
           // Loyalty={stats.Loyalty}
         />
@@ -484,6 +485,7 @@ function getScore(
   addScore("Science", org.Science, weights.science);
   addScore("Security", org.Security, weights.security);
   addScore("xpModifier", org.xpModifier, weights.xpModifier);
+  addScore("xpModifier", org.xp, weights.xp);
 
   // Monthly income/costs
   addScore("incomeBoost_month", org.incomeBoost_month, weights.incomeBoost_month);
