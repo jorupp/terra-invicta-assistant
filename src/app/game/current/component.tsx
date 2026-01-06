@@ -19,8 +19,21 @@ export default function CurrentGameComponent() {
       return;
     }
     (async () => {
-      const data = await loadAndAnalyzeFile(filename);
-      setAnalysis(data);
+      let attempts = 0;
+      while (true) {
+        try {
+          const data = await loadAndAnalyzeFile(filename);
+          setAnalysis(data);
+          return;
+        } catch (e) {
+          if (attempts >= 5) {
+            console.error("Failed to load and analyze file after multiple attempts", e);
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          attempts++;
+        }
+      }
     })();
   }, [filename]);
 
@@ -41,7 +54,8 @@ function RenderGameComponent({ analysis }: { analysis: Analysis }) {
   return (
     <div>
       <h2>
-        Game: {analysis.fileName} ({analysis.lastModified?.toLocaleString()})
+        Game: {analysis.fileName} ({analysis.lastModified?.toLocaleString()}) - Game date:{" "}
+        {analysis.gameCurrentDateTimeFormatted.split(" ")[0]}
       </h2>
       <h3>Faction: {analysis.playerFaction.displayName}</h3>
 

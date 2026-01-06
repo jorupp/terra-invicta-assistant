@@ -471,6 +471,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   return {
     fileName,
     lastModified,
+    gameCurrentDateTimeFormatted: formatDateTime(time.currentDateTime),
     player,
     playerFaction,
     playerHabs,
