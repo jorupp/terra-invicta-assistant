@@ -119,14 +119,22 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {techBonuses.length > 0 && <>
       {techBonuses.map(({category, bonus}, index) => {
         const TechIcon = TechIcons[category as keyof typeof TechIcons];
-        return TechIcon ? <span key={index}>{pct(bonus)} <TechIcon /> </span> : null;
+        if (!TechIcon) {
+          console.log("Unknown tech category:", category);
+          return null;
+        }
+        return <span key={index}>{pct(bonus)} <TechIcon /> </span>;
       })}
     </>}
 
     {missionsGrantedNames.length > 0 && <>
       {missionsGrantedNames.map((mission, index) => {
         const MissionIcon = MissionIcons[mission as keyof typeof MissionIcons];
-        return MissionIcon ? <span key={index}><MissionIcon className={props.highlightMissionClassName?.(mission)} />{spacer}</span> : null;
+        if (!MissionIcon) {
+          console.log("Unknown mission name:", mission);
+          return null;
+        }
+        return <span key={index}><MissionIcon className={props.highlightMissionClassName?.(mission)} />{spacer}</span>;
       })}
     </>}
   </>;
