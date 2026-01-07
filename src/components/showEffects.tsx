@@ -5,6 +5,7 @@ import { MissionDataName, Org, TechCategory, Trait } from "@/lib/templates";
 export type ShowEffectsProps = Partial<
   { xpModifier: number, xp: number } &
   Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
+  { councilorTechBonus?: Array<{ category: TechCategory; bonus: number }> } &
   CouncilorAttributes &
     Pick<
       TIOrgState,
@@ -78,6 +79,7 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const priorityMcBonus = props.MCBonus || 0;
   const priorityBoostBonus = props.spaceflightBonus || 0;
   const miningBonus = props.miningBonus || 0;
+  const councilorTechBonus = props.councilorTechBonus || [];
   const techBonuses = props.techBonuses || [];
   const missionsGrantedNames = props.missionsGrantedNames || [];
   const spacer = <span className="mx-0.5"> </span>;
@@ -117,6 +119,17 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {priorityMcBonus !== 0 && <><PriorityMissionControl/> {pct(priorityMcBonus)}{spacer}</>}
     {miningBonus !== 0 && <><MiningBonus/> {pct(miningBonus)}{spacer}</>}
 
+    {councilorTechBonus.length > 0 && <>
+      {councilorTechBonus.map(({category, bonus}, index) => {
+        const TechIcon = TechIcons[category as keyof typeof TechIcons];
+        if (!TechIcon) {
+          console.log("Unknown tech category:", category);
+          return null;
+        }
+        return <span key={index}>{pct(bonus)} <TechIcon className="border-green-500 border" /> </span>;
+      })}
+    </>}
+
     {techBonuses.length > 0 && <>
       {techBonuses.map(({category, bonus}, index) => {
         const TechIcon = TechIcons[category as keyof typeof TechIcons];
@@ -145,7 +158,15 @@ export function combineEffects(p1: ShowEffectsProps, p2: ShowEffectsProps): Show
   const result: ShowEffectsProps = {...p1};
   for (const key in p2) {
     const k = key as keyof ShowEffectsProps;
-    if (k === 'techBonuses') {
+    if (k === 'councilorTechBonus') {
+      result.councilorTechBonus = [...[...(result.councilorTechBonus || []), ...(p2.councilorTechBonus || [])].reduce((acc, curr) => {
+        const key = curr.category;
+        const existing = acc.get(key) || 0;
+        acc.set(key, existing + curr.bonus);
+        return acc;
+      }, new Map<TechCategory, number>()).entries().map(([category, bonus]) => ({category, bonus}) )];
+    }
+    else if (k === 'techBonuses') {
       result.techBonuses = [...[...(result.techBonuses || []), ...(p2.techBonuses || [])].reduce((acc, curr) => {
         const key = curr.category;
         const existing = acc.get(key) || 0;

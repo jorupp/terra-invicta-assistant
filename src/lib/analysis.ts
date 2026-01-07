@@ -370,7 +370,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             incomeBoost_month: trait?.incomeBoost,
             incomeInfluence_month: trait?.incomeInfluence,
             incomeResearch_month: trait?.incomeResearch,
-            techBonuses: trait?.techBonuses,
+            councilorTechBonus: trait?.techBonuses,
             missionsGrantedNames: trait?.missionsGrantedNames,
             xpModifier: trait?.xpModifier,
           });

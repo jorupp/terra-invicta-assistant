@@ -102,7 +102,7 @@ function CouncilorTableRow({
         />
       </TableCell>
       <TableCell>
-        <ShowEffects techBonuses={stats.techBonuses} />
+        <ShowEffects councilorTechBonus={stats.councilorTechBonus} techBonuses={stats.techBonuses} />
       </TableCell>
       <TableCell>
         <ShowEffects
@@ -542,7 +542,15 @@ function getScore(
   addScore("MCBonus", org.MCBonus, weights.MCBonus);
   addScore("miningBonus", org.miningBonus, weights.miningBonus);
 
-  // Tech bonuses
+  // Tech bonuses from councilor/traits
+  if (weights.councilorTechBonus && org?.councilorTechBonus) {
+    for (const { category, bonus } of org.councilorTechBonus) {
+      const weight = weights.councilorTechBonus[category];
+      addScore(`councilorTechBonus[${category}]`, bonus, weight);
+    }
+  }
+
+  // Tech bonuses from orgs
   if (weights.techBonuses && org?.techBonuses) {
     for (const { category, bonus } of org.techBonuses) {
       const weight = weights.techBonuses[category];

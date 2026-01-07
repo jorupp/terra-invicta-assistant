@@ -148,6 +148,13 @@ export function ScoringWeightsDialog({
     setEditedWeights({ ...editedWeights, [key]: value });
   };
 
+  const updateCouncilorTechBonus = (category: TechCategory, value: number) => {
+    setEditedWeights({
+      ...editedWeights,
+      councilorTechBonus: { ...editedWeights.councilorTechBonus, [category]: value },
+    });
+  };
+
   const updateTechBonus = (category: TechCategory, value: number) => {
     setEditedWeights({
       ...editedWeights,
@@ -433,9 +440,32 @@ export function ScoringWeightsDialog({
                 </div>
               </div>
 
-              {/* Tech Bonuses */}
+              {/* Tech Bonuses (from Councilor/Traits) */}
               <div>
-                <h3 className="font-semibold mb-1.5 text-sm">Tech Bonuses</h3>
+                <h3 className="font-semibold mb-1.5 text-sm">Councilor Tech Bonuses</h3>
+                <div className="space-y-1">
+                  {[
+                    "Energy",
+                    "InformationScience",
+                    "LifeScience",
+                    "Materials",
+                    "MilitaryScience",
+                    "SocialScience",
+                    "SpaceScience",
+                  ].map((cat) => (
+                    <NumberInput
+                      key={cat}
+                      label={cat}
+                      value={editedWeights.councilorTechBonus?.[cat as TechCategory]}
+                      onChange={(v) => updateCouncilorTechBonus(cat as TechCategory, v)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Tech Bonuses (from Orgs) */}
+              <div>
+                <h3 className="font-semibold mb-1.5 text-sm">Org Tech Bonuses</h3>
                 <div className="space-y-1">
                   {[
                     "Energy",
@@ -553,6 +583,7 @@ export interface ScoringWeights {
   miningBonus?: number;
 
   // Tech bonuses (weight per tech category)
+  councilorTechBonus?: Partial<Record<TechCategory, number>>;
   techBonuses?: Partial<Record<TechCategory, number>>;
 
   // Missions (weight per mission name)
@@ -607,7 +638,18 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     MCBonus: 5, // didn't have this in my old thing - no idea what it's for
     miningBonus: 20,
 
-    // Tech bonuses - didn't have these before, will go with same as priority bonuses for now
+    // Councilor Tech bonuses - from traits and orgs are easier to get them
+    councilorTechBonus: {
+      Energy: 15,
+      InformationScience: 15,
+      LifeScience: 15,
+      Materials: 15,
+      MilitaryScience: 15,
+      SocialScience: 15,
+      SpaceScience: 15,
+    },
+
+    // Org Tech bonuses - from orgs
     techBonuses: {
       Energy: 10,
       InformationScience: 10,
@@ -704,7 +746,18 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     MCBonus: 7,
     miningBonus: 1,
 
-    // Tech bonuses - going a bit higher here since we won't have habs online yet
+    // Councilor Tech bonuses - from traits (going a bit higher here since we won't have habs online yet) and we should keep these a while
+    councilorTechBonus: {
+      Energy: 20,
+      InformationScience: 20,
+      LifeScience: 20,
+      Materials: 20,
+      MilitaryScience: 20,
+      SocialScience: 20,
+      SpaceScience: 20,
+    },
+
+    // Org Tech bonuses - from orgs (going a bit higher here since we won't have habs online yet)
     techBonuses: {
       Energy: 15,
       InformationScience: 15,
