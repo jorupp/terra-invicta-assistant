@@ -289,7 +289,7 @@ function CouncilorsComponent({
                           title={"Prohibited Traits: " + org.template.prohibitedOwnerTraits.join(", ")}
                         >
                           {org.template.prohibitedOwnerTraits.every((t) => playerTraits.has(t)) ? (
-                            <PlusCircleIcon className="inline h-4 w-4 stroke-orange-500 -mt-1" />
+                            <PlusCircleIcon className="inline h-4 w-4 stroke-blue-600 -mt-1" />
                           ) : (
                             <MinusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
                           )}
