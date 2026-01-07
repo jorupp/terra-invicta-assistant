@@ -1,6 +1,7 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
 import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar, UnknownIcon } from "./icons";
 import { MissionDataName, Org, TechCategory, Trait } from "@/lib/templates";
+import { twMerge } from "tailwind-merge";
 
 export type ShowEffectsProps = Partial<
   { xpModifier: number, xp: number } &
@@ -103,8 +104,9 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {security !== 0 && <><Security/> {security}{spacer}</>}
     {apparentLoyalty !== 0 && <><Loyalty/> {apparentLoyalty}{spacer}</>}
     {loyalty !== 0 && <><Loyalty/> {loyalty}{spacer}</>}
-    {xpModifier !== 0 && <>{pct(xpModifier)} XP{spacer}</>}
-    {xp !== 0 && <>{xp} XP{spacer}</>}
+    {xpModifier !== 0 && <>{pct(xpModifier)} XP {spacer}</>}
+    {xp !== 0 && <span className={twMerge((1 + (xpModifier || 0)) * 20 <= xp ? 'bg-green-300 rounded pl-1' : null)}>{xp} XP{spacer}</span>}
+
     {priorityEconomyBonus !== 0 && <><PriorityEconomy/> {pct(priorityEconomyBonus)}{spacer}</>}
     {priorityWelfareBonus !== 0 && <><PriorityWelfare/> {pct(priorityWelfareBonus)}{spacer}</>}
     {priorityEnvironmentBonus !== 0 && <><PriorityEnvironment/> {pct(priorityEnvironmentBonus)}{spacer}</>}
