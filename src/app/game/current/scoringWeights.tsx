@@ -594,9 +594,102 @@ export interface ScoringWeights {
   extraWeightForSingleMissions: number;
 }
 
+const zeroWeights: ScoringWeights = {
+  persuasion: 0,
+  command: 0,
+  investigation: 0,
+  espionage: 0,
+  administration: 0,
+  science: 0,
+  security: 0,
+  xpModifier: 0,
+  xp: 0,
+  incomeBoost_month: 0,
+  incomeMoney_month: 0,
+  incomeInfluence_month: 0,
+  incomeOps_month: 0,
+  incomeMissionControl: 0,
+  incomeResearch_month: 0,
+  projectCapacityGranted: 0,
+  costMoney: 0,
+  costInfluence: 0,
+  costOps: 0,
+  costBoost: 0,
+  economyBonus: 0,
+  welfareBonus: 0,
+  environmentBonus: 0,
+  knowledgeBonus: 0,
+  governmentBonus: 0,
+  unityBonus: 0,
+  militaryBonus: 0,
+  oppressionBonus: 0,
+  spoilsBonus: 0,
+  spaceDevBonus: 0,
+  spaceflightBonus: 0,
+  MCBonus: 0,
+  miningBonus: 0,
+  councilorTechBonus: {
+    Energy: 0,
+    InformationScience: 0,
+    LifeScience: 0,
+    Materials: 0,
+    MilitaryScience: 0,
+    SocialScience: 0,
+    SpaceScience: 0,
+  },
+  techBonuses: {
+    Energy: 0,
+    InformationScience: 0,
+    LifeScience: 0,
+    Materials: 0,
+    MilitaryScience: 0,
+    SocialScience: 0,
+    SpaceScience: 0,
+  },
+  missions: {
+    Advise: 0,
+    Assassinate: 0,
+    AssaultAlienAsset: 0,
+    AssumeControl: 0,
+    BuildFacility: 0,
+    Contact: 0,
+    ControlSpaceAsset: 0,
+    Coup: 0,
+    Crackdown: 0,
+    DefendInterests: 0,
+    Deorbit: 0,
+    Detain: 0,
+    DetectCouncilActivity: 0,
+    Extract: 0,
+    GainInfluence: 0,
+    GoToGround: 0,
+    HostileTakeover: 0,
+    Inspire: 0,
+    InvestigateAlienActivity: 0,
+    InvestigateCouncilor: 0,
+    Orbit: 0,
+    Propaganda: 0,
+    Protect: 0,
+    Purge: 0,
+    SabotageFacilities: 0,
+    SabotageHabModule: 0,
+    SabotageProject: 0,
+    SeizeSpaceAsset: 0,
+    SetNationalPolicy: 0,
+    Stabilize: 0,
+    StealProject: 0,
+    Turn: 0,
+    Unrest: 0,
+  },
+  orgTierExponent: 1,
+  extraWeightForMissingMissions: 0,
+  extraWeightForSingleMissions: 0,
+};
+
 // initial defaults based on my old scoring system for mid/late game
 export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
   "Preconfigured: Default": {
+    ...zeroWeights,
     // Councilor attributes - based on my old scoring system
     persuasion: 1,
     command: 1,
@@ -640,6 +733,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
 
     // Councilor Tech bonuses - from traits and orgs are easier to get them
     councilorTechBonus: {
+      ...zeroWeights.councilorTechBonus,
       Energy: 15,
       InformationScience: 15,
       LifeScience: 15,
@@ -651,6 +745,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
 
     // Org Tech bonuses - from orgs
     techBonuses: {
+      ...zeroWeights.techBonuses,
       Energy: 10,
       InformationScience: 10,
       LifeScience: 10,
@@ -661,6 +756,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     },
 
     missions: {
+      ...zeroWeights.missions,
       // Missions (weighted by utility/frequency of use by ClaudeSonnet45)
       // Advise: 2.0,
       // Assassinate: 2.5,
@@ -707,6 +803,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     extraWeightForSingleMissions: 0.5, // extra weight to get missions you only have one of
   },
   "Preconfigured: Early Game": {
+    ...zeroWeights,
     // bunch of guesses here - emphasis on income and persuasion/command for early game
     persuasion: 1.5,
     command: 1,
@@ -748,6 +845,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
 
     // Councilor Tech bonuses - from traits (going a bit higher here since we won't have habs online yet) and we should keep these a while
     councilorTechBonus: {
+      ...zeroWeights.councilorTechBonus,
       Energy: 20,
       InformationScience: 20,
       LifeScience: 20,
@@ -759,6 +857,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
 
     // Org Tech bonuses - from orgs (going a bit higher here since we won't have habs online yet)
     techBonuses: {
+      ...zeroWeights.techBonuses,
       Energy: 15,
       InformationScience: 15,
       LifeScience: 15,
@@ -769,6 +868,7 @@ export const prebuiltScoringWeights: Record<string, ScoringWeights> = {
     },
 
     missions: {
+      ...zeroWeights.missions,
       // Missions (weighted by utility/frequency of use by ClaudeSonnet45)
       // Advise: 2.0,
       // Assassinate: 2.5,
