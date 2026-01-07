@@ -1,3 +1,4 @@
+import { Ban } from "lucide-react";
 import { ComponentProps } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -29,6 +30,11 @@ const buildIcon = (name: string, src: string, showLightBg?: boolean) => {
   Icon.DisplayName = name;
   return Icon;
 };
+
+export const UnknownIcon = (props: ComponentProps<"span">) => 
+  <span className={twMerge('inline-block rounded radius-4 p-0.5 -m-0.5 -my-1.5', props.className)}>
+    <Ban className="h-4 w-4 stroke-destructive" />
+  </span>;
 
 export const Currency = buildIcon("Money", "https://wiki.hoodedhorse.com/images/mbhh_ti/8/80/ICO_currency.png");
 export const Influence = buildIcon("Influence", "https://wiki.hoodedhorse.com/images/mbhh_ti/3/35/ICO_influence.png");

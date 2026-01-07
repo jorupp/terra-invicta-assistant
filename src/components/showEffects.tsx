@@ -1,5 +1,5 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
-import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar } from "./icons";
+import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar, UnknownIcon } from "./icons";
 import { MissionDataName, Org, TechCategory, Trait } from "@/lib/templates";
 
 export type ShowEffectsProps = Partial<
@@ -124,9 +124,9 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
         const TechIcon = TechIcons[category as keyof typeof TechIcons];
         if (!TechIcon) {
           console.log("Unknown tech category:", category);
-          return null;
+          return <span key={index}>{pct(bonus)} <UnknownIcon className="border-green-500 border" title={`Unknown: ${category}`} />{spacer}</span>;
         }
-        return <span key={index}>{pct(bonus)} <TechIcon className="border-green-500 border" /> </span>;
+        return <span key={index}>{pct(bonus)} <TechIcon className="border-green-500 border" />{spacer}</span>;
       })}
     </>}
 
@@ -135,9 +135,9 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
         const TechIcon = TechIcons[category as keyof typeof TechIcons];
         if (!TechIcon) {
           console.log("Unknown tech category:", category);
-          return null;
+          return <span key={index}>{pct(bonus)} <UnknownIcon title={`Unknown: ${category}`} />{spacer}</span>;
         }
-        return <span key={index}>{pct(bonus)} <TechIcon /> </span>;
+        return <span key={index}>{pct(bonus)} <TechIcon />{spacer}</span>;
       })}
     </>}
 
@@ -146,7 +146,7 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
         const MissionIcon = MissionIcons[mission as keyof typeof MissionIcons];
         if (!MissionIcon) {
           console.log("Unknown mission name:", mission);
-          return null;
+          return <span key={index}><UnknownIcon title={`Unknown: ${mission}`} />{spacer}</span>;
         }
         return <span key={index}><MissionIcon className={props.highlightMissionClassName?.(mission)} />{spacer}</span>;
       })}
