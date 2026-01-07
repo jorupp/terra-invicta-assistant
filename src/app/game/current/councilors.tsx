@@ -226,9 +226,9 @@ function CouncilorsComponent({
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <>
-      <Accordion type="single" collapsible defaultValue="councilors">
-        <AccordionItem value="councilors">
-          <AccordionTrigger>Councilors</AccordionTrigger>
+      <Accordion type="single" collapsible defaultValue="existing">
+        <AccordionItem value="existing">
+          <AccordionTrigger>Manage Existing Council</AccordionTrigger>
           <AccordionContent>
             <Table>
               <CouncilorTableHeader hasOrgs />
@@ -245,46 +245,7 @@ function CouncilorsComponent({
                 ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="available-councilors">
-          <AccordionTrigger>Available Councilors</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <CouncilorTableHeader />
-              <TableBody>
-                {scoredAvailableCouncilors.map((councilor) => (
-                  <CouncilorTableRow
-                    key={councilor.id}
-                    councilor={councilor}
-                    stats={councilor.effectsBaseAndUnaugmentedTraits}
-                    label={councilor.displayName!}
-                    highlightMissionClassName={availableHighlightMissionClassName}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-
-            <h3>Unmodified Active Councilors:</h3>
-            <Table>
-              <CouncilorTableHeader />
-              <TableBody>
-                {scoredBaseCouncilors.map((councilor) => (
-                  <CouncilorTableRow
-                    key={`${councilor.id}-base`}
-                    councilor={councilor}
-                    stats={councilor.effectsBaseAndUnaugmentedTraits}
-                    label={`${councilor.displayName}`}
-                    highlightMissionClassName={currentHighlightMissionClassName}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="available-organizations">
-          <AccordionTrigger>Available Organizations</AccordionTrigger>
-          <AccordionContent>
+            <h3>Available Organizations:</h3>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -395,6 +356,42 @@ function CouncilorsComponent({
                       </Tooltip>
                     </TableCell>
                   </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="new-councilors">
+          <AccordionTrigger>Find New Councilors</AccordionTrigger>
+          <AccordionContent>
+            <h3>Available Councilors:</h3>
+            <Table>
+              <CouncilorTableHeader />
+              <TableBody>
+                {scoredAvailableCouncilors.map((councilor) => (
+                  <CouncilorTableRow
+                    key={councilor.id}
+                    councilor={councilor}
+                    stats={councilor.effectsBaseAndUnaugmentedTraits}
+                    label={councilor.displayName!}
+                    highlightMissionClassName={availableHighlightMissionClassName}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+
+            <h3>Unmodified Active Councilors:</h3>
+            <Table>
+              <CouncilorTableHeader />
+              <TableBody>
+                {scoredBaseCouncilors.map((councilor) => (
+                  <CouncilorTableRow
+                    key={`${councilor.id}-base`}
+                    councilor={councilor}
+                    stats={councilor.effectsBaseAndUnaugmentedTraits}
+                    label={`${councilor.displayName}`}
+                    highlightMissionClassName={currentHighlightMissionClassName}
+                  />
                 ))}
               </TableBody>
             </Table>
