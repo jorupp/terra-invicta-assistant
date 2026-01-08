@@ -28,7 +28,6 @@ export function getFleetsUi(analysis: Analysis) {
       );
       const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
       const surv = firstFleets.filter((f) => f.operation === "AlienEarthSurveillanceOperation" && !f.arrivalTime);
-      console.log(surv);
       const survInfo = surv ? (
         <>
           ,{" "}
