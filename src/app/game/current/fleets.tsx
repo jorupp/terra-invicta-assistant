@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
+import { Fragment } from "react/jsx-runtime";
 
 export function getFleetsUi(analysis: Analysis) {
   const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
@@ -59,8 +60,8 @@ export function getFleetsUi(analysis: Analysis) {
         {label.length > 0 ? (
           <>
             (
-            {label.map((i) => (
-              <>{i}</>
+            {label.map((i, ix) => (
+              <Fragment key={ix}>{i}</Fragment>
             ))}
             )
           </>
