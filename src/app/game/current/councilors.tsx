@@ -11,6 +11,7 @@ import { Analysis } from "@/lib/analysis";
 import { MissionDataName } from "@/lib/template-types-generated";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 import { defaultScoringWeights, loadWeightsFromStorage, ScoringWeights, ScoringWeightsDialog } from "./scoringWeights";
+import { Administration } from "@/components/icons";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
@@ -282,17 +283,17 @@ export function getCouncilorsUi(analysis: Analysis) {
     .map((org) => ({ ...org, type: "used" }));
   const scoredUsedOrgs = scoreAndSort(usedOrgs, weights, playerMissionCounts, getOrganizationScore);
 
-  const bestAvailable = scoredAvailableCouncilors[0]?.score.value;
-  const worstExisting = scoredBaseCouncilors[scoredBaseCouncilors.length - 1]?.score.value;
-  const bestOrg = scoredOrgs[0]?.score.value;
-  const worstOrg = scoredUsedOrgs[scoredUsedOrgs.length - 1]?.score.value;
+  const bestAvailableCouncilor = scoredAvailableCouncilors[0]?.score.value;
+  const worstExistingCouncilor = scoredBaseCouncilors[scoredBaseCouncilors.length - 1]?.score.value;
+  const bestAvailableOrg = scoredOrgs[0]?.score.value;
+  const worstExistingOrg = scoredUsedOrgs[scoredUsedOrgs.length - 1]?.score.value;
 
   return {
     key: "councilors",
     tab: (
       <>
-        Councilors ({worstExisting?.toFixed(0)} vs. {bestAvailable?.toFixed(0)}) / Orgs ({bestOrg?.toFixed(2)} vs{" "}
-        {worstOrg?.toFixed(2)})
+        Councilors ({worstExistingCouncilor?.toFixed(0)} vs. {bestAvailableCouncilor?.toFixed(0)}) / Orgs (
+        {worstExistingOrg?.toFixed(2)} vs {bestAvailableOrg?.toFixed(2)})
       </>
     ),
     content: (
@@ -353,12 +354,25 @@ function CouncilorsComponent({
   }
   const playerNationIds = new Set(analysis.playerNationIds);
   const playerTraits = new Set(analysis.playerCouncilors.flatMap((i) => i.traitTemplateNames));
+  const unusedAdmin = analysis.playerCouncilors
+    .map(
+      (c) =>
+        (c.effectsWithOrgsAndAugments.Administration || 0) +
+        (c.effectsWithOrgsAndAugments.administration || 0) -
+        c.orgs.reduce((a, b) => a + b.tier, 0)
+    )
+    .reduce((a, b) => a + b, 0);
+
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <>
       <Accordion type="single" collapsible defaultValue="existing">
         <AccordionItem value="existing">
-          <AccordionTrigger>Manage Existing Council</AccordionTrigger>
+          <AccordionTrigger>
+            <span>
+              Manage Existing Council ({unusedAdmin.toFixed(0)} <Administration />)
+            </span>
+          </AccordionTrigger>
           <AccordionContent>
             <Table>
               <CouncilorTableHeader hasOrgs />
@@ -375,7 +389,7 @@ function CouncilorsComponent({
                 ))}
               </TableBody>
             </Table>
-            <h3>Available Organizations:</h3>
+            <h3 className="mt-1">Available Organizations:</h3>
             <Table>
               <OrgTableHeader />
               <TableBody>
@@ -411,7 +425,7 @@ function CouncilorsComponent({
               </TableBody>
             </Table>
 
-            <h3>Unmodified Active Councilors:</h3>
+            <h3 className="mt-1">Unmodified Active Councilors:</h3>
             <Table>
               <CouncilorTableHeader />
               <TableBody>
