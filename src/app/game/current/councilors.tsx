@@ -580,7 +580,7 @@ function getScore(
   addScore("Science", org.Science, weights.science);
   addScore("Security", org.Security, weights.security);
   addScore("xpModifier", org.xpModifier, weights.xpModifier);
-  addScore("xpModifier", org.xp, weights.xp);
+  addScore("xp", org.xp, weights.xp);
 
   // Monthly income/costs
   addScore("incomeBoost_month", org.incomeBoost_month, weights.incomeBoost_month);
