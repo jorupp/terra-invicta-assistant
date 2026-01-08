@@ -86,7 +86,7 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const spacer = <span className="mx-0.5"> </span>;
 
   return <>
-    {tier > 3 
+    {(tier > 3 || props.highlightTier)
       ? <span className={twMerge(props.highlightTier ? "bg-green-300 rounded p-1 pr-0" : undefined)}>{tier} <TierStar />{spacer}</span>
       : tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}{spacer}</>}
     {/** TODO: how to show takeover defense? */}
