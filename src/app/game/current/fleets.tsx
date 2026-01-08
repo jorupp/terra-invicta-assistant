@@ -16,16 +16,60 @@ export function getFleetsUi(analysis: Analysis) {
   const label = [
     ...byTarget.entries().map(([target, fleets]) => {
       // now that we know the arrival of the first one, find all arriving within 14 days to summarize MC
-      const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime)[0];
-      const firstFleets = fleets.filter((f) => toDays(diffDateTime(f.arrivalTime!, firstFleet.arrivalTime!)) < 14);
+      const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime || analysis.gameCurrentDateTime)[0];
+      const firstFleets = fleets.filter(
+        (f) =>
+          toDays(
+            diffDateTime(
+              f.arrivalTime || analysis.gameCurrentDateTime,
+              firstFleet.arrivalTime || analysis.gameCurrentDateTime
+            )
+          ) < 14
+      );
       const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
-      return `${target}: x${fleets.length}, 1st ${firstFleet.daysToTarget?.toFixed(0)}d w/ ${firstMc.toFixed(0)} MC`;
+      const surv = firstFleets.filter((f) => f.operation === "AlienEarthSurveillanceOperation" && !f.arrivalTime);
+      console.log(surv);
+      const survInfo = surv ? (
+        <>
+          ,{" "}
+          <span className="text-white bg-destructive rounded py-2 px-3 font-bold">
+            {surv
+              .map((f) => f.operationCompleteDays || 0)
+              .reduce((a, b) => Math.min(a, b), 9999999999)
+              .toFixed(0)}
+            d Surveillance
+          </span>{" "}
+        </>
+      ) : (
+        ""
+      );
+      return (
+        <>
+          {target}: x{fleets.length}, 1st {(firstFleet.daysToTarget || 0).toFixed(0)}d w/ {firstMc.toFixed(0)} MC
+          {survInfo}
+        </>
+      );
     }),
-  ].join(", ");
+  ];
 
   return {
     key: "fleets",
-    tab: <>Alien Fleets{label ? ` (${label})` : ""}</>,
+    tab: (
+      <>
+        Alien Fleets
+        {label.length > 0 ? (
+          <>
+            (
+            {label.map((i) => (
+              <>{i}</>
+            ))}
+            )
+          </>
+        ) : (
+          ""
+        )}
+      </>
+    ),
     content: <FleetsComponent analysis={analysis} />,
   };
 }

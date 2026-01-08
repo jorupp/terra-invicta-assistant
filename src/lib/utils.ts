@@ -44,6 +44,9 @@ export function sortByDateTime<T>(items: T[], getDateTime: (item: T) => DateTime
   return items.toSorted((a, b) => compareDateTime(getDateTime(a), getDateTime(b)));
 }
 export function diffDateTime(a: DateTime, b: DateTime): DateTime {
+  if (!a || !b) {
+    return null as any as DateTime;
+  }
   let millisecond = a.millisecond - b.millisecond;
   let second = a.second - b.second;
   let minute = a.minute - b.minute;
@@ -80,6 +83,7 @@ export function diffDateTime(a: DateTime, b: DateTime): DateTime {
   return { year, month, day, hour, minute, second, millisecond };
 }
 export function toDays(dt: DateTime): number {
+  if (!dt) return 0;
   return (
     dt.year * 365 +
     dt.month * 30 +
