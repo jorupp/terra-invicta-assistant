@@ -29,6 +29,21 @@ function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   );
 }
 
+function OrgTableHeader() {
+  return (
+    <TableHeader>
+      <TableRow>
+        <TableHead>Org Name</TableHead>
+        <TableHead>Requirements</TableHead>
+        <TableHead>Tier</TableHead>
+        <TableHead>Purchase</TableHead>
+        <TableHead>Monthly</TableHead>
+        <TableHead>Effects</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+}
+
 function CouncilorTableRow({
   councilor,
   stats,
@@ -122,6 +137,112 @@ function CouncilorTableRow({
   );
 }
 
+function OrgTableRow({
+  org,
+  playerNationIds,
+  playerTraits,
+  highlightMissionClassName,
+}: {
+  org: Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult };
+  playerNationIds: Set<number>;
+  playerTraits: Set<string>;
+  highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
+}) {
+  return (
+    <TableRow key={org.id}>
+      <TableCell>{org.displayName}</TableCell>
+      <TableCell>
+        {org.template?.requiresNationality && (
+          <span className="mr-1" title={`Required Nation: ${org.homeNationName || ""}`}>
+            {playerNationIds.has(org.homeNationId || -1) ? (
+              <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
+            ) : (
+              <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
+            )}
+          </span>
+        )}
+        {org.template?.requiredOwnerTraits && (
+          <span className="mr-1" title={"Required Traits: " + org.template.requiredOwnerTraits.join(", ")}>
+            {org.template.requiredOwnerTraits.every((t) => playerTraits.has(t)) ? (
+              <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
+            ) : (
+              <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
+            )}
+          </span>
+        )}
+        {org.template?.prohibitedOwnerTraits && (
+          <span className="mr-1" title={"Prohibited Traits: " + org.template.prohibitedOwnerTraits.join(", ")}>
+            {org.template.prohibitedOwnerTraits.every((t) => playerTraits.has(t)) ? (
+              <PlusCircleIcon className="inline h-4 w-4 stroke-blue-600 -mt-1" />
+            ) : (
+              <MinusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
+            )}
+          </span>
+        )}
+      </TableCell>
+      <TableCell>
+        <ShowEffects tier={org.tier} />
+      </TableCell>
+      <TableCell>
+        {org.type === "available" ? (
+          <ShowEffects
+            costMoney={org.costMoney || 0}
+            costInfluence={org.costInfluence || 0}
+            costOps={org.costOps || 0}
+            costBoost={org.costBoost || 0}
+          />
+        ) : null}
+      </TableCell>
+      <TableCell>
+        <ShowEffects
+          incomeBoost_month={org.incomeBoost_month}
+          incomeMoney_month={org.incomeMoney_month}
+          incomeInfluence_month={org.incomeInfluence_month}
+          incomeOps_month={org.incomeOps_month}
+          incomeMissionControl={org.incomeMissionControl}
+          incomeResearch_month={org.incomeResearch_month}
+          projectCapacityGranted={org.projectCapacityGranted}
+        />
+      </TableCell>
+      <TableCell>
+        <ShowEffects
+          persuasion={org.persuasion}
+          command={org.command}
+          investigation={org.investigation}
+          espionage={org.espionage}
+          administration={org.administration}
+          science={org.science}
+          security={org.security}
+          economyBonus={org.economyBonus}
+          welfareBonus={org.welfareBonus}
+          environmentBonus={org.environmentBonus}
+          knowledgeBonus={org.knowledgeBonus}
+          governmentBonus={org.governmentBonus}
+          unityBonus={org.unityBonus}
+          militaryBonus={org.militaryBonus}
+          oppressionBonus={org.oppressionBonus}
+          spoilsBonus={org.spoilsBonus}
+          spaceDevBonus={org.spaceDevBonus}
+          spaceflightBonus={org.spaceflightBonus}
+          MCBonus={org.MCBonus}
+          miningBonus={org.miningBonus}
+          techBonuses={org.template?.techBonuses}
+          missionsGrantedNames={org.template?.missionsGrantedNames || []}
+          highlightMissionClassName={highlightMissionClassName}
+        />
+      </TableCell>
+      <TableCell>
+        <Tooltip>
+          <TooltipTrigger>{org.score.value?.toFixed(2)}</TooltipTrigger>
+          <TooltipContent align="end" className="max-w-auto">
+            <pre className="p-2">{org.score.details}</pre>
+          </TooltipContent>
+        </Tooltip>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export function getCouncilorsUi(analysis: Analysis) {
   const { playerMissionCounts } = analysis;
   const [weights, setWeights] = useState<ScoringWeights>(defaultScoringWeights);
@@ -156,16 +277,22 @@ export function getCouncilorsUi(analysis: Analysis) {
     playerMissionCounts,
     getOrganizationScore
   );
+  const usedOrgs = analysis.playerCouncilors
+    .flatMap((councilor) => councilor.orgs)
+    .map((org) => ({ ...org, type: "used" }));
+  const scoredUsedOrgs = scoreAndSort(usedOrgs, weights, playerMissionCounts, getOrganizationScore);
 
   const bestAvailable = scoredAvailableCouncilors[0]?.score.value;
   const worstExisting = scoredBaseCouncilors[scoredBaseCouncilors.length - 1]?.score.value;
   const bestOrg = scoredOrgs[0]?.score.value;
+  const worstOrg = scoredUsedOrgs[scoredUsedOrgs.length - 1]?.score.value;
 
   return {
     key: "councilors",
     tab: (
       <>
-        Councilors ({worstExisting?.toFixed(0)} vs. {bestAvailable?.toFixed(0)}) / Orgs ({bestOrg?.toFixed(2)})
+        Councilors ({worstExisting?.toFixed(0)} vs. {bestAvailable?.toFixed(0)}) / Orgs ({bestOrg?.toFixed(2)} vs{" "}
+        {worstOrg?.toFixed(2)})
       </>
     ),
     content: (
@@ -178,6 +305,7 @@ export function getCouncilorsUi(analysis: Analysis) {
           scoredAvailableCouncilors,
           scoredBaseCouncilors,
           scoredOrgs,
+          scoredUsedOrgs,
         }}
       />
     ),
@@ -192,6 +320,7 @@ function CouncilorsComponent({
   scoredAvailableCouncilors,
   scoredBaseCouncilors,
   scoredOrgs,
+  scoredUsedOrgs,
 }: {
   analysis: Analysis;
   weights: ScoringWeights;
@@ -200,6 +329,7 @@ function CouncilorsComponent({
   scoredAvailableCouncilors: (Analysis["playerAvailableCouncilors"][number] & { score: ScoreResult })[];
   scoredBaseCouncilors: (Analysis["playerCouncilors"][number] & { score: ScoreResult })[];
   scoredOrgs: (Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult })[];
+  scoredUsedOrgs: (Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult })[];
 }) {
   const { playerMissionCounts } = analysis;
 
@@ -247,115 +377,16 @@ function CouncilorsComponent({
             </Table>
             <h3>Available Organizations:</h3>
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Org Name</TableHead>
-                  <TableHead>Requirements</TableHead>
-                  <TableHead>Tier</TableHead>
-                  <TableHead>Purchase</TableHead>
-                  <TableHead>Monthly</TableHead>
-                  <TableHead>Effects</TableHead>
-                </TableRow>
-              </TableHeader>
+              <OrgTableHeader />
               <TableBody>
                 {scoredOrgs.map((org) => (
-                  <TableRow key={org.id}>
-                    <TableCell>{org.displayName}</TableCell>
-                    <TableCell>
-                      {org.template?.requiresNationality && (
-                        <span className="mr-1" title={`Required Nation: ${org.homeNationName || ""}`}>
-                          {playerNationIds.has(org.homeNationId || -1) ? (
-                            <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
-                          ) : (
-                            <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
-                          )}
-                        </span>
-                      )}
-                      {org.template?.requiredOwnerTraits && (
-                        <span
-                          className="mr-1"
-                          title={"Required Traits: " + org.template.requiredOwnerTraits.join(", ")}
-                        >
-                          {org.template.requiredOwnerTraits.every((t) => playerTraits.has(t)) ? (
-                            <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
-                          ) : (
-                            <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
-                          )}
-                        </span>
-                      )}
-                      {org.template?.prohibitedOwnerTraits && (
-                        <span
-                          className="mr-1"
-                          title={"Prohibited Traits: " + org.template.prohibitedOwnerTraits.join(", ")}
-                        >
-                          {org.template.prohibitedOwnerTraits.every((t) => playerTraits.has(t)) ? (
-                            <PlusCircleIcon className="inline h-4 w-4 stroke-blue-600 -mt-1" />
-                          ) : (
-                            <MinusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
-                          )}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <ShowEffects tier={org.tier} />
-                    </TableCell>
-                    <TableCell>
-                      {org.type === "available" ? (
-                        <ShowEffects
-                          costMoney={org.costMoney || 0}
-                          costInfluence={org.costInfluence || 0}
-                          costOps={org.costOps || 0}
-                          costBoost={org.costBoost || 0}
-                        />
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      <ShowEffects
-                        incomeBoost_month={org.incomeBoost_month}
-                        incomeMoney_month={org.incomeMoney_month}
-                        incomeInfluence_month={org.incomeInfluence_month}
-                        incomeOps_month={org.incomeOps_month}
-                        incomeMissionControl={org.incomeMissionControl}
-                        incomeResearch_month={org.incomeResearch_month}
-                        projectCapacityGranted={org.projectCapacityGranted}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <ShowEffects
-                        persuasion={org.persuasion}
-                        command={org.command}
-                        investigation={org.investigation}
-                        espionage={org.espionage}
-                        administration={org.administration}
-                        science={org.science}
-                        security={org.security}
-                        economyBonus={org.economyBonus}
-                        welfareBonus={org.welfareBonus}
-                        environmentBonus={org.environmentBonus}
-                        knowledgeBonus={org.knowledgeBonus}
-                        governmentBonus={org.governmentBonus}
-                        unityBonus={org.unityBonus}
-                        militaryBonus={org.militaryBonus}
-                        oppressionBonus={org.oppressionBonus}
-                        spoilsBonus={org.spoilsBonus}
-                        spaceDevBonus={org.spaceDevBonus}
-                        spaceflightBonus={org.spaceflightBonus}
-                        MCBonus={org.MCBonus}
-                        miningBonus={org.miningBonus}
-                        techBonuses={org.template?.techBonuses}
-                        missionsGrantedNames={org.template?.missionsGrantedNames || []}
-                        highlightMissionClassName={availableHighlightMissionClassName}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip>
-                        <TooltipTrigger>{org.score.value?.toFixed(2)}</TooltipTrigger>
-                        <TooltipContent align="end" className="max-w-auto">
-                          <pre className="p-2">{org.score.details}</pre>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
+                  <OrgTableRow
+                    key={org.id}
+                    org={org}
+                    playerNationIds={playerNationIds}
+                    playerTraits={playerTraits}
+                    highlightMissionClassName={availableHighlightMissionClassName}
+                  />
                 ))}
               </TableBody>
             </Table>
@@ -391,6 +422,25 @@ function CouncilorsComponent({
                     stats={councilor.effectsBaseAndUnaugmentedTraits}
                     label={`${councilor.displayName}`}
                     highlightMissionClassName={currentHighlightMissionClassName}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="current-orgs">
+          <AccordionTrigger>Current Organizations</AccordionTrigger>
+          <AccordionContent>
+            <Table>
+              <OrgTableHeader />
+              <TableBody>
+                {scoredUsedOrgs.map((org) => (
+                  <OrgTableRow
+                    key={org.id}
+                    org={org}
+                    playerNationIds={playerNationIds}
+                    playerTraits={playerTraits}
+                    highlightMissionClassName={availableHighlightMissionClassName}
                   />
                 ))}
               </TableBody>
@@ -449,12 +499,17 @@ function getModifiedCouncilorScore(
 }
 
 function getOrganizationScore(
-  org: Analysis["playerAvailableOrgs"][number],
+  org: Analysis["playerAvailableOrgs"][number] & { type: string },
   weights: ScoringWeights,
   haveMissions: Map<MissionDataName, number>
 ): ScoreResult {
   return getScore(
-    { ...org, techBonuses: org.template?.techBonuses, missionsGrantedNames: org.template?.missionsGrantedNames || [] },
+    {
+      ...org,
+      techBonuses: org.template?.techBonuses,
+      missionsGrantedNames: org.template?.missionsGrantedNames || [],
+      ...(org.type === "available" ? {} : { costMoney: 0, costInfluence: 0, costOps: 0, costBoost: 0 }), // ignore purchase costs for already-purchased orgs
+    },
     weights,
     haveMissions
   );
