@@ -46,7 +46,7 @@ export type ShowEffectsProps = Partial<
     >
 >;
 
-export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassName?: (missionName: MissionDataName) => string | undefined }) => {
+export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassName?: (missionName: MissionDataName) => string | undefined, highlightTier?: boolean }) => {
   const tier = props.tier || 0;
   const takeoverDefense = props.takeoverDefense || 0;
   const costMoney = (props.costMoney || 0) + (props.incomeMoney_month || 0);
@@ -86,7 +86,9 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const spacer = <span className="mx-0.5"> </span>;
 
   return <>
-    {tier > 5 ? <>{tier} <TierStar />{spacer}</> : tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}{spacer}</>}
+    {tier > 3 
+      ? <span className={twMerge(props.highlightTier ? "bg-green-300 rounded p-1 pr-0" : undefined)}>{tier} <TierStar />{spacer}</span>
+      : tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}{spacer}</>}
     {/** TODO: how to show takeover defense? */}
     {costMoney !== 0 && <><Currency/> {costMoney}{spacer}</>}
     {costInfluence !== 0 && <><Influence/> {costInfluence}{spacer}</>}

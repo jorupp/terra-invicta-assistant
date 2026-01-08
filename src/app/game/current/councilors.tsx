@@ -58,6 +58,8 @@ function CouncilorTableRow({
   hasOrgs?: boolean;
   highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
 }) {
+  const admin = (stats.administration || 0) + (stats.Administration || 0);
+  const orgTiers = councilor.orgs.reduce((a, b) => a + b.tier, 0);
   return (
     <TableRow key={`${councilor.id}-${label}`}>
       <TableCell>{label}</TableCell>
@@ -86,7 +88,7 @@ function CouncilorTableRow({
       </TableCell>
       {hasOrgs && (
         <TableCell>
-          <ShowEffects tier={stats.tier} />
+          <ShowEffects tier={stats.tier} highlightTier={orgTiers < admin} />
         </TableCell>
       )}
       <TableCell>
