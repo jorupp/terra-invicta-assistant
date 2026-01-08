@@ -82,6 +82,8 @@ function CouncilorTableRow({
           ApparentLoyalty={stats.ApparentLoyalty}
           xpModifier={stats.xpModifier}
           xp={stats.xp}
+          traitTemplateNames={stats.traitTemplateNames}
+          typeTemplateName={stats.typeTemplateName}
           // TODO: is there a case where we should show this?
           // Loyalty={stats.Loyalty}
         />

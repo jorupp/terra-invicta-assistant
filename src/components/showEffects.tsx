@@ -1,12 +1,13 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
-import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar, UnknownIcon } from "./icons";
-import { MissionDataName, Org, TechCategory, Trait } from "@/lib/templates";
+import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar, TraitCriminal, TraitGovernment, UnknownIcon } from "./icons";
+import {  CouncilorTypeDataName,  MissionDataName, Org, TechCategory, TraitDataName } from "@/lib/templates";
 import { twMerge } from "tailwind-merge";
+import { governmentCriminalGroupTraits, typesCanHaveCriminal, typesCanHaveGovernment } from "@/lib/template-types";
 
 export type ShowEffectsProps = Partial<
   { xpModifier: number, xp: number } &
   Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
-  { councilorTechBonus?: Array<{ category: TechCategory; bonus: number }> } &
+  { councilorTechBonus?: Array<{ category: TechCategory; bonus: number }>, traitTemplateNames: TraitDataName[], typeTemplateName: CouncilorTypeDataName } &
   CouncilorAttributes &
     Pick<
       TIOrgState,
@@ -84,6 +85,12 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const techBonuses = props.techBonuses || [];
   const missionsGrantedNames = props.missionsGrantedNames || [];
   const spacer = <span className="mx-0.5"> </span>;
+  const isGovernment = (props.traitTemplateNames || []).includes("Government");
+  const canHaveGovernment = props.typeTemplateName && typesCanHaveGovernment.includes(props.typeTemplateName) && 
+    !(props.traitTemplateNames || []).some(t => governmentCriminalGroupTraits.includes(t));
+  const isCriminal = (props.traitTemplateNames || []).includes("Criminal");
+  const canHaveCriminal = props.typeTemplateName && typesCanHaveCriminal.includes(props.typeTemplateName) &&
+    !(props.traitTemplateNames || []).some(t => governmentCriminalGroupTraits.includes(t));
 
   return <>
     {(tier > 3 || props.highlightTier)
@@ -107,7 +114,9 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {apparentLoyalty !== 0 && <><Loyalty/> {apparentLoyalty}{spacer}</>}
     {loyalty !== 0 && <><Loyalty/> {loyalty}{spacer}</>}
     {xpModifier !== 0 && <>{pct(xpModifier)} XP {spacer}</>}
-    {xp !== 0 && <span className={twMerge((1 + (xpModifier || 0)) * 20 <= xp ? 'bg-green-300 rounded pl-1' : null)}>{xp} XP{spacer}</span>}
+    {xp !== 0 && <><span className={twMerge((1 + (xpModifier || 0)) * 20 <= xp ? 'bg-green-300 rounded px-1' : null)}>{xp} XP</span>{spacer}</>}
+    {isGovernment ? <><TraitGovernment /> {spacer}</> : canHaveGovernment && <><TraitGovernment strokeClass="stroke-yellow-500" /> {spacer}</>}
+    {isCriminal ? <><TraitCriminal /> {spacer}</> : canHaveCriminal && <><TraitCriminal strokeClass="stroke-yellow-500" /> {spacer}</>}
 
     {priorityEconomyBonus !== 0 && <><PriorityEconomy/> {pct(priorityEconomyBonus)}{spacer}</>}
     {priorityWelfareBonus !== 0 && <><PriorityWelfare/> {pct(priorityWelfareBonus)}{spacer}</>}
@@ -180,6 +189,12 @@ export function combineEffects(p1: ShowEffectsProps, p2: ShowEffectsProps): Show
     }
     else if (k === 'missionsGrantedNames') {
       result.missionsGrantedNames = [...new Set([...(result.missionsGrantedNames || []), ...(p2.missionsGrantedNames || [])])];
+    }
+    else if (k === 'traitTemplateNames') {
+      result.traitTemplateNames = [...new Set([...(result.traitTemplateNames || []), ...(p2.traitTemplateNames || [])])];
+    }
+    else if (k === 'typeTemplateName') {
+      result.typeTemplateName = result.typeTemplateName || p2.typeTemplateName;
     }
     else if (typeof p2[k] === "number") {
       result[k] = (result[k] || 0) + (p2[k] || 0);
