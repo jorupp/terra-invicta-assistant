@@ -448,7 +448,7 @@ function CouncilorsComponent({
             <Table>
               <OrgTableHeader />
               <TableBody>
-                {scoredUsedOrgs.map((org) => (
+                {scoredUsedOrgs.toReversed().map((org) => (
                   <OrgTableRow
                     key={org.id}
                     org={org}
