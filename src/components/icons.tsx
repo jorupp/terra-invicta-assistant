@@ -1,4 +1,5 @@
-import { Ban, Building2, Skull } from "lucide-react";
+import { TraitDataName } from "@/lib/template-types-generated";
+import { Ban, Building2, HeartOff, Skull } from "lucide-react";
 import { ComponentProps } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -204,4 +205,10 @@ export const MissionIcons: { [key: string]: typeof MissionAssassinate } = {
   Protect: MissionProtect,
   SetNationalPolicy: MissionSetNationalPolicy,
   Transfer: MissionTransfer,
+};
+
+export const TraitIcons: Partial<Record<TraitDataName, typeof Building2>> = {
+  Criminal: Skull,
+  Government: Building2,
+  Sociopath: HeartOff,
 };

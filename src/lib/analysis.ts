@@ -290,6 +290,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       factionOrbitId: org.factionOrbit?.value,
       homeRegionId,
       homeNationId,
+      homeNationTemplateName: homeNation?.templateName,
       homeNationName: homeNation?.displayName,
       tier: org.tier,
       takeoverDefense: org.takeoverDefense,

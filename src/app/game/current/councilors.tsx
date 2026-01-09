@@ -8,10 +8,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
-import { MissionDataName } from "@/lib/template-types-generated";
+import { MissionDataName, TraitDataName } from "@/lib/template-types-generated";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 import { defaultScoringWeights, loadWeightsFromStorage, ScoringWeights, ScoringWeightsDialog } from "./scoringWeights";
-import { Administration } from "@/components/icons";
+import { Administration, TraitIcons } from "@/components/icons";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
@@ -155,6 +155,10 @@ function OrgTableRow({
   playerTraits: Set<string>;
   highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
 }) {
+  const missingRequiredTraits = org.template?.requiredOwnerTraits?.filter((t) => !playerTraits.has(t)) || [];
+  function traitIcon(trait: TraitDataName, Fallback: typeof PlusCircleIcon) {
+    return TraitIcons[trait] || Fallback;
+  }
   return (
     <TableRow key={org.id}>
       <TableCell>{org.displayName}</TableCell>
@@ -162,7 +166,7 @@ function OrgTableRow({
         {org.template?.requiresNationality && (
           <span className="mr-1" title={`Required Nation: ${org.homeNationName || ""}`}>
             {playerNationIds.has(org.homeNationId || -1) ? (
-              <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
+              <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1 bg-transparent" />
             ) : (
               <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
             )}
@@ -170,20 +174,23 @@ function OrgTableRow({
         )}
         {org.template?.requiredOwnerTraits && (
           <span className="mr-1" title={"Required Traits: " + org.template.requiredOwnerTraits.join(", ")}>
-            {org.template.requiredOwnerTraits.every((t) => playerTraits.has(t)) ? (
-              <PlusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
-            ) : (
-              <MinusCircleIcon className="inline h-4 w-4 stroke-destructive -mt-1" />
-            )}
+            {missingRequiredTraits.length === 0
+              ? org.template.requiredOwnerTraits.map((trait, ix) => {
+                  const Icon = traitIcon(trait, PlusCircleIcon);
+                  return <Icon key={ix} className="inline h-4 w-4 stroke-green-700 -mt-1" />;
+                })
+              : missingRequiredTraits.map((trait, ix) => {
+                  const Icon = traitIcon(trait, MinusCircleIcon);
+                  return <Icon key={ix} className="inline h-4 w-4 stroke-destructive -mt-1" />;
+                })}
           </span>
         )}
         {org.template?.prohibitedOwnerTraits && (
           <span className="mr-1" title={"Prohibited Traits: " + org.template.prohibitedOwnerTraits.join(", ")}>
-            {org.template.prohibitedOwnerTraits.every((t) => playerTraits.has(t)) ? (
-              <PlusCircleIcon className="inline h-4 w-4 stroke-blue-600 -mt-1" />
-            ) : (
-              <MinusCircleIcon className="inline h-4 w-4 stroke-green-700 -mt-1" />
-            )}
+            {org.template.prohibitedOwnerTraits.map((trait, ix) => {
+              const Icon = traitIcon(trait, MinusCircleIcon);
+              return <Icon key={ix} className="inline h-4 w-4 stroke-blue-700 -mt-1" />;
+            })}
           </span>
         )}
       </TableCell>
