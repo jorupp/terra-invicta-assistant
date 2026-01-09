@@ -41,7 +41,7 @@ export const TraitGovernment = (props: ComponentProps<"span"> & { strokeClass?: 
   </span>;
 export const TraitCriminal = (props: ComponentProps<"span"> & { strokeClass?: string }) => 
   <span className={twMerge('inline-block rounded radius-4 p-0.5 -m-0.5 -my-1.5', props.className)}>
-    <Skull className={twMerge("h-4 w-4", props.strokeClass || "stroke-destructive")} />
+    <Skull className={twMerge("h-4 w-4", props.strokeClass || "stroke-green-500")} />
   </span>;
 
 
