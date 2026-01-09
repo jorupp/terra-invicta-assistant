@@ -80,10 +80,12 @@ function CouncilorTableRow({
           Science={stats.Science}
           Security={stats.Security}
           ApparentLoyalty={stats.ApparentLoyalty}
+          Loyalty={stats.Loyalty}
           xpModifier={stats.xpModifier}
           xp={stats.xp}
           traitTemplateNames={stats.traitTemplateNames}
           typeTemplateName={stats.typeTemplateName}
+          playerIntel={stats.playerIntel}
           // TODO: is there a case where we should show this?
           // Loyalty={stats.Loyalty}
         />

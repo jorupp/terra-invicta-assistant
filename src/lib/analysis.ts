@@ -42,6 +42,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       friendlyName: i.friendlyName,
       displayName: i._displayName,
     })),
+    intel: new Map(faction.intel.map((i) => [i.Key.value, i.Value])),
   }));
   const shipDesignsByDataName = new Map<string, (typeof factions)[0]["shipDesigns"][0]>(
     factions.flatMap((faction) => faction.shipDesigns).map((design) => [design.dataName, design])
@@ -426,6 +427,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         .map((name) => councilorTraitTemplatesByDataName.get(name))
         .filter((t): t is (typeof councilorTraitTemplates)[0] => !!t);
       const councilorType = councilorTypesByDataName.get(councilor.typeTemplateName);
+      const playerIntel = playerFaction.intel.get(councilor.ID.value) || 0;
 
       const { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments } = computeCouncilorEffects(
         {
@@ -434,6 +436,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           xp: councilor.XP,
           traitTemplateNames: councilor.traitTemplateNames,
           typeTemplateName: councilor.typeTemplateName,
+          playerIntel,
         },
         traitTemplates,
         councilorOrgs
@@ -456,6 +459,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         xp: councilor.XP,
         effectsBaseAndUnaugmentedTraits,
         effectsWithOrgsAndAugments,
+        playerIntel,
       };
     }
   );

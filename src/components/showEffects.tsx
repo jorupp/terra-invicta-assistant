@@ -7,7 +7,7 @@ import { governmentCriminalGroupTraits, typesCanHaveCriminal, typesCanHaveGovern
 export type ShowEffectsProps = Partial<
   { xpModifier: number, xp: number } &
   Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
-  { councilorTechBonus?: Array<{ category: TechCategory; bonus: number }>, traitTemplateNames: TraitDataName[], typeTemplateName: CouncilorTypeDataName } &
+  { councilorTechBonus?: Array<{ category: TechCategory; bonus: number }>, traitTemplateNames: TraitDataName[], typeTemplateName: CouncilorTypeDataName, playerIntel: number } &
   CouncilorAttributes &
     Pick<
       TIOrgState,
@@ -66,6 +66,7 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const security = (props.security || 0) + (props.Security || 0);
   const apparentLoyalty = props.ApparentLoyalty || 0;
   const loyalty = props.Loyalty || 0;
+  const playerIntel = props.playerIntel || 0;
   const xpModifier = props.xpModifier || 0;
   const xp = props.xp || 0;
   const priorityEconomyBonus = props.economyBonus || 0;
@@ -111,8 +112,9 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {administration !== 0 && <><Administration/> {administration}{spacer}</>}
     {science !== 0 && <><Science/> {science}{spacer}</>}
     {security !== 0 && <><Security/> {security}{spacer}</>}
-    {apparentLoyalty !== 0 && <><Loyalty/> {apparentLoyalty}{spacer}</>}
-    {loyalty !== 0 && <><Loyalty/> {loyalty}{spacer}</>}
+    {apparentLoyalty !== 0 && <>A<Loyalty/> {apparentLoyalty}{spacer}</>}
+    {loyalty !== 0 && <>L<Loyalty/> {loyalty}{spacer}</>}
+    {playerIntel !== 0 && <> {playerIntel} I{spacer}</>}
     {xpModifier !== 0 && <>{pct(xpModifier)} XP {spacer}</>}
     {xp !== 0 && <><span className={twMerge((1 + (xpModifier || 0)) * 20 <= xp ? 'bg-green-300 rounded px-1' : null)}>{xp} XP</span>{spacer}</>}
     {isGovernment ? <><TraitGovernment /> {spacer}</> : canHaveGovernment && <><TraitGovernment strokeClass="stroke-yellow-500" /> {spacer}</>}

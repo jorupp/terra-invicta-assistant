@@ -404,7 +404,128 @@ export interface TIFactionState extends BaseState {
   defaultHullAppearanceIndex: number;
   nextRefitNumber: number;
   shipsBuiltInClass: Record<string, number>;
-  // [key: string]: unknown;
+
+  // Intel-related
+  intel: KeyValuePair<IDValue & { $type: string }, number>[];
+  highestIntel: KeyValuePair<IDValue & { $type: string }, number>[];
+
+  // AI & Strategy
+  aiValues: unknown;
+  AISavingTarget: number;
+  AIReviewProjects: unknown;
+  initialAINationGoals: unknown;
+  factionGoals: IDValue[];
+  focusGoal: IDValue | null;
+  factionEarlyToDoList: unknown[];
+  factionLateToDoList: unknown[];
+  currentRiskAversion: number;
+  crazyIvan: boolean;
+
+  // Combat & Military
+  CombatLogs: unknown[];
+  Kills: unknown[];
+  HabDestructionLog: unknown[];
+  LocalTransferDVLog: unknown[];
+  SolarTransferDVLog: unknown[];
+  armies: IDValue[];
+  armiesLost: number;
+  desiredShipClass: string;
+  desiredStaticFleetFraction: number;
+  fleetWetMassDuringHighestShipMaintainence: number;
+
+  // Resources & Economy
+  resources: Record<string, number>;
+  baseIncomes_year: Record<string, number>;
+  boostAccounts: KeyValuePair<IDValue, number>[];
+  globalResearchPurse: number;
+  Transactions: unknown[];
+  resourceIncomeDeficiencies: Record<string, number>;
+  dailyResourceTransfers: unknown[];
+  cachedSTOFighterMinimumBoost: number;
+  cachedYearlyRevenue: Record<string, number>;
+  highestRecordedExpenditurePerDay: number;
+  lastMonthsSpoils: number;
+  lastWeeksSpoils: number;
+  thisMonthsCumulativeSpoils: number;
+  thisWeeksCumulativeSpoils: number;
+
+  // Faction Relations
+  factionHate: KeyValuePair<IDValue, number>[];
+  factionFleetsEncountered: KeyValuePair<IDValue, IDValue[]>[];
+  assessedAlienHateOfMe: number;
+  mostPowerfulHumanEnemy: IDValue | null;
+  perceivedEnemyFleetStrengthFactors: Record<string, number>;
+  alienProxyNeedsHelp: boolean;
+  aliensRemoved: boolean;
+  factionAssassinations: KeyValuePair<IDValue, number>[];
+  internalCouncilorSuspicion: KeyValuePair<IDValue, number>[];
+  lastRecordedLoyalty: KeyValuePair<IDValue, number>[];
+
+  // Projects & Tech
+  availableProjectNames: string[];
+  currentProjectProgress: Record<string, number>;
+  favoredProjects: string[];
+  hiddenProjects: string[];
+  missedProjects: string[];
+  sabotagedProjects: string[];
+  activeProjectTriggers: Record<string, boolean>;
+  researchWeights: Record<string, number>;
+  longtermTechTarget: string | null;
+  techRaceSlot: number;
+  lastTechRaceDate: DateTime | null;
+
+  // Control Points & Nations
+  controlPoints: IDValue[];
+  lostControlPoints: IDValue[];
+  majorCPTrouble: IDValue[];
+  minorCPTrouble: IDValue[];
+  history_CPCapOverageByDay: number[];
+  history_MCCapOverageByDay: number[];
+  permaAbandonedNations: IDValue[];
+  specialRegionAdjacencies: unknown[];
+
+  // Habs & Space
+  primaryHab: IDValue | null;
+  updateHabPlanningFlag: boolean;
+
+  // Ships
+  updateShipDesignsFlag: boolean;
+  lastUnaffordableShipShipyard: IDValue | null;
+  obsoletedShipParts: string[];
+
+  // Notifications & UI
+  showAlerts: boolean;
+  showMonthlyIncomesInTopBarAndIntel: boolean;
+  showObsoleteParts: boolean;
+  showRegularNotifications: boolean;
+  showSummaryLogs: boolean;
+  showTimerNotifications: boolean;
+  notificationOverrides: Record<string, boolean>;
+  checkNotificationOverrides: boolean;
+  alertSpaceTimerNotifications: unknown[];
+  defaultFleetArrivalAlert: boolean;
+  defaultFleetArrivalAlert_Earth: boolean;
+  defaultFleetArrivalAlienModifier: number;
+  defaultFleetArrivalAlienModifier_Earth: number;
+  mapColorationStyle: string;
+
+  // Alien-related
+  alienInvestigations: KeyValuePair<IDValue, unknown>[];
+  knownAlienSites: IDValue[];
+  highestSpaceStrengthSinceLastAlienKnockdown: number;
+  lastDateOfFixedAlienHate: DateTime | null;
+  abductions: number;
+
+  // Misc
+  councilorsGenerated: boolean;
+  objectiveNames: string[];
+  knowsWinCondition: boolean;
+  numAtrocitiesByCause: Record<string, number>;
+  selfAssessement: unknown;
+  thisTurnsReveralScore: number;
+  alarms: unknown[];
+  ignoreContacts: boolean;
+  ignoreInterstateDiplomacy: boolean;
 }
 
 // Player State
