@@ -3,11 +3,19 @@ import { Administration, Boost, Command, Currency, Espionage, Influence, Investi
 import {  CouncilorTypeDataName,  MissionDataName, Org, TechCategory, TraitDataName } from "@/lib/templates";
 import { twMerge } from "tailwind-merge";
 import { governmentCriminalGroupTraits, typesCanHaveCriminal, typesCanHaveGovernment } from "@/lib/template-types";
+import { HeartIcon } from "lucide-react";
 
 export type ShowEffectsProps = Partial<
   { xpModifier: number, xp: number } &
   Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
-  { councilorTechBonus?: Array<{ category: TechCategory; bonus: number }>, traitTemplateNames: TraitDataName[], typeTemplateName: CouncilorTypeDataName, playerIntel: number } &
+  { 
+    councilorTechBonus?: Array<{ category: TechCategory; bonus: number }>,
+    traitTemplateNames: TraitDataName[],
+    typeTemplateName: CouncilorTypeDataName,
+    playerIntel: number,
+    playerMaxIntel: number,
+    lastRecordedLoyalty: number,
+  } &
   CouncilorAttributes &
     Pick<
       TIOrgState,
@@ -64,8 +72,9 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const administration = (props.administration || 0) + (props.Administration || 0);
   const science = (props.science || 0) + (props.Science || 0);
   const security = (props.security || 0) + (props.Security || 0);
-  const apparentLoyalty = props.ApparentLoyalty || 0;
-  const loyalty = props.Loyalty || 0;
+  const apparentLoyalty = props.ApparentLoyalty || -100;
+  const lastRecordedLoyalty = props.lastRecordedLoyalty || -100;
+  const loyalty = props.Loyalty || -100;
   const playerIntel = props.playerIntel || 0;
   const xpModifier = props.xpModifier || 0;
   const xp = props.xp || 0;
@@ -112,9 +121,16 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {administration !== 0 && <><Administration/> {administration}{spacer}</>}
     {science !== 0 && <><Science/> {science}{spacer}</>}
     {security !== 0 && <><Security/> {security}{spacer}</>}
-    {apparentLoyalty !== 0 && <>A<Loyalty/> {apparentLoyalty}{spacer}</>}
-    {loyalty !== 0 && <>L<Loyalty/> {loyalty}{spacer}</>}
-    {playerIntel !== 0 && <> {playerIntel} I{spacer}</>}
+    { apparentLoyalty !== -100 && (
+      playerIntel === 1 ? (
+        <>/ <Loyalty/> {loyalty}{spacer}</>
+      ) : (
+        <>
+          <><span className="inline-block -m-0.5"><HeartIcon className="h-4 w-4 stroke-red-500" /></span> {apparentLoyalty}</>
+          {lastRecordedLoyalty !== -100 && <>/ <Loyalty/> {lastRecordedLoyalty}</>}
+          {spacer}
+        </>
+    )) }
     {xpModifier !== 0 && <>{pct(xpModifier)} XP {spacer}</>}
     {xp !== 0 && <><span className={twMerge((1 + (xpModifier || 0)) * 20 <= xp ? 'bg-green-300 rounded px-1' : null)}>{xp} XP</span>{spacer}</>}
     {isGovernment ? <><TraitGovernment /> {spacer}</> : canHaveGovernment && <><TraitGovernment strokeClass="stroke-yellow-500" /> {spacer}</>}

@@ -86,6 +86,8 @@ function CouncilorTableRow({
           traitTemplateNames={stats.traitTemplateNames}
           typeTemplateName={stats.typeTemplateName}
           playerIntel={stats.playerIntel}
+          playerMaxIntel={stats.playerMaxIntel}
+          lastRecordedLoyalty={stats.lastRecordedLoyalty}
           // TODO: is there a case where we should show this?
           // Loyalty={stats.Loyalty}
         />
