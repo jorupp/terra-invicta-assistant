@@ -43,6 +43,9 @@ export async function GET(request: NextRequest) {
         if (!file.endsWith(".gz") && !file.endsWith(".json")) {
           continue;
         }
+        if (process.env.IGNORE_UNCOMPRESSED_FILES === "true" && file.endsWith(".json")) {
+          continue;
+        }
 
         const fullPath = join(saveGameDir, file);
         try {
@@ -68,6 +71,9 @@ export async function GET(request: NextRequest) {
 
       // Only process .gz and .json files
       if (!filename.endsWith(".gz") && !filename.endsWith(".json")) {
+        return;
+      }
+      if (process.env.IGNORE_UNCOMPRESSED_FILES === "true" && filename.endsWith(".json")) {
         return;
       }
 
