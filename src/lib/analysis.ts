@@ -86,16 +86,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     throw new Error("Player faction data not found in save file.");
   }
 
-  const controlPoints = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIControlPoint"].map(({ Value: cp }) => ({
-    id: cp.ID.value,
-    factionId: cp.faction?.value,
-    nationId: cp.nation?.value,
-    displayName: cp.displayName,
-    benefitsDisabled: cp.benefitsDisabled,
-    defended: cp.defended,
-    // TODO: can we get a CP cost somewhere?
-  }));
-
   const planets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceBodyState"];
   const sol = planets.find((i) => i.Value.templateName === "Sol")?.Key.value;
   const earth = planets.find((i) => i.Value.templateName === "Earth")?.Key.value;
@@ -365,11 +355,54 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     nation: region.nation.value,
   }));
   const regionsById = new Map<number, (typeof regions)[0]>(regions.map((region) => [region.id, region]));
-  const nations = saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"].map(({ Value: nation }) => ({
-    id: nation.ID.value,
-    templateName: nation.templateName,
-    displayName: nation.displayName,
+
+  const controlPoints = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIControlPoint"].map(({ Value: cp }) => ({
+    id: cp.ID.value,
+    factionId: cp.faction?.value,
+    nationId: cp.nation?.value,
+    displayName: cp.displayName,
+    benefitsDisabled: cp.benefitsDisabled,
+    defended: cp.defended,
   }));
+  const controlPointsByNationId = controlPoints.reduce((acc, cp) => {
+    if (!cp.nationId) return acc;
+    if (!acc.has(cp.nationId)) {
+      acc.set(cp.nationId, []);
+    }
+    acc.get(cp.nationId)!.push(cp);
+    return acc;
+  }, new Map<number, typeof controlPoints>());
+  const nations = saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"]
+    .filter((i) => i.Value.exists && !!i.Value.capital)
+    .map(({ Value: nation }) => {
+      const investmentPoints = nation.baseInvestmentPoints_month;
+      const valuePerSpoilsIP =
+        5 * investmentPoints +
+        5 * nation.numMiningRegions_dailyCache * 5 +
+        5 * nation.numOilRegions_dailyCache * 5 +
+        2.5 * (10 - nation.democracy);
+      const totalSpoils = valuePerSpoilsIP * investmentPoints;
+      const cpCount = nation.controlPoints.length;
+      const totalCpCost = cpCount * investmentPoints;
+      const totalSpoilsPerCpCost = totalCpCost > 0 ? totalSpoils / totalCpCost : 0;
+      const totalSpoilsPerControlPoint = cpCount > 0 ? totalSpoils / cpCount : 0;
+      const controlPoints = controlPointsByNationId.get(nation.ID.value) || [];
+
+      return {
+        id: nation.ID.value,
+        templateName: nation.templateName,
+        displayName: nation.displayName,
+        cpCount,
+        totalCpCost,
+        valuePerSpoilsIP,
+        totalSpoils,
+        totalSpoilsPerCpCost,
+        totalSpoilsPerControlPoint,
+        controlPoints,
+        investmentPoints,
+      };
+    })
+    .filter((i) => i.investmentPoints > 0);
   const nationsById = new Map<number, (typeof nations)[0]>(nations.map((nation) => [nation.id, nation]));
 
   const orgTemplates = new Map(
@@ -661,6 +694,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     playerCouncilors,
     playerMissionCounts,
     playerAvailableCouncilors,
+    nations,
+    factionsById,
   };
 }
 

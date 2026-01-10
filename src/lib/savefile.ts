@@ -236,7 +236,19 @@ export interface TINationState extends BaseState {
   allies: IDValue[];
   rivals: IDValue[];
   claims: IDValue[];
-  [key: string]: unknown;
+  numOilRegions_dailyCache: number;
+  numMiningRegions_dailyCache: number;
+  numCoreEconomicRegions_dailyCache: number;
+  baseInvestmentPoints_month: number;
+  controlPoints: IDValue[];
+  StartOfTurnNativeControlPoints: number;
+  inequality: number;
+  education: number;
+  democracy: number;
+  cohesion: number;
+  unrest: number;
+  militaryTechLevel: number;
+  // [key: string]: unknown;
 }
 
 // Control Point
