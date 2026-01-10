@@ -103,3 +103,4 @@ export function formatDateTime(dt: DateTime): string {
     "0"
   )}`;
 }
+export const noDate = "0001-01-01T00:00:00.0000000";

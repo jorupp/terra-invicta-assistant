@@ -1,7 +1,7 @@
-import { DateTime, SaveFile } from "./savefile";
+import { DateTime, SaveFile, TIHabModuleState } from "./savefile";
 import { MissionDataName, templates } from "./templates";
 import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
-import { diffDateTime, formatDateTime, sortByDateTime, toDays } from "./utils";
+import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "./utils";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const playerState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIPlayerState"].find(
@@ -68,6 +68,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   }));
 
   const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
+  const gameCurrentDateTimeFormatted = formatDateTime(time.currentDateTime);
 
   const planets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceBodyState"];
   const sol = planets.find((i) => i.Value.templateName === "Sol")?.Key.value;
@@ -177,13 +178,98 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     };
   });
   const fleetsById = new Map<number, (typeof fleets)[0]>(fleets.map((fleet) => [fleet.id, fleet]));
-  const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => ({
-    id: hab.ID.value,
-    faction: hab.faction.value,
-    displayName: hab.displayName,
-    habSiteId: hab.habSite?.value,
-    orbitStateId: hab.orbitState?.value,
+  const habModules = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabModuleState"].map(({ Value: mod }) => ({
+    id: mod.ID.value,
+    sectorId: mod.sector?.value,
+    templateName: mod.displayName,
+    displayName: mod.displayName,
+    destroyed: mod.destroyed,
+    startBuildDate: mod.startBuildDate,
+    completionDate: mod.completionDate,
+    decomissionDate: mod.decommissionDate,
+    powered: mod.powered,
+    slot: mod.slot,
+    buildCost: mod.buildCost,
   }));
+  const habModulesBySectorId = habModules.reduce((acc, mod) => {
+    if (!mod.sectorId) return acc;
+    if (!acc.has(mod.sectorId)) {
+      acc.set(mod.sectorId, []);
+    }
+    acc.get(mod.sectorId)!.push(mod);
+    return acc;
+  }, new Map<number, typeof habModules>());
+  const habSectors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISectorState"].map(({ Value: sector }) => ({
+    id: sector.ID.value,
+    faction: sector.faction?.value,
+    habId: sector.hab?.value,
+    sectorNum: sector.sectorNum,
+    slots: sector.slots,
+    exists: sector.exists,
+    displayName: sector.displayName,
+    habModuleIds: sector.habModules.map((i) => i.value),
+    habModules: habModulesBySectorId.get(sector.ID.value) || [],
+  }));
+  const habSectorsByHabId = habSectors.reduce((acc, sector) => {
+    if (!sector.habId) return acc;
+    if (!acc.has(sector.habId)) {
+      acc.set(sector.habId, []);
+    }
+    acc.get(sector.habId)!.push(sector);
+    return acc;
+  }, new Map<number, typeof habSectors>());
+
+  function isImportant(module: (typeof habModules)[0]) {
+    return (
+      module.templateName?.includes("Mining") ||
+      module.templateName?.includes("Mine") ||
+      module.templateName?.includes(" Core")
+    );
+  }
+  function isMine(module: (typeof habModules)[0]) {
+    return module.templateName?.includes("Mining") || module.templateName?.includes("Mine");
+  }
+
+  const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => {
+    const tier = hab.tier;
+    const validSectors = tier === 1 ? 1 : tier === 2 ? 3 : 5;
+    const sectors = (habSectorsByHabId.get(hab.ID.value) || []).filter((s) => s.exists && s.sectorNum < validSectors);
+    const modules = sectors.flatMap((s) => s.habModules);
+    const empty = modules.filter((m) => m.destroyed || m.startBuildDate === noDate);
+    const underConstruction = modules.filter((m) => m.completionDate >= gameCurrentDateTimeFormatted && !m.destroyed);
+    const highlightedCompletion = underConstruction
+      .toSorted((a, b) => {
+        if (isImportant(a) && !isImportant(b)) return -1;
+        if (!isImportant(a) && isImportant(b)) return 1;
+        return a.completionDate.localeCompare(b.completionDate);
+      })
+      .map((completion) => ({
+        ...completion,
+        daysToCompletion:
+          (new Date(completion.completionDate).getTime() - new Date(gameCurrentDateTimeFormatted).getTime()) /
+          (1000 * 60 * 60 * 24),
+      }))[0];
+    const nonEmpty = modules.filter((m) => !m.destroyed && m.startBuildDate !== noDate);
+    const mine = nonEmpty.filter((m) => isMine(m));
+    const isBase = hab.habType === "Base";
+    const missingMine = isBase && mine.length === 0;
+
+    return {
+      id: hab.ID.value,
+      faction: hab.faction.value,
+      displayName: hab.displayName,
+      habSiteId: hab.habSite?.value,
+      orbitStateId: hab.orbitState?.value,
+      habType: hab.habType,
+      tier: hab.tier,
+      sectorIds: hab.sectors.map((i) => i.value),
+      sectors: sectors,
+      emptyModuleCount: empty.length,
+      underConstructionModuleCount: underConstruction.length,
+      highlightedCompletion,
+      missingMine,
+    };
+  });
 
   const playerHabs = habs.filter((hab) => hab.faction === playerFaction.id);
   const playerFleets = fleets.filter((fleet) => fleet.faction === playerFaction.id);
@@ -495,7 +581,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     fileName,
     lastModified,
     gameCurrentDateTime: time.currentDateTime,
-    gameCurrentDateTimeFormatted: formatDateTime(time.currentDateTime),
+    gameCurrentDateTimeFormatted,
     player,
     playerFaction,
     playerHabs,
