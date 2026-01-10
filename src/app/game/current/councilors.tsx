@@ -215,6 +215,7 @@ function OrgTableRow({
         <ShowEffects tier={org.tier} />
       </TableCell>
       <TableCell>
+        {org.type === "unassigned" && "T "}
         {org.type === "available" || org.type === "unassigned" ? (
           <ShowEffects
             costMoney={(org.costMoney || 0) * (org.type === "available" ? 1 : orgTransferFactor)}
