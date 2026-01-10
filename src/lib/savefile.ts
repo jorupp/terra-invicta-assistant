@@ -3,11 +3,6 @@ import { join } from "path";
 import { gunzipSync } from "zlib";
 import type { MissionDataName, TraitDataName, CouncilorTypeDataName, HabSchematicDataName } from "./templates";
 
-const templateDir = process.env.TEMPLATE_DIR!;
-if (!templateDir) {
-  throw new Error("TEMPLATE_DIR environment variable is not set.");
-}
-
 export async function loadSaveFile(filePath: string): Promise<SaveFile> {
   const start = Date.now();
 
@@ -332,6 +327,12 @@ export interface ResourcesCost {
   resourceCosts: ResourceCost[];
 }
 
+export interface Transaction {
+  Resource: string;
+  Amount: number;
+  Date: DateTime;
+}
+
 export interface ShipyardQueueItem {
   shipDesignTemplateName: string;
   startDate: DateTime;
@@ -438,7 +439,7 @@ export interface TIFactionState extends BaseState {
   baseIncomes_year: Record<string, number>;
   boostAccounts: KeyValuePair<IDValue, number>[];
   globalResearchPurse: number;
-  Transactions: unknown[];
+  Transactions: Record<string, Transaction[]>;
   resourceIncomeDeficiencies: Record<string, number>;
   dailyResourceTransfers: unknown[];
   cachedSTOFighterMinimumBoost: number;
