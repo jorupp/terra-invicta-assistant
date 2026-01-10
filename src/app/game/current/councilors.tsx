@@ -32,14 +32,14 @@ function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   );
 }
 
-function OrgTableHeader() {
+function OrgTableHeader({ isTakeover }: { isTakeover?: boolean }) {
   return (
     <TableHeader>
       <TableRow>
         <TableHead>Org Name</TableHead>
         <TableHead>Requirements</TableHead>
         <TableHead>Tier</TableHead>
-        <TableHead>Purchase</TableHead>
+        {isTakeover ? <TableHead>Target</TableHead> : <TableHead>Purchase</TableHead>}
         <TableHead>Monthly</TableHead>
         <TableHead>Effects</TableHead>
         <TableHead>Score</TableHead>
@@ -164,11 +164,13 @@ function OrgTableRow({
   playerNationIds,
   playerTraits,
   highlightMissionClassName,
+  isTakeover,
 }: {
   org: Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult };
   playerNationIds: Set<number>;
   playerTraits: Set<string>;
   highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
+  isTakeover?: boolean;
 }) {
   const missingRequiredTraits = org.template?.requiredOwnerTraits?.filter((t) => !playerTraits.has(t)) || [];
   function traitIcon(trait: TraitDataName, Fallback: typeof PlusCircleIcon) {
@@ -220,6 +222,16 @@ function OrgTableRow({
             costOps={org.costOps || 0}
             costBoost={org.costBoost || 0}
           />
+        ) : org.type == "stealable" && isTakeover ? (
+          (() => {
+            const target = org as any as Analysis["playerStealableOrgs"][number];
+            return (
+              <>
+                {target.councilor} from {target.faction?.displayName}, CAdmin: {target.councilorAdmin}, FAdmin:{" "}
+                {target.factionAdmin}, takeoverDefense: {target.takeoverDefense}
+              </>
+            );
+          })()
         ) : null}
       </TableCell>
       <TableCell>
@@ -362,6 +374,12 @@ function CouncilorsComponent({
   scoredUsedOrgs: (Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult })[];
 }) {
   const { playerMissionCounts } = analysis;
+  const scoredStealableOrgs = scoreAndSort(
+    analysis.playerStealableOrgs.map((i) => ({ type: "stealable", ...i })),
+    weights,
+    playerMissionCounts,
+    getOrganizationScore
+  );
 
   function currentHighlightMissionClassName(missionName: MissionDataName) {
     // if we have exactly 2, show yellow BG, if we have 1, show red, otherwise no change to bg
@@ -484,6 +502,26 @@ function CouncilorsComponent({
                     playerNationIds={playerNationIds}
                     playerTraits={playerTraits}
                     highlightMissionClassName={availableHighlightMissionClassName}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="takeover">
+          <AccordionTrigger>Hostile Takeover</AccordionTrigger>
+          <AccordionContent>
+            <Table>
+              <OrgTableHeader isTakeover />
+              <TableBody>
+                {scoredStealableOrgs.map((org) => (
+                  <OrgTableRow
+                    key={org.id}
+                    org={org}
+                    playerNationIds={playerNationIds}
+                    playerTraits={playerTraits}
+                    highlightMissionClassName={availableHighlightMissionClassName}
+                    isTakeover
                   />
                 ))}
               </TableBody>

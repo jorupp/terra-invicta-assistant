@@ -48,6 +48,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       Array.isArray(faction.lastRecordedLoyalty) ? faction.lastRecordedLoyalty.map((i) => [i.Key.value, i.Value]) : []
     ),
   }));
+  const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
   const shipDesignsByDataName = new Map<string, (typeof factions)[0]["shipDesigns"][0]>(
     factions.flatMap((faction) => faction.shipDesigns).map((design) => [design.dataName, design])
   );
@@ -576,6 +577,46 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     }
     return acc;
   }, new Map<MissionDataName, number>());
+  const factionAdminById = new Map<number, number>(
+    factions.map((faction) => {
+      // sum of all councilors' admin effects
+      const totalAdmin = councilors
+        .filter((c) => c.factionId === faction.id)
+        .reduce((acc, c) => {
+          return (
+            acc +
+            Math.max(
+              0,
+              (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0)
+            )
+          );
+        }, 0);
+      return [faction.id, totalAdmin];
+    })
+  );
+  const playerStealableOrgs = councilors
+    .filter((i) => i.factionId !== playerFaction.id && i.playerIntel >= 0.25) // TODO: figure out exact intel threshold
+    .map((c) => [
+      ...c.orgs.map((o) => {
+        const faction = factionsById.get(c.factionId || -1);
+        return {
+          ...o,
+          councilor: c.displayName,
+          councilorAdmin: Math.max(
+            0,
+            (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0)
+          ),
+          factionAdmin: faction && factionAdminById.get(faction.id),
+          faction: faction && {
+            id: faction.id,
+            displayName: faction.displayName,
+            templateName: faction.templateName,
+          },
+        };
+      }),
+    ])
+    .flat()
+    .filter((o) => o.template?.allowedOnMarket);
 
   return {
     fileName,
@@ -590,6 +631,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     alienFleetsToPlayerOrbits,
     playerUnassignedOrgs,
     playerAvailableOrgs,
+    playerStealableOrgs,
     playerNationIds: [...playerNationIds],
     playerCouncilors,
     playerMissionCounts,
