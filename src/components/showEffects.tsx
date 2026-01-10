@@ -124,7 +124,7 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {security !== 0 && <><Security/> {security}{spacer}</>}
     { apparentLoyalty !== -100 && (
       playerIntel === 1 ? (
-        <>/ <Loyalty/> {loyalty}{spacer}</>
+        <><Loyalty/> {loyalty}{spacer}</>
       ) : (
         <>
           <><span className="inline-block -m-0.5"><HeartIcon className="h-4 w-4 stroke-red-500" /></span> {apparentLoyalty}</>
