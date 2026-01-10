@@ -42,6 +42,8 @@ function OrgTableHeader() {
         <TableHead>Purchase</TableHead>
         <TableHead>Monthly</TableHead>
         <TableHead>Effects</TableHead>
+        <TableHead>Score</TableHead>
+        <TableHead>NM Score</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -266,6 +268,7 @@ function OrgTableRow({
           </TooltipContent>
         </Tooltip>
       </TableCell>
+      <TableCell>{org.score.noMissionScore?.toFixed(2)}</TableCell>
     </TableRow>
   );
 }
