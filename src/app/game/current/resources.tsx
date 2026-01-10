@@ -81,9 +81,11 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
           {[...bySourceByResource.entries()].map(([source, resourceMap]) => (
             <TableRow key={source}>
               <TableCell>{source}</TableCell>
-              {resources.map((resource) => {
-                return <TableCell key={resource}>{smartRound(resourceMap.get(resource) || 0)}</TableCell>;
-              })}
+              {resources.map((resource) => (
+                <TableCell key={resource}>
+                  {resourceMap.has(resource) ? smartRound(resourceMap.get(resource)!) : null}
+                </TableCell>
+              ))}
             </TableRow>
           ))}
         </TableBody>
