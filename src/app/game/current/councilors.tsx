@@ -25,6 +25,8 @@ function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
         <TableHead>Science</TableHead>
         <TableHead>Missions</TableHead>
         <TableHead>Score</TableHead>
+        <TableHead>NM Score</TableHead>
+        <TableHead>CP Cap</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -60,6 +62,13 @@ function CouncilorTableRow({
 }) {
   const admin = (stats.administration || 0) + (stats.Administration || 0);
   const orgTiers = councilor.orgs.reduce((a, b) => a + b.tier, 0);
+  const cpCap =
+    (stats.persuasion || 0) +
+    (stats.command || 0) +
+    (stats.administration || 0) +
+    (stats.Persuasion || 0) +
+    (stats.Command || 0) +
+    (stats.Administration || 0);
   return (
     <TableRow key={`${councilor.id}-${label}`}>
       <TableCell>{label}</TableCell>
@@ -142,6 +151,8 @@ function CouncilorTableRow({
           </TooltipContent>
         </Tooltip>
       </TableCell>
+      <TableCell>{councilor.score.noMissionScore?.toFixed(2)}</TableCell>
+      <TableCell>{cpCap?.toFixed(0)}</TableCell>
     </TableRow>
   );
 }
@@ -546,6 +557,7 @@ function getOrganizationScore(
 
 interface ScoreResult {
   value: number;
+  noMissionScore: number;
   details: string;
 }
 
@@ -639,6 +651,8 @@ function getScore(
     }
   }
 
+  let noMissionScore = totalScore;
+
   // Missions granted
   if (weights.missions && org?.missionsGrantedNames) {
     for (const missionName of org.missionsGrantedNames) {
@@ -672,12 +686,14 @@ function getScore(
   if (tier > 1 && !ignoreTier) {
     const tierFactor = Math.pow(tier, weights.orgTierExponent);
     finalScore = totalScore / tierFactor;
+    noMissionScore /= tierFactor;
     details.push(`Subtotal: ${totalScore.toFixed(3)}`);
     details.push(`Divided by ${tierFactor.toFixed(2)} for tier ${tier}: ${finalScore.toFixed(3)}`);
   }
 
   return {
     value: finalScore,
+    noMissionScore,
     details: details.join("\n"),
   };
 }
