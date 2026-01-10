@@ -65,12 +65,12 @@ function CouncilorTableRow({
   const admin = (stats.administration || 0) + (stats.Administration || 0);
   const orgTiers = councilor.orgs.reduce((a, b) => a + b.tier, 0);
   const cpCap =
-    (stats.persuasion || 0) +
-    (stats.command || 0) +
-    (stats.administration || 0) +
-    (stats.Persuasion || 0) +
-    (stats.Command || 0) +
-    (stats.Administration || 0);
+    Math.max(0, stats.persuasion || 0) +
+    Math.max(0, stats.command || 0) +
+    Math.max(0, stats.administration || 0) +
+    Math.max(0, stats.Persuasion || 0) +
+    Math.max(0, stats.Command || 0) +
+    Math.max(0, stats.Administration || 0);
   return (
     <TableRow key={`${councilor.id}-${label}`}>
       <TableCell>{label}</TableCell>
@@ -574,8 +574,11 @@ function getScore(
   const details: string[] = [];
 
   // Helper to add score for a numeric attribute
-  const addScore = (name: string, value: number | undefined, weight: number | undefined) => {
-    const actualValue = value || 0;
+  const addScore = (name: string, value: number | undefined, weight: number | undefined, noNegative?: boolean) => {
+    let actualValue = value || 0;
+    if (noNegative) {
+      actualValue = Math.max(0, actualValue);
+    }
     const actualWeight = weight ?? 0;
 
     // Skip if value or weight is 0/undefined/null
@@ -591,20 +594,20 @@ function getScore(
   };
 
   // Councilor attributes
-  addScore("persuasion", org.persuasion, weights.persuasion);
-  addScore("command", org.command, weights.command);
-  addScore("investigation", org.investigation, weights.investigation);
-  addScore("espionage", org.espionage, weights.espionage);
-  addScore("administration", org.administration, weights.administration);
-  addScore("science", org.science, weights.science);
-  addScore("security", org.security, weights.security);
-  addScore("Persuasion", org.Persuasion, weights.persuasion);
-  addScore("Command", org.Command, weights.command);
-  addScore("Investigation", org.Investigation, weights.investigation);
-  addScore("Espionage", org.Espionage, weights.espionage);
-  addScore("Administration", org.Administration, weights.administration);
-  addScore("Science", org.Science, weights.science);
-  addScore("Security", org.Security, weights.security);
+  addScore("persuasion", org.persuasion, weights.persuasion, true);
+  addScore("command", org.command, weights.command, true);
+  addScore("investigation", org.investigation, weights.investigation, true);
+  addScore("espionage", org.espionage, weights.espionage, true);
+  addScore("administration", org.administration, weights.administration, true);
+  addScore("science", org.science, weights.science, true);
+  addScore("security", org.security, weights.security, true);
+  addScore("Persuasion", org.Persuasion, weights.persuasion, true);
+  addScore("Command", org.Command, weights.command, true);
+  addScore("Investigation", org.Investigation, weights.investigation, true);
+  addScore("Espionage", org.Espionage, weights.espionage, true);
+  addScore("Administration", org.Administration, weights.administration, true);
+  addScore("Science", org.Science, weights.science, true);
+  addScore("Security", org.Security, weights.security, true);
   addScore("xpModifier", org.xpModifier, weights.xpModifier);
   addScore("xp", org.xp, weights.xp);
 
