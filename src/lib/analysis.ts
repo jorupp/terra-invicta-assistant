@@ -246,46 +246,51 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     return module.templateName?.includes("Mining") || module.templateName?.includes("Mine");
   }
 
-  const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => {
-    const tier = hab.tier;
-    const validSectors = tier === 1 ? 1 : tier === 2 ? 3 : 5;
-    const sectors = (habSectorsByHabId.get(hab.ID.value) || []).filter((s) => s.exists && s.sectorNum < validSectors);
-    const modules = sectors.flatMap((s) => s.habModules);
-    const empty = modules.filter((m) => m.destroyed || m.startBuildDate === noDate);
-    const underConstruction = modules.filter((m) => m.completionDate >= gameCurrentDateTimeFormatted && !m.destroyed);
-    const highlightedCompletion = underConstruction
-      .toSorted((a, b) => {
-        if (isImportant(a) && !isImportant(b)) return -1;
-        if (!isImportant(a) && isImportant(b)) return 1;
-        return a.completionDate.localeCompare(b.completionDate);
-      })
-      .map((completion) => ({
-        ...completion,
-        daysToCompletion:
-          (new Date(completion.completionDate).getTime() - new Date(gameCurrentDateTimeFormatted).getTime()) /
-          (1000 * 60 * 60 * 24),
-      }))[0];
-    const nonEmpty = modules.filter((m) => !m.destroyed && m.startBuildDate !== noDate);
-    const mine = nonEmpty.filter((m) => isMine(m));
-    const isBase = hab.habType === "Base";
-    const missingMine = isBase && mine.length === 0;
+  const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"]
+    .map(({ Value: hab }) => {
+      const tier = hab.tier;
+      const validSectors = tier === 1 ? 1 : tier === 2 ? 3 : 5;
+      const sectors = (habSectorsByHabId.get(hab.ID.value) || []).filter((s) => s.exists && s.sectorNum < validSectors);
+      const modules = sectors.flatMap((s) => s.habModules);
+      const empty = modules.filter((m) => m.destroyed || m.startBuildDate === noDate);
+      const underConstruction = modules.filter((m) => m.completionDate >= gameCurrentDateTimeFormatted && !m.destroyed);
+      const highlightedCompletion = underConstruction
+        .toSorted((a, b) => {
+          if (isImportant(a) && !isImportant(b)) return -1;
+          if (!isImportant(a) && isImportant(b)) return 1;
+          return a.completionDate.localeCompare(b.completionDate);
+        })
+        .map((completion) => ({
+          ...completion,
+          daysToCompletion:
+            (new Date(completion.completionDate).getTime() - new Date(gameCurrentDateTimeFormatted).getTime()) /
+            (1000 * 60 * 60 * 24),
+        }))[0];
+      const nonEmpty = modules.filter((m) => !m.destroyed && m.startBuildDate !== noDate);
+      const mine = nonEmpty.filter((m) => isMine(m));
+      const isBase = hab.habType === "Base";
+      const missingMine = isBase && mine.length === 0;
 
-    return {
-      id: hab.ID.value,
-      faction: hab.faction.value,
-      displayName: hab.displayName,
-      habSiteId: hab.habSite?.value,
-      orbitStateId: hab.orbitState?.value,
-      habType: hab.habType,
-      tier: hab.tier,
-      sectorIds: hab.sectors.map((i) => i.value),
-      sectors: sectors,
-      emptyModuleCount: empty.length,
-      underConstructionModuleCount: underConstruction.length,
-      highlightedCompletion,
-      missingMine,
-    };
-  });
+      return {
+        id: hab.ID.value,
+        faction: hab.faction.value,
+        displayName: hab.displayName,
+        habSiteId: hab.habSite?.value,
+        orbitStateId: hab.orbitState?.value,
+        habType: hab.habType,
+        tier: hab.tier,
+        sectorIds: hab.sectors.map((i) => i.value),
+        sectors: sectors,
+        emptyModuleCount: empty.length,
+        underConstructionModuleCount: underConstruction.length,
+        highlightedCompletion,
+        missingMine,
+        finderSortOverride: hab.finderSortOverride,
+      };
+    })
+    .toSorted((a, b) =>
+      a.finderSortOverride === b.finderSortOverride ? 0 : a.finderSortOverride < b.finderSortOverride ? -1 : 1
+    );
 
   const playerHabs = habs.filter((hab) => hab.faction === playerFaction.id);
   const playerFleets = fleets.filter((fleet) => fleet.faction === playerFaction.id);
