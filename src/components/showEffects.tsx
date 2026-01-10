@@ -4,6 +4,7 @@ import {  CouncilorTypeDataName,  MissionDataName, Org, TechCategory, TraitDataN
 import { twMerge } from "tailwind-merge";
 import { governmentCriminalGroupTraits, typesCanHaveCriminal, typesCanHaveGovernment } from "@/lib/template-types";
 import { HeartIcon } from "lucide-react";
+import { smartRound } from "@/lib/utils";
 
 export type ShowEffectsProps = Partial<
   { xpModifier: number, xp: number } &
@@ -107,10 +108,10 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
       ? <span className={twMerge(props.highlightTier ? "bg-green-300 rounded p-1 pr-0" : undefined)}>{tier} <TierStar />{spacer}</span>
       : tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}{spacer}</>}
     {/** TODO: how to show takeover defense? */}
-    {costMoney !== 0 && <><Currency/> {costMoney}{spacer}</>}
-    {costInfluence !== 0 && <><Influence/> {costInfluence}{spacer}</>}
-    {costOps !== 0 && <><Ops/> {costOps}{spacer}</>}
-    {costBoost !== 0 && <><Boost/> {costBoost}{spacer}</>}
+    {costMoney !== 0 && <><Currency/> {smartRound(costMoney)}{spacer}</>}
+    {costInfluence !== 0 && <><Influence/> {smartRound(costInfluence)}{spacer}</>}
+    {costOps !== 0 && <><Ops/> {smartRound(costOps)}{spacer}</>}
+    {costBoost !== 0 && <><Boost/> {smartRound(costBoost)}{spacer}</>}
     {incomeMissionControl !== 0 && <><MissionControl/> {incomeMissionControl}{spacer}</>}
     {incomeResearch !== 0 && <><Research/> {incomeResearch}{spacer}</>}
     {projectCapacityGranted !== 0 && <><Projects/> {projectCapacityGranted}{spacer}</>}

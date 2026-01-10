@@ -39,7 +39,7 @@ function OrgTableHeader({ isTakeover }: { isTakeover?: boolean }) {
         <TableHead>Org Name</TableHead>
         <TableHead>Requirements</TableHead>
         <TableHead>Tier</TableHead>
-        {isTakeover ? <TableHead>Target</TableHead> : <TableHead>Purchase</TableHead>}
+        {isTakeover ? <TableHead>Target</TableHead> : <TableHead>Purchase / Transfer</TableHead>}
         <TableHead>Monthly</TableHead>
         <TableHead>Effects</TableHead>
         <TableHead>Score</TableHead>
@@ -215,12 +215,12 @@ function OrgTableRow({
         <ShowEffects tier={org.tier} />
       </TableCell>
       <TableCell>
-        {org.type === "available" ? (
+        {org.type === "available" || org.type === "unassigned" ? (
           <ShowEffects
-            costMoney={org.costMoney || 0}
-            costInfluence={org.costInfluence || 0}
-            costOps={org.costOps || 0}
-            costBoost={org.costBoost || 0}
+            costMoney={(org.costMoney || 0) * (org.type === "available" ? 1 : orgTransferFactor)}
+            costInfluence={(org.costInfluence || 0) * (org.type === "available" ? 1 : orgTransferFactor)}
+            costOps={(org.costOps || 0) * (org.type === "available" ? 1 : orgTransferFactor)}
+            costBoost={(org.costBoost || 0) * (org.type === "available" ? 1 : orgTransferFactor)}
           />
         ) : org.type == "stealable" && isTakeover ? (
           (() => {
@@ -580,6 +580,7 @@ function getModifiedCouncilorScore(
   return getScore(councilor.effectsWithOrgsAndAugments, weights, haveMissions, true);
 }
 
+const orgTransferFactor = 0.2;
 function getOrganizationScore(
   org: Analysis["playerAvailableOrgs"][number] & { type: string },
   weights: ScoringWeights,
@@ -590,7 +591,15 @@ function getOrganizationScore(
       ...org,
       techBonuses: org.template?.techBonuses,
       missionsGrantedNames: org.template?.missionsGrantedNames || [],
-      ...(org.type === "available" ? {} : { costMoney: 0, costInfluence: 0, costOps: 0, costBoost: 0 }), // ignore purchase costs for already-purchased orgs
+      ...(org.type === "available"
+        ? {}
+        : {
+            // already-purchased orgs seem to cost ~30% to transfer
+            costMoney: (org.costMoney || 0) * orgTransferFactor,
+            costInfluence: (org.costInfluence || 0) * orgTransferFactor,
+            costOps: (org.costOps || 0) * orgTransferFactor,
+            costBoost: (org.costBoost || 0) * orgTransferFactor,
+          }),
     },
     weights,
     haveMissions
