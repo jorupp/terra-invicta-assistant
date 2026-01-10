@@ -94,7 +94,7 @@ export const TechIcons = {
   Social: TechSocial,
   Military: TechMilitary,
   Information: TechInformation,
-  Xeno: TechXeno,
+  Xenology: TechXeno,
 };
 export const PriorityEconomy = buildIcon("Priority: Economy", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/92/ICO_economy_priority.png");
 export const PriorityEnvironment = buildIcon("Priority: Environment", "https://wiki.hoodedhorse.com/images/mbhh_ti/b/b0/ICO_environment_priority.png");
