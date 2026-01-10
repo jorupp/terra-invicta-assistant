@@ -1,9 +1,17 @@
-import { DateTime, SaveFile, TIHabModuleState } from "./savefile";
+import { SaveFile } from "./savefile";
 import { MissionDataName, templates } from "./templates";
 import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
 import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "./utils";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
+  const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
+  const lastMonth = {
+    ...time.currentDateTime,
+    month: time.currentDateTime.month === 1 ? 12 : time.currentDateTime.month - 1,
+    year: time.currentDateTime.month === 1 ? time.currentDateTime.year - 1 : time.currentDateTime.year,
+  };
+  const gameCurrentDateTimeFormatted = formatDateTime(time.currentDateTime);
+
   const playerState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIPlayerState"].find(
     (i) => !i.Value.isAI
   )?.Value;
@@ -47,6 +55,26 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     lastRecordedLoyalty: new Map(
       Array.isArray(faction.lastRecordedLoyalty) ? faction.lastRecordedLoyalty.map((i) => [i.Key.value, i.Value]) : []
     ),
+    monthlyTransactionSummary: [
+      ...Object.entries(faction.Transactions)
+        .flatMap(([source, transactions]) =>
+          transactions.map((t) => ({
+            source,
+            resource: t.Resource,
+            amount: t.Amount,
+            date: t.Date,
+          }))
+        )
+        .filter((t) => toDays(diffDateTime(lastMonth, t.date)) < 0)
+        .reduce((acc, t) => {
+          const key = `${t.source}||${t.resource}`;
+          const resourceMap = acc.get(key) || { source: t.source, resource: t.resource, amount: 0 };
+          resourceMap.amount += t.amount;
+          acc.set(key, resourceMap);
+          return acc;
+        }, new Map<string, { source: string; resource: string; amount: number }>())
+        .values(),
+    ],
   }));
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
   const shipDesignsByDataName = new Map<string, (typeof factions)[0]["shipDesigns"][0]>(
@@ -67,9 +95,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     defended: cp.defended,
     // TODO: can we get a CP cost somewhere?
   }));
-
-  const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
-  const gameCurrentDateTimeFormatted = formatDateTime(time.currentDateTime);
 
   const planets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceBodyState"];
   const sol = planets.find((i) => i.Value.templateName === "Sol")?.Key.value;

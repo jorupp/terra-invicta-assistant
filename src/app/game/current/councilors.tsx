@@ -539,10 +539,11 @@ function CouncilorsComponent({
           <Button variant="outline">Debug Data</Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <pre>{JSON.stringify(analysis.playerCouncilors, null, 2)}</pre>
+          {/* <pre>{JSON.stringify(analysis.playerCouncilors, null, 2)}</pre>
           <pre>{JSON.stringify(analysis.playerAvailableCouncilors, null, 2)}</pre>
           <pre>{JSON.stringify(analysis.playerAvailableOrgs, null, 2)}</pre>
-          <pre>{JSON.stringify(analysis.playerUnassignedOrgs, null, 2)}</pre>
+          <pre>{JSON.stringify(analysis.playerUnassignedOrgs, null, 2)}</pre> */}
+          <pre>{JSON.stringify(analysis.playerFaction, null, 2)}</pre>
         </CollapsibleContent>
       </Collapsible>
     </>

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { loadAndAnalyzeFile } from "./actions";
 import { Loader } from "lucide-react";
 import { getHabsUi } from "./habs";
+import { getResourcesUi } from "./resources";
 
 export default function CurrentGameComponent() {
   const filename = useCurrent();
@@ -51,7 +52,7 @@ export default function CurrentGameComponent() {
 }
 
 function RenderGameComponent({ analysis }: { analysis: Analysis }) {
-  const tabs = [getCouncilorsUi(analysis), getFleetsUi(analysis), getHabsUi(analysis)];
+  const tabs = [getCouncilorsUi(analysis), getFleetsUi(analysis), getHabsUi(analysis), getResourcesUi(analysis)];
   return (
     <div>
       <h2>
