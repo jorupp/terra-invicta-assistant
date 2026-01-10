@@ -140,7 +140,15 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                           : null}{" "}
                         ({nation.totalCpCost.toFixed(0)} cost, {nation.investmentPoints.toFixed(0)} IP)
                       </TableCell>
-                      <TableCell>{nation.totalSpoils.toFixed(0)}</TableCell>
+                      <TableCell>
+                        <span
+                          title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(
+                            2
+                          )} IP`}
+                        >
+                          {nation.totalSpoils.toFixed(0)}
+                        </span>
+                      </TableCell>
                       <TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell>
                       <TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell>
                     </TableRow>

@@ -378,12 +378,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const investmentPoints = nation.baseInvestmentPoints_month;
       const valuePerSpoilsIP =
         5 * investmentPoints +
-        5 * nation.numMiningRegions_dailyCache * 5 +
-        5 * nation.numOilRegions_dailyCache * 5 +
+        5 * nation.numMiningRegions_dailyCache +
+        5 * nation.numOilRegions_dailyCache +
         2.5 * (10 - nation.democracy);
       const totalSpoils = valuePerSpoilsIP * investmentPoints;
       const cpCount = nation.controlPoints.length;
-      const totalCpCost = cpCount * investmentPoints;
+      const totalCpCost = Math.pow(nation.GDP / 1000000000, 0.6) / 2; // https://www.reddit.com/r/TerraInvicta/comments/1c9t3c2/control_point_cost_formula/
       const totalSpoilsPerCpCost = totalCpCost > 0 ? totalSpoils / totalCpCost : 0;
       const totalSpoilsPerControlPoint = cpCount > 0 ? totalSpoils / cpCount : 0;
       const controlPoints = controlPointsByNationId.get(nation.ID.value) || [];

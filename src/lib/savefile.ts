@@ -248,6 +248,7 @@ export interface TINationState extends BaseState {
   cohesion: number;
   unrest: number;
   militaryTechLevel: number;
+  GDP: number;
   // [key: string]: unknown;
 }
 
