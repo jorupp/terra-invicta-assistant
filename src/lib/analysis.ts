@@ -657,6 +657,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       return [faction.id, totalAdmin];
     })
   );
+  // TODO: add unassigned orgs too - not sure how to identify them
   const playerStealableOrgs = councilors
     .filter((i) => i.factionId !== playerFaction.id && i.playerIntel >= 0.25) // TODO: figure out exact intel threshold
     .map((c) => [
