@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
 import { smartRound } from "@/lib/utils";
+import { twMerge } from "tailwind-merge";
 
 export function getResourcesUi(analysis: Analysis) {
   const spoils = analysis.playerFaction.monthlyTransactionSummary
@@ -135,7 +136,12 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                               const FactionIcon = faction
                                 ? FactionIcons[faction.templateName as keyof typeof FactionIcons]
                                 : ControlPoint;
-                              return <FactionIcon key={cp.id} />;
+                              return (
+                                <FactionIcon
+                                  key={cp.id}
+                                  className={twMerge(cp.benefitsDisabled ? "bg-red-200" : "", "p-1 rounded")}
+                                />
+                              );
                             })
                           : null}{" "}
                         ({nation.totalCpCost.toFixed(0)} cost, {nation.investmentPoints.toFixed(0)} IP)
