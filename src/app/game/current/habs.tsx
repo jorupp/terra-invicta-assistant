@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
 import { formatDateTime, noDate } from "@/lib/utils";
+import { Fragment } from "react/jsx-runtime";
 
 function HabHeader() {
   return (
@@ -27,10 +28,10 @@ function HabTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: stri
       <TableCell>{hab.displayName}</TableCell>
       <TableCell>
         {highlightedCompletions.map((highlightedCompletion, ix) => (
-          <>
+          <Fragment key={ix}>
             {ix > 0 && ", "}
             {highlightedCompletion.templateName} in {highlightedCompletion.daysToCompletion?.toFixed(0)} days
-          </>
+          </Fragment>
         ))}
       </TableCell>
       <TableCell>
