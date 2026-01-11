@@ -62,15 +62,12 @@ function CouncilorTableRow({
   hasOrgs?: boolean;
   highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
 }) {
-  const admin = (stats.administration || 0) + (stats.Administration || 0);
+  const admin = Math.min(25, Math.max(0, (stats.administration || 0) + (stats.Administration || 0)));
   const orgTiers = councilor.orgs.reduce((a, b) => a + b.tier, 0);
   const cpCap =
-    Math.max(0, stats.persuasion || 0) +
-    Math.max(0, stats.command || 0) +
-    Math.max(0, stats.administration || 0) +
-    Math.max(0, stats.Persuasion || 0) +
-    Math.max(0, stats.Command || 0) +
-    Math.max(0, stats.Administration || 0);
+    Math.min(25, Math.max(0, stats.persuasion || 0) + Math.max(0, stats.Persuasion || 0)) +
+    Math.min(25, Math.max(0, stats.command || 0) + Math.max(0, stats.Command || 0)) +
+    Math.min(25, Math.max(0, stats.administration || 0) + Math.max(0, stats.Administration || 0));
   return (
     <TableRow key={`${councilor.id}-${label}`}>
       <TableCell>{label}</TableCell>
