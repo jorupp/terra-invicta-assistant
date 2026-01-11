@@ -318,7 +318,8 @@ export function getCouncilorsUi(analysis: Analysis) {
       .concat(analysis.playerUnassignedOrgs.map((i) => ({ type: "unassigned", ...i }))),
     weights,
     playerMissionCounts,
-    getOrganizationScore
+    getOrganizationScore,
+    "noMissionScore" // ignore missions when sorting orgs
   );
   const usedOrgs = analysis.playerCouncilors
     .flatMap((councilor) => councilor.orgs)
@@ -555,13 +556,14 @@ function scoreAndSort<T>(
   items: T[],
   weights: ScoringWeights,
   haveMissions: Map<MissionDataName, number>,
-  scoreFn: (item: T, weights: ScoringWeights, haveMissions: Map<MissionDataName, number>) => ScoreResult
+  scoreFn: (item: T, weights: ScoringWeights, haveMissions: Map<MissionDataName, number>) => ScoreResult,
+  scoreSort: "value" | "noMissionScore" = "value"
 ) {
   const scoredItems = items.map((item) => {
     const scoreResult = scoreFn(item, weights, haveMissions);
     return { ...item, score: scoreResult };
   });
-  scoredItems.sort((a, b) => b.score.value - a.score.value);
+  scoredItems.sort((a, b) => b.score[scoreSort] - a.score[scoreSort]);
   return scoredItems;
 }
 
