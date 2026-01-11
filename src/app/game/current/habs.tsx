@@ -20,17 +20,18 @@ function HabHeader() {
 }
 
 function HabTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: string }) {
-  const { highlightedCompletion, emptyModuleCount, missingMine } = hab;
+  const { highlightedCompletions, emptyModuleCount, missingMine } = hab;
 
   return (
     <TableRow key={hab.id}>
       <TableCell>{hab.displayName}</TableCell>
       <TableCell>
-        {highlightedCompletion && (
+        {highlightedCompletions.map((highlightedCompletion, ix) => (
           <>
+            {ix > 0 && ", "}
             {highlightedCompletion.templateName} in {highlightedCompletion.daysToCompletion?.toFixed(0)} days
           </>
-        )}
+        ))}
       </TableCell>
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
@@ -44,7 +45,7 @@ export function getHabsUi(analysis: Analysis) {
   const { playerHabs } = analysis;
   const missingMines = playerHabs.filter((h) => h.missingMine);
   const nextCompletion = playerHabs
-    .map((i) => i.highlightedCompletion)
+    .flatMap((i) => i.highlightedCompletions)
     .filter((i) => i)
     .toSorted((a, b) => {
       return a.daysToCompletion < b.daysToCompletion ? -1 : 1;

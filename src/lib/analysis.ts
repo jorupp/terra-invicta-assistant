@@ -254,7 +254,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const modules = sectors.flatMap((s) => s.habModules);
       const empty = modules.filter((m) => m.destroyed || m.startBuildDate === noDate);
       const underConstruction = modules.filter((m) => m.completionDate >= gameCurrentDateTimeFormatted && !m.destroyed);
-      const highlightedCompletion = underConstruction
+      const highlightedCompletions = underConstruction
         .toSorted((a, b) => {
           if (isImportant(a) && !isImportant(b)) return -1;
           if (!isImportant(a) && isImportant(b)) return 1;
@@ -265,7 +265,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           daysToCompletion:
             (new Date(completion.completionDate).getTime() - new Date(gameCurrentDateTimeFormatted).getTime()) /
             (1000 * 60 * 60 * 24),
-        }))[0];
+        }))
+        .filter((i, ix) => ix === 0 || isImportant(i));
       const nonEmpty = modules.filter((m) => !m.destroyed && m.startBuildDate !== noDate);
       const mine = nonEmpty.filter((m) => isMine(m));
       const isBase = hab.habType === "Base";
@@ -283,7 +284,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         sectors: sectors,
         emptyModuleCount: empty.length,
         underConstructionModuleCount: underConstruction.length,
-        highlightedCompletion,
+        highlightedCompletions,
         missingMine,
         finderSortOverride: hab.finderSortOverride,
       };
