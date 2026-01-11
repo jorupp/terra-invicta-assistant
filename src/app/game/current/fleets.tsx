@@ -29,7 +29,7 @@ export function getFleetsUi(analysis: Analysis) {
       );
       const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
       const surv = firstFleets.filter((f) => f.operation === "AlienEarthSurveillanceOperation" && !f.arrivalTime);
-      const survInfo = surv ? (
+      const survInfo = surv.length ? (
         <>
           ,{" "}
           <span className="text-white bg-destructive rounded py-2 px-3 font-bold">
