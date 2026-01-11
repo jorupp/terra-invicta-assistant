@@ -66,13 +66,20 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const incomeMissionControl = props.incomeMissionControl || 0;
   const incomeResearch = props.incomeResearch_month || 0;
   const projectCapacityGranted = props.projectCapacityGranted || 0;
-  const persuasion = Math.min(25, Math.max(0, (props.persuasion || 0) + (props.Persuasion || 0)));
-  const command = Math.min(25, Math.max(0, (props.command || 0) + (props.Command || 0)));
-  const investigation = Math.min(25, Math.max(0, (props.investigation || 0) + (props.Investigation || 0)));
-  const espionage = Math.min(25, Math.max(0, (props.espionage || 0) + (props.Espionage || 0)));
-  const administration = Math.min(25, Math.max(0, (props.administration || 0) + (props.Administration || 0)));
-  const science = Math.min(25, Math.max(0, (props.science || 0) + (props.Science || 0)));
-  const security = Math.min(25, Math.max(0, (props.security || 0) + (props.Security || 0)));
+  const basePersuasion = Math.max(0, (props.persuasion || 0) + (props.Persuasion || 0));
+  const baseCommand = Math.max(0, (props.command || 0) + (props.Command || 0));
+  const baseInvestigation = Math.max(0, (props.investigation || 0) + (props.Investigation || 0));
+  const baseEspionage = Math.max(0, (props.espionage || 0) + (props.Espionage || 0));
+  const baseAdministration = Math.max(0, (props.administration || 0) + (props.Administration || 0));
+  const baseScience = Math.max(0, (props.science || 0) + (props.Science || 0));
+  const baseSecurity = Math.max(0, (props.security || 0) + (props.Security || 0));
+  const persuasion = Math.min(25, basePersuasion);
+  const command = Math.min(25, baseCommand);
+  const investigation = Math.min(25, baseInvestigation);
+  const espionage = Math.min(25, baseEspionage);
+  const administration = Math.min(25, baseAdministration);
+  const science = Math.min(25, baseScience);
+  const security = Math.min(25, baseSecurity);
   const apparentLoyalty = props.ApparentLoyalty || -100;
   const lastRecordedLoyalty = props.lastRecordedLoyalty || -100;
   const loyalty = props.Loyalty || -100;
@@ -115,13 +122,13 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {incomeMissionControl !== 0 && <><MissionControl/> {incomeMissionControl}{spacer}</>}
     {incomeResearch !== 0 && <><Research/> {incomeResearch}{spacer}</>}
     {projectCapacityGranted !== 0 && <><Projects/> {projectCapacityGranted}{spacer}</>}
-    {persuasion !== 0 && <><Persuasion/> {persuasion}{spacer}</>}
-    {command !== 0 && <><Command/> {command}{spacer}</>}
-    {investigation !== 0 && <><Investigation/> {investigation}{spacer}</>}
-    {espionage !== 0 && <><Espionage/> {espionage}{spacer}</>}
-    {administration !== 0 && <><Administration/> {administration}{spacer}</>}
-    {science !== 0 && <><Science/> {science}{spacer}</>}
-    {security !== 0 && <><Security/> {security}{spacer}</>}
+    {persuasion !== 0 && <><Persuasion className={twMerge(persuasion < basePersuasion ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {persuasion}{spacer}</>}
+    {command !== 0 && <><Command className={twMerge(command < baseCommand ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {command}{spacer}</>}
+    {investigation !== 0 && <><Investigation className={twMerge(investigation < baseInvestigation ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {investigation}{spacer}</>}
+    {espionage !== 0 && <><Espionage className={twMerge(espionage < baseEspionage ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {espionage}{spacer}</>}
+    {administration !== 0 && <><Administration className={twMerge(administration < baseAdministration ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {administration}{spacer}</>}
+    {science !== 0 && <><Science className={twMerge(science < baseScience ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {science}{spacer}</>}
+    {security !== 0 && <><Security className={twMerge(security < baseSecurity ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {security}{spacer}</>}
     { apparentLoyalty !== -100 && (
       playerIntel === 1 ? (
         <><Loyalty/> {loyalty}{spacer}</>
