@@ -403,9 +403,13 @@ function CouncilorsComponent({
   const unusedAdmin = analysis.playerCouncilors
     .map(
       (c) =>
-        (c.effectsWithOrgsAndAugments.Administration || 0) +
-        (c.effectsWithOrgsAndAugments.administration || 0) -
-        c.orgs.reduce((a, b) => a + b.tier, 0)
+        Math.min(
+          25,
+          Math.max(
+            0,
+            (c.effectsWithOrgsAndAugments.Administration || 0) + (c.effectsWithOrgsAndAugments.administration || 0)
+          )
+        ) - c.orgs.reduce((a, b) => a + b.tier, 0)
     )
     .reduce((a, b) => a + b, 0);
 
