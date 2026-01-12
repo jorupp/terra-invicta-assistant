@@ -483,6 +483,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       XPModifier: org.XPModifier,
     };
   });
+  const orgsById = new Map<number, (typeof orgs)[0]>(orgs.map((org) => [org.id, org]));
   const playerUnassignedOrgs = orgs.filter((org) => playerFaction?.unassignedOrgIds.includes(org.id));
   const playerAvailableOrgs = orgs.filter((org) => playerFaction?.availableOrgIds.includes(org.id));
 
@@ -644,34 +645,35 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const factionAdminById = new Map<number, number>(
     factions.map((faction) => {
       // sum of all councilors' admin effects
-      const totalAdmin = councilors
-        .filter((c) => c.factionId === faction.id)
-        .reduce((acc, c) => {
-          return (
-            acc +
-            Math.max(
-              0,
-              (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0)
-            )
-          );
-        }, 0);
-      return [faction.id, totalAdmin];
+      const factionCouncilors = councilors.filter((c) => c.factionId === faction.id);
+      const totalAdmin = factionCouncilors.reduce((acc, c) => {
+        return (
+          acc +
+          Math.max(
+            0,
+            (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0)
+          )
+        );
+      }, 0);
+      return [faction.id, totalAdmin / Math.max(1, factionCouncilors.length)];
     })
   );
-  // TODO: add unassigned orgs too - not sure how to identify them
-  const playerStealableOrgs = councilors
-    .filter((i) => i.factionId !== playerFaction.id && i.playerIntel >= 0.25) // TODO: figure out exact intel threshold
+  const playerVisibleCouncilors = councilors.filter((i) => i.factionId !== playerFaction.id && i.playerIntel >= 0.25); // TODO: figure out exact intel threshold
+  const playerVisibleFactionIds = new Set<number>(
+    playerVisibleCouncilors.map((c) => c.factionId).filter((id): id is number => !!id)
+  );
+  const playerStealableOrgs = playerVisibleCouncilors
     .map((c) => [
       ...c.orgs.map((o) => {
         const faction = factionsById.get(c.factionId || -1);
         return {
           ...o,
-          councilor: c.displayName,
-          councilorAdmin: Math.max(
+          councilorId: c.id as number | undefined,
+          councilor: c.displayName as string | undefined,
+          admin: Math.max(
             0,
             (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0)
-          ),
-          factionAdmin: faction && factionAdminById.get(faction.id),
+          ) as number | undefined,
           faction: faction && {
             id: faction.id,
             displayName: faction.displayName,
@@ -681,6 +683,27 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       }),
     ])
     .flat()
+    .concat(
+      factions
+        .filter((i) => i.id !== playerFaction.id)
+        .filter((faction) => playerVisibleFactionIds.has(faction.id))
+        .flatMap((faction) => {
+          const factionOrgs = orgs.filter((org) => faction.unassignedOrgIds.includes(org.id));
+          return factionOrgs.map((o) => {
+            return {
+              ...o,
+              councilorId: undefined,
+              councilor: undefined,
+              admin: faction && factionAdminById.get(faction.id),
+              faction: faction && {
+                id: faction.id,
+                displayName: faction.displayName,
+                templateName: faction.templateName,
+              },
+            };
+          });
+        })
+    )
     .filter((o) => o.template?.allowedOnMarket);
 
   return {

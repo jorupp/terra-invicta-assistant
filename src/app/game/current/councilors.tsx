@@ -12,6 +12,7 @@ import { MissionDataName, TraitDataName } from "@/lib/template-types-generated";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 import { defaultScoringWeights, loadWeightsFromStorage, ScoringWeights, ScoringWeightsDialog } from "./scoringWeights";
 import { Administration, TraitIcons } from "@/components/icons";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
@@ -225,8 +226,8 @@ function OrgTableRow({
             const target = org as any as Analysis["playerStealableOrgs"][number];
             return (
               <>
-                {target.councilor} from {target.faction?.displayName}, CAdmin: {target.councilorAdmin}, FAdmin:{" "}
-                {target.factionAdmin}, takeoverDefense: {target.takeoverDefense}
+                {target.councilor ?? "Unassigned"} from {target.faction?.displayName}, Admin: {target.admin} +
+                takeoverDefense: {target.takeoverDefense}
               </>
             );
           })()
@@ -377,7 +378,8 @@ function CouncilorsComponent({
     analysis.playerStealableOrgs.map((i) => ({ type: "stealable", ...i })),
     weights,
     playerMissionCounts,
-    getOrganizationScore
+    getOrganizationScore,
+    "noMissionScore"
   );
 
   function currentHighlightMissionClassName(missionName: MissionDataName) {
@@ -412,6 +414,15 @@ function CouncilorsComponent({
         ) - c.orgs.reduce((a, b) => a + b.tier, 0)
     )
     .reduce((a, b) => a + b, 0);
+
+  const stealableOrgsByFaction = scoredStealableOrgs.reduce((acc, org) => {
+    const key = org.faction?.id || 0;
+    if (!acc.has(key)) {
+      acc.set(key, []);
+    }
+    acc.get(key)!.push(org);
+    return acc;
+  }, new Map<number, typeof scoredStealableOrgs>());
 
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
@@ -514,21 +525,34 @@ function CouncilorsComponent({
         <AccordionItem value="takeover">
           <AccordionTrigger>Hostile Takeover</AccordionTrigger>
           <AccordionContent>
-            <Table>
-              <OrgTableHeader isTakeover />
-              <TableBody>
-                {scoredStealableOrgs.map((org) => (
-                  <OrgTableRow
-                    key={org.id}
-                    org={org}
-                    playerNationIds={playerNationIds}
-                    playerTraits={playerTraits}
-                    highlightMissionClassName={availableHighlightMissionClassName}
-                    isTakeover
-                  />
+            <Tabs defaultValue={`faction-${Array.from(stealableOrgsByFaction.keys())[0]}`}>
+              <TabsList>
+                {Array.from(stealableOrgsByFaction.entries()).map(([factionId, orgs]) => (
+                  <TabsTrigger key={factionId} value={`faction-${factionId}`}>
+                    {orgs[0].faction?.displayName || "Unknown Faction"} ({orgs.length})
+                  </TabsTrigger>
                 ))}
-              </TableBody>
-            </Table>
+              </TabsList>
+              {Array.from(stealableOrgsByFaction.entries()).map(([factionId, orgs]) => (
+                <TabsContent key={factionId} value={`faction-${factionId}`}>
+                  <Table>
+                    <OrgTableHeader isTakeover />
+                    <TableBody>
+                      {orgs.map((org) => (
+                        <OrgTableRow
+                          key={org.id}
+                          org={org}
+                          playerNationIds={playerNationIds}
+                          playerTraits={playerTraits}
+                          highlightMissionClassName={availableHighlightMissionClassName}
+                          isTakeover
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+              ))}
+            </Tabs>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
