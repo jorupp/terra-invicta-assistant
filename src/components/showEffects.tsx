@@ -122,13 +122,13 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
     {incomeMissionControl !== 0 && <><MissionControl/> {incomeMissionControl}{spacer}</>}
     {incomeResearch !== 0 && <><Research/> {incomeResearch}{spacer}</>}
     {projectCapacityGranted !== 0 && <><Projects/> {projectCapacityGranted}{spacer}</>}
-    {persuasion !== 0 && <><Persuasion className={twMerge(persuasion < basePersuasion ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {persuasion}{spacer}</>}
-    {command !== 0 && <><Command className={twMerge(command < baseCommand ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {command}{spacer}</>}
-    {investigation !== 0 && <><Investigation className={twMerge(investigation < baseInvestigation ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {investigation}{spacer}</>}
-    {espionage !== 0 && <><Espionage className={twMerge(espionage < baseEspionage ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {espionage}{spacer}</>}
-    {administration !== 0 && <><Administration className={twMerge(administration < baseAdministration ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {administration}{spacer}</>}
-    {science !== 0 && <><Science className={twMerge(science < baseScience ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {science}{spacer}</>}
-    {security !== 0 && <><Security className={twMerge(security < baseSecurity ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> {security}{spacer}</>}
+    {persuasion !== 0 && <><Persuasion className={twMerge(persuasion < basePersuasion ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={basePersuasion.toFixed(0)}>{persuasion}</span>{spacer}</>}
+    {command !== 0 && <><Command className={twMerge(command < baseCommand ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseCommand.toFixed(0)}>{command}</span>{spacer}</>}
+    {investigation !== 0 && <><Investigation className={twMerge(investigation < baseInvestigation ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseInvestigation.toFixed(0)}>{investigation}</span>{spacer}</>}
+    {espionage !== 0 && <><Espionage className={twMerge(espionage < baseEspionage ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseEspionage.toFixed(0)}>{espionage}</span>{spacer}</>}
+    {administration !== 0 && <><Administration className={twMerge(administration < baseAdministration ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseAdministration.toFixed(0)}>{administration}</span>{spacer}</>}
+    {science !== 0 && <><Science className={twMerge(science < baseScience ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseScience.toFixed(0)}>{science}</span>{spacer}</>}
+    {security !== 0 && <><Security className={twMerge(security < baseSecurity ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseSecurity.toFixed(0)}>{security}</span>{spacer}</>}
     { apparentLoyalty !== -100 && (
       playerIntel === 1 ? (
         <><Loyalty/> {loyalty}{spacer}</>
