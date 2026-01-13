@@ -663,6 +663,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     playerVisibleCouncilors.map((c) => c.factionId).filter((id): id is number => !!id)
   );
   const playerStealableOrgs = playerVisibleCouncilors
+    .filter((c) => c.playerIntel >= 0.5) // TODO: figure out exact intel threshold for stealing
     .map((c) => [
       ...c.orgs.map((o) => {
         const faction = factionsById.get(c.factionId || -1);
