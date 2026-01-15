@@ -378,6 +378,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     nationId: cp.nation?.value,
     displayName: cp.displayName,
     benefitsDisabled: cp.benefitsDisabled,
+    crackdownExpiration: cp.crackdownExpiration,
     defended: cp.defended,
   }));
   const controlPointsByNationId = controlPoints.reduce((acc, cp) => {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
-import { smartRound } from "@/lib/utils";
+import { diffDateTime, smartRound, sortByDateTime, toDays } from "@/lib/utils";
 import { twMerge } from "tailwind-merge";
 
 export function getResourcesUi(analysis: Analysis) {
@@ -145,6 +145,25 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                             })
                           : null}{" "}
                         ({nation.totalCpCost.toFixed(0)} cost, {nation.investmentPoints.toFixed(0)} IP)
+                        {(() => {
+                          const earliestCrackdown = sortByDateTime(
+                            nation.controlPoints.filter((cp) => cp.crackdownExpiration),
+                            (cp) => cp.crackdownExpiration!
+                          )[0];
+                          if (earliestCrackdown) {
+                            return (
+                              <span>
+                                {" "}
+                                (expires in{" "}
+                                {toDays(
+                                  diffDateTime(earliestCrackdown.crackdownExpiration!, analysis.gameCurrentDateTime)
+                                ).toFixed(0)}
+                                d)
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </TableCell>
                       <TableCell>
                         <span
