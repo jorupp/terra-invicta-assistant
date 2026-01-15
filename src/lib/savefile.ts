@@ -683,7 +683,7 @@ export interface Quaternion {
 }
 
 export interface TIHabState extends BaseState {
-  habType: string;
+  habType: "Station" | "Base";
   tier: number;
   advisingCouncilors: IDValue[];
   dockedFleets: IDValue[];

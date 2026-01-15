@@ -249,8 +249,13 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"]
     .map(({ Value: hab }) => {
       const tier = hab.tier;
-      const validSectors = tier === 1 ? 1 : tier === 2 ? 3 : 5;
-      const sectors = (habSectorsByHabId.get(hab.ID.value) || []).filter((s) => s.exists && s.sectorNum < validSectors);
+      // there's probably some data to indicate which sectors are populated for a given tier + habType (shrug)
+      const validSectors = new Set(
+        tier === 1 ? [0] : tier === 2 ? (hab.habType === "Station" ? [0, 2, 4] : [0, 1, 2]) : [0, 1, 2, 3, 4]
+      );
+      const sectors = (habSectorsByHabId.get(hab.ID.value) || []).filter(
+        (s) => s.exists && validSectors.has(s.sectorNum)
+      );
       const modules = sectors.flatMap((s) => s.habModules);
       const empty = modules.filter((m) => m.destroyed || m.startBuildDate === noDate);
       const underConstruction = modules.filter((m) => m.completionDate >= gameCurrentDateTimeFormatted && !m.destroyed);
@@ -280,7 +285,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         orbitStateId: hab.orbitState?.value,
         habType: hab.habType,
         tier: hab.tier,
-        sectorIds: hab.sectors.map((i) => i.value),
+        sectorIds: sectors.map((i) => i.id),
         sectors: sectors,
         emptyModuleCount: empty.length,
         underConstructionModuleCount: underConstruction.length,
