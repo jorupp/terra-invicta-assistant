@@ -515,6 +515,7 @@ function CouncilorsComponent({
     }, new Map<number, Map<string, MissionSource[]>>());
   const factions = Array.from(sourcesByFactionByMission.keys())
     .map((factionId) => factionsById.get(factionId)!)
+    .filter((f) => f)
     .toSorted((a, b) => {
       if (a.id === playerFaction.id) return -1;
       if (b.id === playerFaction.id) return 1;
