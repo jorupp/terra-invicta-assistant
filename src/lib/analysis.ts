@@ -340,6 +340,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       .filter((orbit) => playerInterestedBodyIds.has(orbit.Value.barycenter.value))
       .map((i) => i.Key.value)
   );
+  const playerInterestedPlanets = planets
+    .filter((planet) => playerInterestedBodyIds.has(planet.Key.value))
+    .map((p) => p.Value);
 
   const alienFaction = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].find(
     (faction) => faction.Value.templateName === "AlienCouncil"
@@ -727,6 +730,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     playerAvailableCouncilors,
     nations,
     factionsById,
+    playerInterestedPlanets,
   };
 }
 

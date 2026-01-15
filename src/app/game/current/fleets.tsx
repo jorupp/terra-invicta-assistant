@@ -83,6 +83,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="p-4">
+      <p>Tracking planets: {analysis.playerInterestedPlanets.map((p) => p.displayName).join(", ")}</p>
       <Table>
         <TableHeader>
           <TableRow>
