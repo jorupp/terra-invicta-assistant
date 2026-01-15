@@ -441,7 +441,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const homeNation = homeNationId ? nationsById.get(homeNationId) : undefined;
     return {
       id: org.ID.value,
-      displayName: org.displayName,
+      displayName: org.displayName!,
       templateName: org.templateName,
       template,
       assignedCouncilorId: org.assignedCouncilor?.value,
@@ -731,6 +731,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     nations,
     factionsById,
     playerInterestedPlanets,
+    playerVisibleCouncilors,
   };
 }
 

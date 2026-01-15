@@ -11,7 +11,7 @@ import { Analysis } from "@/lib/analysis";
 import { MissionDataName, TraitDataName } from "@/lib/template-types-generated";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 import { defaultScoringWeights, loadWeightsFromStorage, ScoringWeights, ScoringWeightsDialog } from "./scoringWeights";
-import { Administration, TraitIcons } from "@/components/icons";
+import { Administration, MissionIcons, TraitIcons, UnknownIcon } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
@@ -57,7 +57,7 @@ function CouncilorTableRow({
   hasOrgs,
   highlightMissionClassName,
 }: {
-  councilor: Analysis["playerCouncilors"][number] & { score: ScoreResult };
+  councilor: Analysis["playerCouncilors"][number] & { score?: ScoreResult };
   stats: Analysis["playerCouncilors"][number]["effectsWithOrgsAndAugments"];
   label: string;
   hasOrgs?: boolean;
@@ -149,16 +149,20 @@ function CouncilorTableRow({
           />
         </span>
       </TableCell>
-      <TableCell>
-        <Tooltip>
-          <TooltipTrigger>{councilor.score.value?.toFixed(2)}</TooltipTrigger>
-          <TooltipContent align="end" className="max-w-auto">
-            <pre className="p-2">{councilor.score.details}</pre>
-          </TooltipContent>
-        </Tooltip>
-      </TableCell>
-      <TableCell>{councilor.score.noMissionScore?.toFixed(2)}</TableCell>
-      <TableCell>{cpCap?.toFixed(0)}</TableCell>
+      {councilor.score === undefined ? null : (
+        <>
+          <TableCell>
+            <Tooltip>
+              <TooltipTrigger>{councilor.score.value?.toFixed(2)}</TooltipTrigger>
+              <TooltipContent align="end" className="max-w-auto">
+                <pre className="p-2">{councilor.score.details}</pre>
+              </TooltipContent>
+            </Tooltip>
+          </TableCell>
+          <TableCell>{councilor.score.noMissionScore?.toFixed(2)}</TableCell>
+          <TableCell>{cpCap?.toFixed(0)}</TableCell>
+        </>
+      )}
     </TableRow>
   );
 }
@@ -171,8 +175,8 @@ function OrgTableRow({
   isTakeover,
 }: {
   org: Analysis["playerAvailableOrgs"][number] & {
-    type: string;
-    score: ScoreResult;
+    type?: string;
+    score?: ScoreResult;
     councilor?: string;
     councilorId?: number;
   };
@@ -284,15 +288,19 @@ function OrgTableRow({
           highlightMissionClassName={highlightMissionClassName}
         />
       </TableCell>
-      <TableCell>
-        <Tooltip>
-          <TooltipTrigger>{org.score.value?.toFixed(2)}</TooltipTrigger>
-          <TooltipContent align="end" className="max-w-auto">
-            <pre className="p-2">{org.score.details}</pre>
-          </TooltipContent>
-        </Tooltip>
-      </TableCell>
-      <TableCell>{org.score.noMissionScore?.toFixed(2)}</TableCell>
+      {org.score === undefined ? null : (
+        <>
+          <TableCell>
+            <Tooltip>
+              <TooltipTrigger>{org.score.value?.toFixed(2)}</TooltipTrigger>
+              <TooltipContent align="end" className="max-w-auto">
+                <pre className="p-2">{org.score.details}</pre>
+              </TooltipContent>
+            </Tooltip>
+          </TableCell>
+          <TableCell>{org.score.noMissionScore?.toFixed(2)}</TableCell>
+        </>
+      )}
     </TableRow>
   );
 }
@@ -391,7 +399,16 @@ function CouncilorsComponent({
     councilorId: number;
   })[];
 }) {
-  const { playerMissionCounts } = analysis;
+  const {
+    playerMissionCounts,
+    playerVisibleCouncilors,
+    playerCouncilors,
+    playerAvailableOrgs,
+    playerUnassignedOrgs,
+    playerFaction,
+    playerStealableOrgs,
+    factionsById,
+  } = analysis;
   const scoredStealableOrgs = scoreAndSort(
     analysis.playerStealableOrgs.map((i) => ({ type: "stealable", ...i })),
     weights,
@@ -441,6 +458,68 @@ function CouncilorsComponent({
     acc.get(key)!.push(org);
     return acc;
   }, new Map<number, typeof scoredStealableOrgs>());
+
+  type MissionSource =
+    | {
+        type: "councilor";
+        councilor: Analysis["playerCouncilors"][number];
+        factionId: number | undefined;
+        missions: MissionDataName[];
+      }
+    | {
+        type: "org";
+        org: Analysis["playerAvailableOrgs"][number];
+        factionId: number | undefined;
+        missions: MissionDataName[];
+      };
+
+  const sourcesByFactionByMission = [...playerCouncilors, ...playerVisibleCouncilors]
+    .map(
+      (i) =>
+        ({
+          type: "councilor",
+          councilor: i,
+          factionId: i.factionId,
+          missions: i.effectsWithOrgsAndAugments.missionsGrantedNames || [],
+        } as MissionSource)
+    )
+    .concat(
+      [...playerAvailableOrgs, ...playerUnassignedOrgs].map((i) => ({
+        type: "org",
+        org: i,
+        factionId: playerFaction?.id,
+        missions: i.template?.missionsGrantedNames || [],
+      }))
+    )
+    .concat(
+      playerStealableOrgs.map((i) => ({
+        type: "org",
+        org: i,
+        factionId: i.faction?.id,
+        missions: i.template?.missionsGrantedNames || [],
+      }))
+    )
+    .reduce((acc, o) => {
+      const key = o.factionId || 0;
+      if (!acc.has(key)) {
+        acc.set(key, new Map<string, MissionSource[]>());
+      }
+      const effectsMap = acc.get(key)!;
+      o.missions.forEach((m) => {
+        if (!effectsMap.has(m)) {
+          effectsMap.set(m, []);
+        }
+        effectsMap.get(m)!.push(o);
+      });
+      return acc;
+    }, new Map<number, Map<string, MissionSource[]>>());
+  const factions = Array.from(sourcesByFactionByMission.keys())
+    .map((factionId) => factionsById.get(factionId)!)
+    .toSorted((a, b) => {
+      if (a.id === playerFaction.id) return -1;
+      if (b.id === playerFaction.id) return 1;
+      return (a.displayName || "").localeCompare(b.displayName || "");
+    });
 
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
@@ -568,6 +647,70 @@ function CouncilorsComponent({
                       ))}
                     </TableBody>
                   </Table>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="missions">
+          <AccordionTrigger>Missions</AccordionTrigger>
+          <AccordionContent>
+            <Tabs defaultValue={`faction-${factions[0].id}`}>
+              <TabsList>
+                {factions.map((faction) => (
+                  <TabsTrigger key={faction.id} value={`faction-${faction.id}`}>
+                    {faction.displayName || "Unknown Faction"} ({sourcesByFactionByMission.get(faction.id)?.size || 0})
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {factions.map((faction) => (
+                <TabsContent key={faction.id} value={`faction-${faction.id}`}>
+                  <Accordion type="single" collapsible>
+                    {Array.from(
+                      new Set([
+                        ...Array.from(sourcesByFactionByMission.get(faction.id)?.keys() || []),
+                        ...Object.keys(weights.missions || {}),
+                      ])
+                    ).map((missionName) => {
+                      const sources = sourcesByFactionByMission.get(faction.id)?.get(missionName) || [];
+                      const MissionIcon = MissionIcons[missionName] || UnknownIcon;
+                      return (
+                        <AccordionItem key={missionName} value={missionName}>
+                          <AccordionTrigger>
+                            <span>
+                              <MissionIcon /> {missionName} &ndash;{" "}
+                              {sources.filter((i) => i.type === "councilor").length} Councilors &lt;-{" "}
+                              {sources.filter((i) => i.type === "org").length} Orgs
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <Table>
+                              <OrgTableHeader costHeader="Takeover" />
+                              <TableBody>
+                                {sources?.map((src) =>
+                                  src.type === "org" ? (
+                                    <OrgTableRow
+                                      key={`councilor-${src.org.id}-mission-${missionName}`}
+                                      org={src.org}
+                                      playerNationIds={playerNationIds}
+                                      playerTraits={playerTraits}
+                                    />
+                                  ) : (
+                                    <CouncilorTableRow
+                                      key={`org-${src.councilor.id}-mission-${missionName}`}
+                                      councilor={src.councilor}
+                                      stats={src.councilor.effectsWithOrgsAndAugments}
+                                      label={src.councilor.displayName!}
+                                    />
+                                  )
+                                )}
+                              </TableBody>
+                            </Table>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
                 </TabsContent>
               ))}
             </Tabs>
