@@ -1,23 +1,55 @@
 import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
-import { Administration, Boost, Command, Currency, Espionage, Influence, Investigation, Loyalty, MiningBonus, MissionControl, MissionIcons, Ops, Persuasion, PriorityBoost, PriorityEconomy, PriorityEnvironment, PriorityFunding, PriorityGovernment, PriorityKnowledge, PriorityMilitary, PriorityMissionControl, PriorityOppression, PrioritySpoils, PriorityUnity, PriorityWelfare, Projects, Research, Science, Security, TechIcons, TierStar, TraitCriminal, TraitGovernment, UnknownIcon } from "./icons";
-import {  CouncilorTypeDataName,  MissionDataName, Org, TechCategory, TraitDataName } from "@/lib/templates";
+import {
+  Administration,
+  Boost,
+  Command,
+  Currency,
+  Espionage,
+  Influence,
+  Investigation,
+  Loyalty,
+  MiningBonus,
+  MissionControl,
+  MissionIcons,
+  Ops,
+  Persuasion,
+  PriorityBoost,
+  PriorityEconomy,
+  PriorityEnvironment,
+  PriorityFunding,
+  PriorityGovernment,
+  PriorityKnowledge,
+  PriorityMilitary,
+  PriorityMissionControl,
+  PriorityOppression,
+  PrioritySpoils,
+  PriorityUnity,
+  PriorityWelfare,
+  Projects,
+  Research,
+  Science,
+  Security,
+  TechIcons,
+  TierStar,
+  TraitCriminal,
+  TraitGovernment,
+  UnknownIcon,
+} from "./icons";
+import { CouncilorTypeDataName, MissionDataName, Org, TechCategory, TraitDataName } from "@/lib/templates";
 import { twMerge } from "tailwind-merge";
 import { governmentCriminalGroupTraits, typesCanHaveCriminal, typesCanHaveGovernment } from "@/lib/template-types";
 import { HeartIcon } from "lucide-react";
 import { smartRound } from "@/lib/utils";
 
 export type ShowEffectsProps = Partial<
-  { xpModifier: number, xp: number } &
-  Pick<Org, 'techBonuses' | 'missionsGrantedNames'> &
-  { 
-    councilorTechBonus?: Array<{ category: TechCategory; bonus: number }>,
-    traitTemplateNames: TraitDataName[],
-    typeTemplateName: CouncilorTypeDataName,
-    playerIntel: number,
-    playerMaxIntel: number,
-    lastRecordedLoyalty: number,
-  } &
-  CouncilorAttributes &
+  { xpModifier: number; xp: number } & Pick<Org, "techBonuses" | "missionsGrantedNames"> & {
+      councilorTechBonus?: Array<{ category: TechCategory; bonus: number }>;
+      traitTemplateNames: TraitDataName[];
+      typeTemplateName: CouncilorTypeDataName;
+      playerIntel: number;
+      playerMaxIntel: number;
+      lastRecordedLoyalty: number;
+    } & CouncilorAttributes &
     Pick<
       TIOrgState,
       | "tier"
@@ -56,7 +88,12 @@ export type ShowEffectsProps = Partial<
     >
 >;
 
-export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassName?: (missionName: MissionDataName) => string | undefined, highlightTier?: boolean }) => {
+export const ShowEffects = (
+  props: ShowEffectsProps & {
+    highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
+    highlightTier?: boolean;
+  }
+) => {
   const tier = props.tier || 0;
   const takeoverDefense = props.takeoverDefense || 0;
   const costMoney = (props.costMoney || 0) + (props.incomeMoney_month || 0);
@@ -104,125 +141,378 @@ export const ShowEffects = (props: ShowEffectsProps & { highlightMissionClassNam
   const missionsGrantedNames = props.missionsGrantedNames || [];
   const spacer = <span className="mx-0.5"> </span>;
   const isGovernment = (props.traitTemplateNames || []).includes("Government");
-  const canHaveGovernment = props.typeTemplateName && typesCanHaveGovernment.includes(props.typeTemplateName) && 
-    !(props.traitTemplateNames || []).some(t => governmentCriminalGroupTraits.includes(t));
+  const canHaveGovernment =
+    props.typeTemplateName &&
+    typesCanHaveGovernment.includes(props.typeTemplateName) &&
+    !(props.traitTemplateNames || []).some((t) => governmentCriminalGroupTraits.includes(t));
   const isCriminal = (props.traitTemplateNames || []).includes("Criminal");
-  const canHaveCriminal = props.typeTemplateName && typesCanHaveCriminal.includes(props.typeTemplateName) &&
-    !(props.traitTemplateNames || []).some(t => governmentCriminalGroupTraits.includes(t));
+  const canHaveCriminal =
+    props.typeTemplateName &&
+    typesCanHaveCriminal.includes(props.typeTemplateName) &&
+    !(props.traitTemplateNames || []).some((t) => governmentCriminalGroupTraits.includes(t));
 
-  return <>
-    {(tier > 3 || props.highlightTier)
-      ? <span className={twMerge(props.highlightTier ? "bg-green-300 rounded p-1 pr-0" : undefined)}>{tier} <TierStar />{spacer}</span>
-      : tier > 0 && <>{new Array(tier).fill(0).map((_, i) => <TierStar key={i} />)}{spacer}</>}
-    {/** TODO: how to show takeover defense? */}
-    {costMoney !== 0 && <><Currency/> {smartRound(costMoney)}{spacer}</>}
-    {costInfluence !== 0 && <><Influence/> {smartRound(costInfluence)}{spacer}</>}
-    {costOps !== 0 && <><Ops/> {smartRound(costOps)}{spacer}</>}
-    {costBoost !== 0 && <><Boost/> {smartRound(costBoost)}{spacer}</>}
-    {incomeMissionControl !== 0 && <><MissionControl/> {incomeMissionControl}{spacer}</>}
-    {incomeResearch !== 0 && <><Research/> {incomeResearch}{spacer}</>}
-    {projectCapacityGranted !== 0 && <><Projects/> {projectCapacityGranted}{spacer}</>}
-    {persuasion !== 0 && <><Persuasion className={twMerge(persuasion < basePersuasion ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={basePersuasion.toFixed(0)}>{persuasion}</span>{spacer}</>}
-    {command !== 0 && <><Command className={twMerge(command < baseCommand ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseCommand.toFixed(0)}>{command}</span>{spacer}</>}
-    {investigation !== 0 && <><Investigation className={twMerge(investigation < baseInvestigation ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseInvestigation.toFixed(0)}>{investigation}</span>{spacer}</>}
-    {espionage !== 0 && <><Espionage className={twMerge(espionage < baseEspionage ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseEspionage.toFixed(0)}>{espionage}</span>{spacer}</>}
-    {administration !== 0 && <><Administration className={twMerge(administration < baseAdministration ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseAdministration.toFixed(0)}>{administration}</span>{spacer}</>}
-    {science !== 0 && <><Science className={twMerge(science < baseScience ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseScience.toFixed(0)}>{science}</span>{spacer}</>}
-    {security !== 0 && <><Security className={twMerge(security < baseSecurity ? 'bg-red-200 p-1 -m-1 mr-0' : undefined)}/> <span title={baseSecurity.toFixed(0)}>{security}</span>{spacer}</>}
-    { apparentLoyalty !== -100 && (
-      playerIntel === 1 ? (
-        <><Loyalty/> {loyalty}{spacer}</>
+  return (
+    <>
+      {tier > 3 || props.highlightTier ? (
+        <span className={twMerge(props.highlightTier ? "bg-green-300 rounded p-1 pr-0" : undefined)}>
+          {tier} <TierStar />
+          {spacer}
+        </span>
       ) : (
+        tier > 0 && (
+          <>
+            {new Array(tier).fill(0).map((_, i) => (
+              <TierStar key={i} />
+            ))}
+            {spacer}
+          </>
+        )
+      )}
+      {/** TODO: how to show takeover defense? */}
+      {costMoney !== 0 && (
         <>
-          <><span className="inline-block -m-0.5"><HeartIcon className="h-4 w-4 stroke-red-500" /></span> {apparentLoyalty}</>
-          {lastRecordedLoyalty !== -100 && <>/ <Loyalty/> {lastRecordedLoyalty}</>}
+          <Currency /> {smartRound(costMoney)}
           {spacer}
         </>
-    )) }
-    {xpModifier !== 0 && <>{pct(xpModifier)} XP {spacer}</>}
-    {xp !== 0 && <><span className={twMerge((1 + (xpModifier || 0)) * 20 <= xp ? 'bg-green-300 rounded px-1' : null)}>{xp} XP</span>{spacer}</>}
-    {isGovernment ? <><TraitGovernment /> {spacer}</> : canHaveGovernment && <><TraitGovernment strokeClass="stroke-yellow-500" /> {spacer}</>}
-    {isCriminal ? <><TraitCriminal /> {spacer}</> : canHaveCriminal && <><TraitCriminal strokeClass="stroke-yellow-500" /> {spacer}</>}
+      )}
+      {costInfluence !== 0 && (
+        <>
+          <Influence /> {smartRound(costInfluence)}
+          {spacer}
+        </>
+      )}
+      {costOps !== 0 && (
+        <>
+          <Ops /> {smartRound(costOps)}
+          {spacer}
+        </>
+      )}
+      {costBoost !== 0 && (
+        <>
+          <Boost /> {smartRound(costBoost)}
+          {spacer}
+        </>
+      )}
+      {incomeMissionControl !== 0 && (
+        <>
+          <MissionControl /> {incomeMissionControl}
+          {spacer}
+        </>
+      )}
+      {incomeResearch !== 0 && (
+        <>
+          <Research /> {incomeResearch}
+          {spacer}
+        </>
+      )}
+      {projectCapacityGranted !== 0 && (
+        <>
+          <Projects /> {projectCapacityGranted}
+          {spacer}
+        </>
+      )}
+      {persuasion !== 0 && (
+        <>
+          <Persuasion className={twMerge(persuasion < basePersuasion ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
+          <span title={basePersuasion.toFixed(0)}>{persuasion}</span>
+          {spacer}
+        </>
+      )}
+      {command !== 0 && (
+        <>
+          <Command className={twMerge(command < baseCommand ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
+          <span title={baseCommand.toFixed(0)}>{command}</span>
+          {spacer}
+        </>
+      )}
+      {investigation !== 0 && (
+        <>
+          <Investigation
+            className={twMerge(investigation < baseInvestigation ? "bg-red-200 p-1 -m-1 mr-0" : undefined)}
+          />{" "}
+          <span title={baseInvestigation.toFixed(0)}>{investigation}</span>
+          {spacer}
+        </>
+      )}
+      {espionage !== 0 && (
+        <>
+          <Espionage className={twMerge(espionage < baseEspionage ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
+          <span title={baseEspionage.toFixed(0)}>{espionage}</span>
+          {spacer}
+        </>
+      )}
+      {administration !== 0 && (
+        <>
+          <Administration
+            className={twMerge(administration < baseAdministration ? "bg-red-200 p-1 -m-1 mr-0" : undefined)}
+          />{" "}
+          <span title={baseAdministration.toFixed(0)}>{administration}</span>
+          {spacer}
+        </>
+      )}
+      {science !== 0 && (
+        <>
+          <Science className={twMerge(science < baseScience ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
+          <span title={baseScience.toFixed(0)}>{science}</span>
+          {spacer}
+        </>
+      )}
+      {security !== 0 && (
+        <>
+          <Security className={twMerge(security < baseSecurity ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
+          <span title={baseSecurity.toFixed(0)}>{security}</span>
+          {spacer}
+        </>
+      )}
+      {apparentLoyalty !== -100 &&
+        (playerIntel === 1 ? (
+          <>
+            <Loyalty /> {loyalty}
+            {spacer}
+          </>
+        ) : (
+          <>
+            <>
+              <span className="inline-block -m-0.5">
+                <HeartIcon className="h-4 w-4 stroke-red-500" />
+              </span>{" "}
+              {apparentLoyalty}
+            </>
+            {lastRecordedLoyalty !== -100 && (
+              <>
+                / <Loyalty /> {lastRecordedLoyalty}
+              </>
+            )}
+            {spacer}
+          </>
+        ))}
+      {xpModifier !== 0 && (
+        <>
+          {pct(xpModifier)} XP {spacer}
+        </>
+      )}
+      {xp !== 0 && (
+        <>
+          <span className={twMerge((1 + (xpModifier || 0)) * 20 <= xp ? "bg-green-300 rounded px-1" : null)}>
+            {xp} XP
+          </span>
+          {spacer}
+        </>
+      )}
+      {isGovernment ? (
+        <>
+          <TraitGovernment /> {spacer}
+        </>
+      ) : (
+        canHaveGovernment && (
+          <>
+            <TraitGovernment strokeClass="stroke-yellow-500" /> {spacer}
+          </>
+        )
+      )}
+      {isCriminal ? (
+        <>
+          <TraitCriminal /> {spacer}
+        </>
+      ) : (
+        canHaveCriminal && (
+          <>
+            <TraitCriminal strokeClass="stroke-yellow-500" /> {spacer}
+          </>
+        )
+      )}
 
-    {priorityEconomyBonus !== 0 && <><PriorityEconomy/> {pct(priorityEconomyBonus)}{spacer}</>}
-    {priorityWelfareBonus !== 0 && <><PriorityWelfare/> {pct(priorityWelfareBonus)}{spacer}</>}
-    {priorityEnvironmentBonus !== 0 && <><PriorityEnvironment/> {pct(priorityEnvironmentBonus)}{spacer}</>}
-    {priorityKnowledgeBonus !== 0 && <><PriorityKnowledge/> {pct(priorityKnowledgeBonus)}{spacer}</>}
-    {priorityGovernmentBonus !== 0 && <><PriorityGovernment/> {pct(priorityGovernmentBonus)}{spacer}</>}
-    {priorityUnityBonus !== 0 && <><PriorityUnity/> {pct(priorityUnityBonus)}{spacer}</>}
-    {priorityMilitaryBonus !== 0 && <><PriorityMilitary/> {pct(priorityMilitaryBonus)}{spacer}</>}
-    {priorityOppressionBonus !== 0 && <><PriorityOppression/> {pct(priorityOppressionBonus)}{spacer}</>}
-    {prioritySpoilsBonus !== 0 && <><PrioritySpoils/> {pct(prioritySpoilsBonus)}{spacer}</>}
-    {priorityFundingBonus !== 0 && <><PriorityFunding/> {pct(priorityFundingBonus)}{spacer}</>}
-    {priorityBoostBonus !== 0 && <><PriorityBoost/> {pct(priorityBoostBonus)}{spacer}</>}
-    {priorityMcBonus !== 0 && <><PriorityMissionControl/> {pct(priorityMcBonus)}{spacer}</>}
-    {miningBonus !== 0 && <><MiningBonus/> {pct(miningBonus)}{spacer}</>}
+      {priorityEconomyBonus !== 0 && (
+        <>
+          <PriorityEconomy /> {pct(priorityEconomyBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityWelfareBonus !== 0 && (
+        <>
+          <PriorityWelfare /> {pct(priorityWelfareBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityEnvironmentBonus !== 0 && (
+        <>
+          <PriorityEnvironment /> {pct(priorityEnvironmentBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityKnowledgeBonus !== 0 && (
+        <>
+          <PriorityKnowledge /> {pct(priorityKnowledgeBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityGovernmentBonus !== 0 && (
+        <>
+          <PriorityGovernment /> {pct(priorityGovernmentBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityUnityBonus !== 0 && (
+        <>
+          <PriorityUnity /> {pct(priorityUnityBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityMilitaryBonus !== 0 && (
+        <>
+          <PriorityMilitary /> {pct(priorityMilitaryBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityOppressionBonus !== 0 && (
+        <>
+          <PriorityOppression /> {pct(priorityOppressionBonus)}
+          {spacer}
+        </>
+      )}
+      {prioritySpoilsBonus !== 0 && (
+        <>
+          <PrioritySpoils /> {pct(prioritySpoilsBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityFundingBonus !== 0 && (
+        <>
+          <PriorityFunding /> {pct(priorityFundingBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityBoostBonus !== 0 && (
+        <>
+          <PriorityBoost /> {pct(priorityBoostBonus)}
+          {spacer}
+        </>
+      )}
+      {priorityMcBonus !== 0 && (
+        <>
+          <PriorityMissionControl /> {pct(priorityMcBonus)}
+          {spacer}
+        </>
+      )}
+      {miningBonus !== 0 && (
+        <>
+          <MiningBonus /> {pct(miningBonus)}
+          {spacer}
+        </>
+      )}
 
-    {councilorTechBonus.length > 0 && <>
-      {councilorTechBonus.map(({category, bonus}, index) => {
-        const TechIcon = TechIcons[category as keyof typeof TechIcons];
-        if (!TechIcon) {
-          console.log("Unknown tech category:", category);
-          return <span key={index}>{pct(bonus)} <UnknownIcon className="border-green-500 border" title={`Unknown: ${category}`} />{spacer}</span>;
-        }
-        return <span key={index}>{pct(bonus)} <TechIcon className="border-green-500 border" />{spacer}</span>;
-      })}
-    </>}
+      {councilorTechBonus.length > 0 && (
+        <>
+          {councilorTechBonus.map(({ category, bonus }, index) => {
+            const TechIcon = TechIcons[category as keyof typeof TechIcons];
+            if (!TechIcon) {
+              console.log("Unknown tech category:", category);
+              return (
+                <span key={index}>
+                  {pct(bonus)} <UnknownIcon className="border-green-500 border" title={`Unknown: ${category}`} />
+                  {spacer}
+                </span>
+              );
+            }
+            return (
+              <span key={index}>
+                {pct(bonus)} <TechIcon className="border-green-500 border" />
+                {spacer}
+              </span>
+            );
+          })}
+        </>
+      )}
 
-    {techBonuses.length > 0 && <>
-      {techBonuses.map(({category, bonus}, index) => {
-        const TechIcon = TechIcons[category as keyof typeof TechIcons];
-        if (!TechIcon) {
-          console.log("Unknown tech category:", category);
-          return <span key={index}>{pct(bonus)} <UnknownIcon title={`Unknown: ${category}`} />{spacer}</span>;
-        }
-        return <span key={index}>{pct(bonus)} <TechIcon />{spacer}</span>;
-      })}
-    </>}
+      {techBonuses.length > 0 && (
+        <>
+          {techBonuses.map(({ category, bonus }, index) => {
+            const TechIcon = TechIcons[category as keyof typeof TechIcons];
+            if (!TechIcon) {
+              console.log("Unknown tech category:", category);
+              return (
+                <span key={index}>
+                  {pct(bonus)} <UnknownIcon title={`Unknown: ${category}`} />
+                  {spacer}
+                </span>
+              );
+            }
+            return (
+              <span key={index}>
+                {pct(bonus)} <TechIcon />
+                {spacer}
+              </span>
+            );
+          })}
+        </>
+      )}
 
-    {missionsGrantedNames.length > 0 && <>
-      {missionsGrantedNames.map((mission, index) => {
-        const MissionIcon = MissionIcons[mission as keyof typeof MissionIcons];
-        if (!MissionIcon) {
-          console.log("Unknown mission name:", mission);
-          return <span key={index}><UnknownIcon title={`Unknown: ${mission}`} />{spacer}</span>;
-        }
-        return <span key={index}><MissionIcon className={props.highlightMissionClassName?.(mission)} />{spacer}</span>;
-      })}
-    </>}
-  </>;
+      {missionsGrantedNames.length > 0 && (
+        <>
+          {missionsGrantedNames.map((mission, index) => {
+            const MissionIcon = MissionIcons[mission as keyof typeof MissionIcons];
+            const extraClass = missionsGrantedNames.length > 5 ? "-mx-1" : undefined;
+            if (!MissionIcon) {
+              console.log("Unknown mission name:", mission);
+              return (
+                <span key={index} className={extraClass}>
+                  <UnknownIcon title={`Unknown: ${mission}`} />
+                  {spacer}
+                </span>
+              );
+            }
+            return (
+              <span key={index} className={extraClass}>
+                <MissionIcon className={props.highlightMissionClassName?.(mission)} />
+                {spacer}
+              </span>
+            );
+          })}
+        </>
+      )}
+    </>
+  );
 };
 
 export function combineEffects(p1: ShowEffectsProps, p2: ShowEffectsProps): ShowEffectsProps {
-  const result: ShowEffectsProps = {...p1};
+  const result: ShowEffectsProps = { ...p1 };
   for (const key in p2) {
     const k = key as keyof ShowEffectsProps;
-    if (k === 'councilorTechBonus') {
-      result.councilorTechBonus = [...[...(result.councilorTechBonus || []), ...(p2.councilorTechBonus || [])].reduce((acc, curr) => {
-        const key = curr.category;
-        const existing = acc.get(key) || 0;
-        acc.set(key, existing + curr.bonus);
-        return acc;
-      }, new Map<TechCategory, number>()).entries().map(([category, bonus]) => ({category, bonus}) )];
-    }
-    else if (k === 'techBonuses') {
-      result.techBonuses = [...[...(result.techBonuses || []), ...(p2.techBonuses || [])].reduce((acc, curr) => {
-        const key = curr.category;
-        const existing = acc.get(key) || 0;
-        acc.set(key, existing + curr.bonus);
-        return acc;
-      }, new Map<TechCategory, number>()).entries().map(([category, bonus]) => ({category, bonus}) )];
-    }
-    else if (k === 'missionsGrantedNames') {
-      result.missionsGrantedNames = [...new Set([...(result.missionsGrantedNames || []), ...(p2.missionsGrantedNames || [])])];
-    }
-    else if (k === 'traitTemplateNames') {
-      result.traitTemplateNames = [...new Set([...(result.traitTemplateNames || []), ...(p2.traitTemplateNames || [])])];
-    }
-    else if (k === 'typeTemplateName') {
+    if (k === "councilorTechBonus") {
+      result.councilorTechBonus = [
+        ...[...(result.councilorTechBonus || []), ...(p2.councilorTechBonus || [])]
+          .reduce((acc, curr) => {
+            const key = curr.category;
+            const existing = acc.get(key) || 0;
+            acc.set(key, existing + curr.bonus);
+            return acc;
+          }, new Map<TechCategory, number>())
+          .entries()
+          .map(([category, bonus]) => ({ category, bonus })),
+      ];
+    } else if (k === "techBonuses") {
+      result.techBonuses = [
+        ...[...(result.techBonuses || []), ...(p2.techBonuses || [])]
+          .reduce((acc, curr) => {
+            const key = curr.category;
+            const existing = acc.get(key) || 0;
+            acc.set(key, existing + curr.bonus);
+            return acc;
+          }, new Map<TechCategory, number>())
+          .entries()
+          .map(([category, bonus]) => ({ category, bonus })),
+      ];
+    } else if (k === "missionsGrantedNames") {
+      result.missionsGrantedNames = [
+        ...new Set([...(result.missionsGrantedNames || []), ...(p2.missionsGrantedNames || [])]),
+      ];
+    } else if (k === "traitTemplateNames") {
+      result.traitTemplateNames = [
+        ...new Set([...(result.traitTemplateNames || []), ...(p2.traitTemplateNames || [])]),
+      ];
+    } else if (k === "typeTemplateName") {
       result.typeTemplateName = result.typeTemplateName || p2.typeTemplateName;
-    }
-    else if (typeof p2[k] === "number") {
+    } else if (typeof p2[k] === "number") {
       result[k] = (result[k] || 0) + (p2[k] || 0);
     }
   }

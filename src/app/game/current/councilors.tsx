@@ -118,30 +118,36 @@ function CouncilorTableRow({
         />
       </TableCell>
       <TableCell>
-        <ShowEffects
-          economyBonus={stats.economyBonus}
-          welfareBonus={stats.welfareBonus}
-          environmentBonus={stats.environmentBonus}
-          knowledgeBonus={stats.knowledgeBonus}
-          governmentBonus={stats.governmentBonus}
-          unityBonus={stats.unityBonus}
-          militaryBonus={stats.militaryBonus}
-          oppressionBonus={stats.oppressionBonus}
-          spoilsBonus={stats.spoilsBonus}
-          spaceDevBonus={stats.spaceDevBonus}
-          spaceflightBonus={stats.spaceflightBonus}
-          MCBonus={stats.MCBonus}
-          miningBonus={stats.miningBonus}
-        />
+        <span className="text-wrap leading-6 -my-2 inline-block">
+          <ShowEffects
+            economyBonus={stats.economyBonus}
+            welfareBonus={stats.welfareBonus}
+            environmentBonus={stats.environmentBonus}
+            knowledgeBonus={stats.knowledgeBonus}
+            governmentBonus={stats.governmentBonus}
+            unityBonus={stats.unityBonus}
+            militaryBonus={stats.militaryBonus}
+            oppressionBonus={stats.oppressionBonus}
+            spoilsBonus={stats.spoilsBonus}
+            spaceDevBonus={stats.spaceDevBonus}
+            spaceflightBonus={stats.spaceflightBonus}
+            MCBonus={stats.MCBonus}
+            miningBonus={stats.miningBonus}
+          />
+        </span>
       </TableCell>
       <TableCell>
-        <ShowEffects councilorTechBonus={stats.councilorTechBonus} techBonuses={stats.techBonuses} />
+        <span className="text-wrap leading-6 -my-2 inline-block">
+          <ShowEffects councilorTechBonus={stats.councilorTechBonus} techBonuses={stats.techBonuses} />
+        </span>
       </TableCell>
       <TableCell>
-        <ShowEffects
-          missionsGrantedNames={stats.missionsGrantedNames}
-          highlightMissionClassName={highlightMissionClassName}
-        />
+        <span className="text-wrap leading-6 -my-2 inline-block">
+          <ShowEffects
+            missionsGrantedNames={stats.missionsGrantedNames}
+            highlightMissionClassName={highlightMissionClassName}
+          />
+        </span>
       </TableCell>
       <TableCell>
         <Tooltip>
