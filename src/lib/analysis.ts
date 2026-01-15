@@ -610,7 +610,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       return {
         id: councilor.ID.value,
-        displayName: councilor.displayName,
+        displayName: councilor.displayName!,
         factionId: councilor.faction?.value,
         councilorType,
         traitTemplateNames: councilor.traitTemplateNames,

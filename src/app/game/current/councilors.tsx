@@ -33,14 +33,14 @@ function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   );
 }
 
-function OrgTableHeader({ isTakeover }: { isTakeover?: boolean }) {
+function OrgTableHeader({ costHeader }: { costHeader?: string }) {
   return (
     <TableHeader>
       <TableRow>
         <TableHead>Org Name</TableHead>
         <TableHead>Requirements</TableHead>
         <TableHead>Tier</TableHead>
-        {isTakeover ? <TableHead>Target</TableHead> : <TableHead>Purchase / Transfer</TableHead>}
+        {costHeader ? <TableHead>{costHeader}</TableHead> : <TableHead>Purchase / Transfer</TableHead>}
         <TableHead>Monthly</TableHead>
         <TableHead>Effects</TableHead>
         <TableHead>Score</TableHead>
@@ -164,7 +164,12 @@ function OrgTableRow({
   highlightMissionClassName,
   isTakeover,
 }: {
-  org: Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult };
+  org: Analysis["playerAvailableOrgs"][number] & {
+    type: string;
+    score: ScoreResult;
+    councilor?: string;
+    councilorId?: number;
+  };
   playerNationIds: Set<number>;
   playerTraits: Set<string>;
   highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
@@ -231,6 +236,8 @@ function OrgTableRow({
               </>
             );
           })()
+        ) : org.type === "used" ? (
+          <>{org.councilor ?? "Unassigned"}</>
         ) : null}
       </TableCell>
       <TableCell>
@@ -319,9 +326,9 @@ export function getCouncilorsUi(analysis: Analysis) {
     getOrganizationScore,
     "noMissionScore" // ignore missions when sorting orgs
   );
-  const usedOrgs = analysis.playerCouncilors
-    .flatMap((councilor) => councilor.orgs)
-    .map((org) => ({ ...org, type: "used" }));
+  const usedOrgs = analysis.playerCouncilors.flatMap((councilor) =>
+    councilor.orgs.map((o) => ({ ...o, type: "used", councilor: councilor.displayName, councilorId: councilor.id }))
+  );
   const scoredUsedOrgs = scoreAndSort(usedOrgs, weights, playerMissionCounts, getOrganizationScore);
 
   const bestAvailableCouncilor = scoredAvailableCouncilors[0]?.score.value;
@@ -371,7 +378,12 @@ function CouncilorsComponent({
   scoredAvailableCouncilors: (Analysis["playerAvailableCouncilors"][number] & { score: ScoreResult })[];
   scoredBaseCouncilors: (Analysis["playerCouncilors"][number] & { score: ScoreResult })[];
   scoredOrgs: (Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult })[];
-  scoredUsedOrgs: (Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult })[];
+  scoredUsedOrgs: (Analysis["playerAvailableOrgs"][number] & {
+    type: string;
+    score: ScoreResult;
+    councilor: string;
+    councilorId: number;
+  })[];
 }) {
   const { playerMissionCounts } = analysis;
   const scoredStealableOrgs = scoreAndSort(
@@ -507,7 +519,7 @@ function CouncilorsComponent({
           <AccordionTrigger>Current Organizations</AccordionTrigger>
           <AccordionContent>
             <Table>
-              <OrgTableHeader />
+              <OrgTableHeader costHeader="Councilor" />
               <TableBody>
                 {scoredUsedOrgs.toReversed().map((org) => (
                   <OrgTableRow
@@ -536,7 +548,7 @@ function CouncilorsComponent({
               {Array.from(stealableOrgsByFaction.entries()).map(([factionId, orgs]) => (
                 <TabsContent key={factionId} value={`faction-${factionId}`}>
                   <Table>
-                    <OrgTableHeader isTakeover />
+                    <OrgTableHeader costHeader="Takeover" />
                     <TableBody>
                       {orgs.map((org) => (
                         <OrgTableRow
