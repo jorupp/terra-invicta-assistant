@@ -239,6 +239,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     return (
       module.templateName?.includes("Mining") ||
       module.templateName?.includes("Mine") ||
+      module.templateName?.includes("Dock") ||
+      module.templateName?.includes("Depot") ||
       module.templateName?.includes(" Core")
     );
   }
