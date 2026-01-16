@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
 import { diffDateTime, smartRound, sortByDateTime, toDays } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
 export function getResourcesUi(analysis: Analysis) {
@@ -29,7 +30,7 @@ export function getResourcesUi(analysis: Analysis) {
 
 function ResourcesComponent({ analysis }: { analysis: Analysis }) {
   const {
-    playerFaction: { monthlyTransactionSummary },
+    playerFaction: { monthlyTransactionSummary, permaAbandonedNationIds, id: playerFactionId },
     nations,
     factionsById,
   } = analysis;
@@ -164,6 +165,12 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                           }
                           return null;
                         })()}
+                        {nation.controlPoints.some((cp) => cp.benefitsDisabled && cp.factionId == playerFactionId) &&
+                          permaAbandonedNationIds.includes(nation.id) && (
+                            <span title="Perma-abandoned nation">
+                              <Trash2 className="inline-block h-4 w-4 stroke-destructive -mt-1 mx-1" />
+                            </span>
+                          )}
                       </TableCell>
                       <TableCell>
                         <span

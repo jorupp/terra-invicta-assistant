@@ -75,6 +75,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }, new Map<string, { source: string; resource: string; amount: number }>())
         .values(),
     ],
+    permaAbandonedNationIds: faction.permaAbandonedNations.map((i) => i.value),
   }));
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
   const shipDesignsByDataName = new Map<string, (typeof factions)[0]["shipDesigns"][0]>(
