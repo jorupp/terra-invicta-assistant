@@ -88,6 +88,36 @@ export type ShowEffectsProps = Partial<
     >
 >;
 
+const spacer = <span className="mx-0.5"> </span>;
+
+const Skill = ({
+  value,
+  baseValue,
+  Icon,
+}: {
+  value: number;
+  baseValue: number;
+  Icon: React.ComponentType<{ className?: string }>;
+}) => {
+  const overflow = baseValue - value;
+  return (
+    value !== 0 && (
+      <span className="inline-block">
+        <Icon
+          className={twMerge(
+            overflow > 0 && "p-1 -mb-1.5",
+            overflow === 1 && "bg-red-200",
+            overflow === 2 && "bg-red-400",
+            overflow > 2 && "bg-red-600"
+          )}
+        />{" "}
+        <span title={baseValue.toFixed(0)}>{value}</span>
+        {spacer}
+      </span>
+    )
+  );
+};
+
 export const ShowEffects = (
   props: ShowEffectsProps & {
     highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
@@ -139,7 +169,6 @@ export const ShowEffects = (
   const councilorTechBonus = props.councilorTechBonus || [];
   const techBonuses = props.techBonuses || [];
   const missionsGrantedNames = props.missionsGrantedNames || [];
-  const spacer = <span className="mx-0.5"> </span>;
   const isGovernment = (props.traitTemplateNames || []).includes("Government");
   const canHaveGovernment =
     props.typeTemplateName &&
@@ -211,59 +240,14 @@ export const ShowEffects = (
           {spacer}
         </>
       )}
-      {persuasion !== 0 && (
-        <>
-          <Persuasion className={twMerge(persuasion < basePersuasion ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
-          <span title={basePersuasion.toFixed(0)}>{persuasion}</span>
-          {spacer}
-        </>
-      )}
-      {command !== 0 && (
-        <>
-          <Command className={twMerge(command < baseCommand ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
-          <span title={baseCommand.toFixed(0)}>{command}</span>
-          {spacer}
-        </>
-      )}
-      {investigation !== 0 && (
-        <>
-          <Investigation
-            className={twMerge(investigation < baseInvestigation ? "bg-red-200 p-1 -m-1 mr-0" : undefined)}
-          />{" "}
-          <span title={baseInvestigation.toFixed(0)}>{investigation}</span>
-          {spacer}
-        </>
-      )}
-      {espionage !== 0 && (
-        <>
-          <Espionage className={twMerge(espionage < baseEspionage ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
-          <span title={baseEspionage.toFixed(0)}>{espionage}</span>
-          {spacer}
-        </>
-      )}
-      {administration !== 0 && (
-        <>
-          <Administration
-            className={twMerge(administration < baseAdministration ? "bg-red-200 p-1 -m-1 mr-0" : undefined)}
-          />{" "}
-          <span title={baseAdministration.toFixed(0)}>{administration}</span>
-          {spacer}
-        </>
-      )}
-      {science !== 0 && (
-        <>
-          <Science className={twMerge(science < baseScience ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
-          <span title={baseScience.toFixed(0)}>{science}</span>
-          {spacer}
-        </>
-      )}
-      {security !== 0 && (
-        <>
-          <Security className={twMerge(security < baseSecurity ? "bg-red-200 p-1 -m-1 mr-0" : undefined)} />{" "}
-          <span title={baseSecurity.toFixed(0)}>{security}</span>
-          {spacer}
-        </>
-      )}
+      <Skill value={persuasion} baseValue={basePersuasion} Icon={Persuasion} />
+      <Skill value={command} baseValue={baseCommand} Icon={Command} />
+      <Skill value={investigation} baseValue={baseInvestigation} Icon={Investigation} />
+      <Skill value={espionage} baseValue={baseEspionage} Icon={Espionage} />
+      <Skill value={administration} baseValue={baseAdministration} Icon={Administration} />
+      <Skill value={science} baseValue={baseScience} Icon={Science} />
+      <Skill value={security} baseValue={baseSecurity} Icon={Security} />
+
       {apparentLoyalty !== -100 &&
         (playerIntel === 1 ? (
           <>
