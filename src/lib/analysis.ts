@@ -418,6 +418,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         totalSpoilsPerControlPoint,
         controlPoints,
         investmentPoints,
+        unrest: nation.unrest,
+        democracy: nation.democracy,
+        GDP: nation.GDP,
       };
     })
     .filter((i) => i.investmentPoints > 0);

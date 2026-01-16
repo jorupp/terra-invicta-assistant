@@ -119,6 +119,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                 <TableRow>
                   <TableHead>Nation</TableHead>
                   <TableHead>Control Points</TableHead>
+                  <TableHead>Unrest</TableHead>
                   <TableHead>Total Spoils</TableHead>
                   <TableHead>Total Spoils Per Point</TableHead>
                   <TableHead>Total Spoils Per CP Cost</TableHead>
@@ -172,6 +173,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                             </span>
                           )}
                       </TableCell>
+                      <TableCell>{nation.unrest.toFixed(2)}</TableCell>
                       <TableCell>
                         <span
                           title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(
