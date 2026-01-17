@@ -249,6 +249,8 @@ export interface TINationState extends BaseState {
   unrest: number;
   militaryTechLevel: number;
   GDP: number;
+  missionControl: number;
+  boostPerYear_dekatons: number;
   // [key: string]: unknown;
 }
 

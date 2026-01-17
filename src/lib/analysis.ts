@@ -369,9 +369,19 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const regions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIRegionState"].map(({ Value: region }) => ({
     id: region.ID.value,
     templateName: region.templateName,
-    nation: region.nation.value,
+    nationId: region.nation.value,
+    boostPerYear: region.boostPerYear_dekatons,
+    missionControl: region.missionControl,
   }));
   const regionsById = new Map<number, (typeof regions)[0]>(regions.map((region) => [region.id, region]));
+  const regionsByNationId = regions.reduce((acc, region) => {
+    if (!region.nationId) return acc;
+    if (!acc.has(region.nationId)) {
+      acc.set(region.nationId, []);
+    }
+    acc.get(region.nationId)!.push(region);
+    return acc;
+  }, new Map<number, typeof regions>());
 
   const controlPoints = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIControlPoint"].map(({ Value: cp }) => ({
     id: cp.ID.value,
@@ -405,6 +415,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const totalSpoilsPerCpCost = totalCpCost > 0 ? totalSpoils / totalCpCost : 0;
       const totalSpoilsPerControlPoint = cpCount > 0 ? totalSpoils / cpCount : 0;
       const controlPoints = controlPointsByNationId.get(nation.ID.value) || [];
+      const regions = regionsByNationId.get(nation.ID.value) || [];
+      const mc = regions.reduce((acc, r) => acc + r.missionControl, 0);
+      const boostPerMonth = regions.reduce((acc, r) => acc + r.boostPerYear, 0) / 12;
+      const mcPerCpCost = totalCpCost > 0 ? mc / totalCpCost : 0;
+      const boostPerMonthPerCpCost = totalCpCost > 0 ? boostPerMonth / totalCpCost : 0;
 
       return {
         id: nation.ID.value,
@@ -421,6 +436,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         unrest: nation.unrest,
         democracy: nation.democracy,
         GDP: nation.GDP,
+        mc,
+        mcPerCpCost,
+        boostPerMonth,
+        boostPerMonthPerCpCost,
       };
     })
     .filter((i) => i.investmentPoints > 0);
@@ -449,7 +468,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const orgs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrgState"].map(({ Value: org }) => {
     const template = org.templateName ? orgTemplates.get(org.templateName) : undefined;
     const homeRegionId = org.homeRegion?.value;
-    const homeNationId = regionsById.get(homeRegionId || -1)?.nation;
+    const homeNationId = regionsById.get(homeRegionId || -1)?.nationId;
     const homeNation = homeNationId ? nationsById.get(homeNationId) : undefined;
     return {
       id: org.ID.value,
@@ -640,7 +659,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         attributes: councilor.attributes,
         orgs: councilorOrgs,
         homeRegionId: councilor.homeRegion?.value,
-        homeNationId: regionsById.get(councilor.homeRegion?.value || -1)?.nation,
+        homeNationId: regionsById.get(councilor.homeRegion?.value || -1)?.nationId,
         typeTemplateName: councilor.typeTemplateName,
         xp: councilor.XP,
         effectsBaseAndUnaugmentedTraits,

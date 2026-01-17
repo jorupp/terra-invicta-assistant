@@ -1,6 +1,6 @@
 "use client";
 
-import { ControlPoint, FactionIcons } from "@/components/icons";
+import { Boost, ControlPoint, FactionIcons, MissionControl } from "@/components/icons";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -132,46 +132,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                     <TableRow key={nation.id}>
                       <TableCell>{nation.displayName}</TableCell>
                       <TableCell>
-                        {nation.controlPoints.length
-                          ? nation.controlPoints.map((cp) => {
-                              const faction = factionsById.get(cp.factionId!);
-                              const FactionIcon = faction
-                                ? FactionIcons[faction.templateName as keyof typeof FactionIcons]
-                                : ControlPoint;
-                              return (
-                                <FactionIcon
-                                  key={cp.id}
-                                  className={twMerge(cp.benefitsDisabled ? "bg-red-200" : "", "p-1 rounded")}
-                                />
-                              );
-                            })
-                          : null}{" "}
-                        ({nation.totalCpCost.toFixed(0)} cost, {nation.investmentPoints.toFixed(0)} IP)
-                        {(() => {
-                          const earliestCrackdown = sortByDateTime(
-                            nation.controlPoints.filter((cp) => cp.crackdownExpiration),
-                            (cp) => cp.crackdownExpiration!
-                          )[0];
-                          if (earliestCrackdown) {
-                            return (
-                              <span>
-                                {" "}
-                                (expires in{" "}
-                                {toDays(
-                                  diffDateTime(earliestCrackdown.crackdownExpiration!, analysis.gameCurrentDateTime)
-                                ).toFixed(0)}
-                                d)
-                              </span>
-                            );
-                          }
-                          return null;
-                        })()}
-                        {nation.controlPoints.some((cp) => cp.benefitsDisabled && cp.factionId == playerFactionId) &&
-                          permaAbandonedNationIds.includes(nation.id) && (
-                            <span title="Perma-abandoned nation">
-                              <Trash2 className="inline-block h-4 w-4 stroke-destructive -mt-1 mx-1" />
-                            </span>
-                          )}
+                        <NationCPDetails {...{ analysis, nation }} />
                       </TableCell>
                       <TableCell>{nation.unrest.toFixed(2)}</TableCell>
                       <TableCell>
@@ -185,6 +146,39 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                       </TableCell>
                       <TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell>
                       <TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="space">
+          <AccordionTrigger>MC/Boost targets</AccordionTrigger>
+          <AccordionContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nation</TableHead>
+                  <TableHead>Control Points</TableHead>
+                  <TableHead>Current MC / Boost</TableHead>
+                  <TableHead>Boost/mo Per CP Cost</TableHead>
+                  <TableHead>MC Per CP Cost</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {nations
+                  .toSorted((a, b) => (a.boostPerMonthPerCpCost < b.boostPerMonthPerCpCost ? 1 : -1))
+                  .map((nation) => (
+                    <TableRow key={nation.id}>
+                      <TableCell>{nation.displayName}</TableCell>
+                      <TableCell>
+                        <NationCPDetails {...{ analysis, nation }} />
+                      </TableCell>
+                      <TableCell>
+                        {nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost />
+                      </TableCell>
+                      <TableCell>{nation.boostPerMonthPerCpCost.toFixed(2)}</TableCell>
+                      <TableCell>{nation.mcPerCpCost.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
               </TableBody>
@@ -206,3 +200,49 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
     </>
   );
 }
+
+const NationCPDetails = ({ analysis, nation }: { nation: Analysis["nations"][0]; analysis: Analysis }) => {
+  const {
+    factionsById,
+    playerFaction: { permaAbandonedNationIds, id: playerFactionId },
+  } = analysis;
+  return (
+    <>
+      {nation.controlPoints.length
+        ? nation.controlPoints.map((cp) => {
+            const faction = factionsById.get(cp.factionId!);
+            const FactionIcon = faction
+              ? FactionIcons[faction.templateName as keyof typeof FactionIcons]
+              : ControlPoint;
+            return (
+              <FactionIcon key={cp.id} className={twMerge(cp.benefitsDisabled ? "bg-red-200" : "", "p-1 rounded")} />
+            );
+          })
+        : null}{" "}
+      ({nation.totalCpCost.toFixed(0)} cost, {nation.investmentPoints.toFixed(0)} IP)
+      {(() => {
+        const earliestCrackdown = sortByDateTime(
+          nation.controlPoints.filter((cp) => cp.crackdownExpiration),
+          (cp) => cp.crackdownExpiration!
+        )[0];
+        if (earliestCrackdown) {
+          return (
+            <span>
+              {" "}
+              (expires in{" "}
+              {toDays(diffDateTime(earliestCrackdown.crackdownExpiration!, analysis.gameCurrentDateTime)).toFixed(0)}
+              d)
+            </span>
+          );
+        }
+        return null;
+      })()}
+      {nation.controlPoints.some((cp) => cp.benefitsDisabled && cp.factionId == playerFactionId) &&
+        permaAbandonedNationIds.includes(nation.id) && (
+          <span title="Perma-abandoned nation">
+            <Trash2 className="inline-block h-4 w-4 stroke-destructive -mt-1 mx-1" />
+          </span>
+        )}
+    </>
+  );
+};
