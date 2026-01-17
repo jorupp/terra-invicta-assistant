@@ -4,6 +4,13 @@ import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
 import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "./utils";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
+  const mcMaskingTechs = new Set(
+    (await templates.projects())
+      .filter((i) => i.effects?.some((e) => e === "Effect_MCUsageMasking"))
+      .map((i) => i.dataName)
+  );
+  const metadata = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIMetadataState"][0].Value;
+  const { difficulty } = metadata;
   const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
   const lastMonth = {
     ...time.currentDateTime,
@@ -25,58 +32,80 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     displayName: playerState.displayName,
   };
 
-  const factions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].map(({ Value: faction }) => ({
-    id: faction.ID.value,
-    templateName: faction.templateName,
-    displayName: faction.displayName,
-    techNameContributionHistory: faction.techNameContributionHistory,
-    unlockedVictoryObjective: faction.unlockedVictoryObjective,
-    finishedProjectNames: faction.finishedProjectNames,
-    atrocities: faction.atrocities,
-    milestones: faction.milestones,
-    missionControlUsage: faction.missionControlUsage,
-    passiveTechSlot: faction.PassiveTechSlot,
-    councilorIds: faction.councilors.map((i) => i.value),
-    turnedCouncilorIds: faction.turnedCouncilors.map((i) => i.value),
-    unassignedOrgIds: faction.unassignedOrgs.map((i) => i.value),
-    availableOrgIds: faction.availableOrgs.map((i) => i.value),
-    availableCouncilorIds: faction.availableCouncilors.map((i) => i.value),
-    shipDesigns: faction.shipDesigns.map((i) => ({
-      hullName: i.hullName,
-      noseArmor: i.noseArmor,
-      lateralArmor: i.lateralArmor,
-      tailArmor: i.tailArmor,
-      dataName: i.dataName,
-      friendlyName: i.friendlyName,
-      displayName: i._displayName,
-    })),
-    intel: new Map((faction.intel || []).map((i) => [i.Key.value, i.Value])),
-    highestIntel: new Map((faction.highestIntel || []).map((i) => [i.Key.value, i.Value])),
-    lastRecordedLoyalty: new Map(
-      Array.isArray(faction.lastRecordedLoyalty) ? faction.lastRecordedLoyalty.map((i) => [i.Key.value, i.Value]) : []
-    ),
-    monthlyTransactionSummary: [
-      ...Object.entries(faction.Transactions)
-        .flatMap(([source, transactions]) =>
-          transactions.map((t) => ({
-            source,
-            resource: t.Resource,
-            amount: t.Amount,
-            date: t.Date,
-          }))
-        )
-        .filter((t) => toDays(diffDateTime(lastMonth, t.date)) < 0)
-        .reduce((acc, t) => {
-          const key = `${t.source}||${t.resource}`;
-          const resourceMap = acc.get(key) || { source: t.source, resource: t.resource, amount: 0 };
-          resourceMap.amount += t.amount;
-          acc.set(key, resourceMap);
-          return acc;
-        }, new Map<string, { source: string; resource: string; amount: number }>())
-        .values(),
-    ],
-    permaAbandonedNationIds: faction.permaAbandonedNations.map((i) => i.value),
-  }));
+  const factions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].map(({ Value: faction }) => {
+    const mcMultiplier =
+      (difficulty === "Cinematic"
+        ? 0.05
+        : difficulty === "Normal"
+        ? 0.3
+        : difficulty === "Veteran"
+        ? 0.6
+        : difficulty === "Brutal"
+        ? 1
+        : 9999) * Math.pow(0.8, faction.finishedProjectNames.filter((name) => mcMaskingTechs.has(name)).length);
+    const mcDailyTransactions = sortByDateTime(
+      faction.Transactions["Daily Income"]?.filter((i) => i.Resource === "MissionControl"),
+      (i) => i.Date
+    );
+    const mcCurrentLimit =
+      mcDailyTransactions.length > 0 ? mcDailyTransactions[mcDailyTransactions.length - 1].Amount : 0;
+    return {
+      id: faction.ID.value,
+      templateName: faction.templateName,
+      displayName: faction.displayName,
+      techNameContributionHistory: faction.techNameContributionHistory,
+      unlockedVictoryObjective: faction.unlockedVictoryObjective,
+      finishedProjectNames: faction.finishedProjectNames,
+      atrocities: faction.atrocities,
+      milestones: faction.milestones,
+      missionControlUsage: faction.missionControlUsage,
+      passiveTechSlot: faction.PassiveTechSlot,
+      councilorIds: faction.councilors.map((i) => i.value),
+      turnedCouncilorIds: faction.turnedCouncilors.map((i) => i.value),
+      unassignedOrgIds: faction.unassignedOrgs.map((i) => i.value),
+      availableOrgIds: faction.availableOrgs.map((i) => i.value),
+      availableCouncilorIds: faction.availableCouncilors.map((i) => i.value),
+      shipDesigns: faction.shipDesigns.map((i) => ({
+        hullName: i.hullName,
+        noseArmor: i.noseArmor,
+        lateralArmor: i.lateralArmor,
+        tailArmor: i.tailArmor,
+        dataName: i.dataName,
+        friendlyName: i.friendlyName,
+        displayName: i._displayName,
+      })),
+      intel: new Map((faction.intel || []).map((i) => [i.Key.value, i.Value])),
+      highestIntel: new Map((faction.highestIntel || []).map((i) => [i.Key.value, i.Value])),
+      lastRecordedLoyalty: new Map(
+        Array.isArray(faction.lastRecordedLoyalty) ? faction.lastRecordedLoyalty.map((i) => [i.Key.value, i.Value]) : []
+      ),
+      monthlyTransactionSummary: [
+        ...Object.entries(faction.Transactions)
+          .flatMap(([source, transactions]) =>
+            transactions.map((t) => ({
+              source,
+              resource: t.Resource,
+              amount: t.Amount,
+              date: t.Date,
+            }))
+          )
+          .filter((t) => toDays(diffDateTime(lastMonth, t.date)) < 0)
+          .reduce((acc, t) => {
+            const key = `${t.source}||${t.resource}`;
+            const resourceMap = acc.get(key) || { source: t.source, resource: t.resource, amount: 0 };
+            resourceMap.amount += t.amount;
+            acc.set(key, resourceMap);
+            return acc;
+          }, new Map<string, { source: string; resource: string; amount: number }>())
+          .values(),
+      ],
+      permaAbandonedNationIds: faction.permaAbandonedNations.map((i) => i.value),
+      mcUsage: faction.missionControlUsage,
+      mcCurrentLimit,
+      mcHateFloor: faction.missionControlUsage * mcMultiplier,
+      mcAlienWarLimit: 50 / mcMultiplier,
+    };
+  });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
   const shipDesignsByDataName = new Map<string, (typeof factions)[0]["shipDesigns"][0]>(
     factions.flatMap((faction) => faction.shipDesigns).map((design) => [design.dataName, design])

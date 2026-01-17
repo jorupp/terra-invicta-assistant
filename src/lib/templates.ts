@@ -982,7 +982,11 @@ export interface Project {
   initialUnlockChance: number;
   deltaUnlockChance: number;
   maxUnlockChance: number;
-  resourcesGranted: any[];
+  resourcesGranted: {
+    resource: string;
+    value: number;
+  }[];
+  effects?: string[];
 }
 
 export interface Radiator {

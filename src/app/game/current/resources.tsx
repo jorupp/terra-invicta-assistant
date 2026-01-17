@@ -1,6 +1,6 @@
 "use client";
 
-import { Boost, ControlPoint, FactionIcons, MissionControl } from "@/components/icons";
+import { Boost, ControlPoint, FactionIcons, MissionControl, PrioritySpoils } from "@/components/icons";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -14,10 +14,20 @@ export function getResourcesUi(analysis: Analysis) {
   const spoils = analysis.playerFaction.monthlyTransactionSummary
     .filter((i) => i.resource === "Money" && i.source === "Spoils")
     .reduce((sum, i) => sum + i.amount, 0);
+  const { mcUsage, mcCurrentLimit, mcAlienWarLimit } = analysis.playerFaction;
 
   return {
     key: "resources",
-    tab: <>Resources{spoils !== 0 ? ` (Spoils: $${spoils.toFixed(0)})` : ""}</>,
+    tab: (
+      <>
+        Resources (<PrioritySpoils /> ${spoils.toFixed(0)}, <MissionControl /> {mcUsage.toFixed(0)}/
+        {mcCurrentLimit.toFixed(0)} - L{" "}
+        <span title="If more MC is used than this, alien hate will never fall below 50">
+          {mcAlienWarLimit.toFixed(0)}
+        </span>
+        )
+      </>
+    ),
     content: (
       <ResourcesComponent
         {...{

@@ -25,7 +25,7 @@ const buildIcon = (name: string, src: string, showLightBg?: boolean) => {
   const extraClassName = showLightBg ? 'bg-gray-700 dark:bg-transparent' : 'bg-transparent dark:bg-gray-200';
   const Icon = (props: ComponentProps<"img"> & { iconClassName?: string }) => (
     <span className={twMerge('inline-block rounded radius-4 p-0.5 -m-0.5 -my-1.5', extraClassName, props.className)} title={name}>
-      <img src={src} {...props} className={twMerge("h-4 w-4", props.iconClassName)} />
+      <img src={src} {...props} className={twMerge("h-4 w-4 max-w-4", props.iconClassName)} />
     </span>
   );
   Icon.DisplayName = name;
