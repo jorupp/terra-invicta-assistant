@@ -4,6 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Button } from "@/components/ui/button";
 import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
+import { MissionControl } from "@/components/icons";
 
 export function getFleetsUi(analysis: Analysis) {
   const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
@@ -45,7 +46,8 @@ export function getFleetsUi(analysis: Analysis) {
       );
       return (
         <>
-          {target}: x{fleets.length}, 1st {(firstFleet.daysToTarget || 0).toFixed(0)}d w/ {firstMc.toFixed(0)} MC
+          {target}: x{fleets.length}, 1st {(firstFleet.daysToTarget || 0).toFixed(0)}d w/ {firstMc.toFixed(0)}{" "}
+          <MissionControl />
           {survInfo}
         </>
       );
