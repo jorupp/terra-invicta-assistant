@@ -558,6 +558,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             (finalEffects as any)[stat] = ((finalEffects as any)[stat] || 0) + Number(strValue);
           }
         }
+        for (const { stat, operation, strValue, condition } of trait.statMods || []) {
+          if (stat && strValue && !condition && operation === "SetToAnotherAttribute") {
+            (finalEffects as any)[stat] = (finalEffects as any)[strValue] || 0;
+          }
+        }
         for (const { priority, bonus } of trait.priorityBonuses || []) {
           if (priority && bonus) {
             const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
