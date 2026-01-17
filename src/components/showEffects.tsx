@@ -124,6 +124,7 @@ export const ShowEffects = (
     highlightTier?: boolean;
   }
 ) => {
+  const maxLoyalty = props.traitTemplateNames?.includes("LoyaltyMonitor") ? 20 : 25;
   const tier = props.tier || 0;
   const takeoverDefense = props.takeoverDefense || 0;
   const costMoney = (props.costMoney || 0) + (props.incomeMoney_month || 0);
@@ -251,7 +252,9 @@ export const ShowEffects = (
       {apparentLoyalty !== -100 &&
         (playerIntel === 1 ? (
           <>
-            <Loyalty /> {loyalty}
+            <span className={twMerge(loyalty >= maxLoyalty ? "bg-green-200 rounded p-1" : undefined)}>
+              <Loyalty /> {loyalty}
+            </span>
             {spacer}
           </>
         ) : (
