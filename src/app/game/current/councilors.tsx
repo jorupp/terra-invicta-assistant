@@ -522,6 +522,8 @@ function CouncilorsComponent({
       return (a.displayName || "").localeCompare(b.displayName || "");
     });
 
+  const importantMissions = ["Assassinate"];
+
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <>
@@ -661,6 +663,22 @@ function CouncilorsComponent({
                 {factions.map((faction) => (
                   <TabsTrigger key={faction.id} value={`faction-${faction.id}`}>
                     {faction.displayName || "Unknown Faction"} ({sourcesByFactionByMission.get(faction.id)?.size || 0})
+                    {importantMissions
+                      .filter(
+                        (m) =>
+                          sourcesByFactionByMission
+                            .get(faction.id)
+                            ?.get(m)
+                            ?.filter((i) => i.type === "councilor")?.length ?? 0 > 0
+                      )
+                      .map((m) => {
+                        const MissionIcon = MissionIcons[m] || UnknownIcon;
+                        return (
+                          <span className="inline-block -mt-2">
+                            <MissionIcon key={m} className="h-4 w-4" />
+                          </span>
+                        );
+                      })}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -669,8 +687,8 @@ function CouncilorsComponent({
                   <Accordion type="single" collapsible>
                     {Array.from(
                       new Set([
+                        ...importantMissions,
                         ...Array.from(sourcesByFactionByMission.get(faction.id)?.keys() || []),
-                        ...Object.keys(weights.missions || {}),
                       ])
                     ).map((missionName) => {
                       const sources = sourcesByFactionByMission.get(faction.id)?.get(missionName) || [];
