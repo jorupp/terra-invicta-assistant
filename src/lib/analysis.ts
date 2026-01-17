@@ -73,6 +73,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         dataName: i.dataName,
         friendlyName: i.friendlyName,
         displayName: i._displayName,
+        role: i.role,
       })),
       intel: new Map((faction.intel || []).map((i) => [i.Key.value, i.Value])),
       highestIntel: new Map((faction.highestIntel || []).map((i) => [i.Key.value, i.Value])),
@@ -189,6 +190,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       }
       return acc;
     }, new Map<string, number>());
+    const shipsByRole = fleetShips.reduce((acc, { design }) => {
+      if (design) {
+        acc.set(design.role, (acc.get(design.role) || 0) + 1);
+      }
+      return acc;
+    }, new Map<string, number>());
 
     // Get target orbit body name
     const targetOrbitId = rawFleet.trajectory?.destinationOrbit?.value ?? rawFleet.orbitState?.value;
@@ -220,6 +227,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       totalMC,
       shipsByHullType: [...shipsByHullType.entries()]
         .map(([hullName, count]) => ({ hullName, count }))
+        .toSorted((a, b) => a.count - b.count),
+      shipsByRole: [...shipsByRole.entries()]
+        .map(([role, count]) => ({ role, count }))
         .toSorted((a, b) => a.count - b.count),
     };
   });

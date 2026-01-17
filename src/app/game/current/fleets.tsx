@@ -94,7 +94,8 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
             <TableHead>Arrival Date</TableHead>
             <TableHead className="text-right">Days to Arrival</TableHead>
             <TableHead className="text-right">MC Used</TableHead>
-            <TableHead>Ships</TableHead>
+            <TableHead>Ships Hulls</TableHead>
+            <TableHead>Ships Roles</TableHead>
             <TableHead>Operation</TableHead>
             <TableHead>Operation Complete</TableHead>
           </TableRow>
@@ -113,6 +114,13 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                 {fleet.shipsByHullType.length > 0
                   ? fleet.shipsByHullType
                       .map((ship) => `${ship.count} ${ship.hullName}${ship.count > 1 ? "s" : ""}`)
+                      .join(" + ")
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                {fleet.shipsByRole.length > 0
+                  ? fleet.shipsByRole
+                      .map((ship) => `${ship.count} ${ship.role}${ship.count > 1 ? "s" : ""}`)
                       .join(" + ")
                   : "-"}
               </TableCell>
