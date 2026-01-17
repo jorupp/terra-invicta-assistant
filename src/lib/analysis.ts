@@ -557,6 +557,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           if (stat && strValue && !condition && operation === "Additive") {
             (finalEffects as any)[stat] = ((finalEffects as any)[stat] || 0) + Number(strValue);
           }
+          if (stat === "Loyalty" && strValue && !condition && operation === "Additive") {
+            (finalEffects as any)["maxLoyalty"] = ((finalEffects as any)["maxLoyalty"] || 0) + Number(strValue);
+          }
         }
         for (const { priority, bonus } of trait.priorityBonuses || []) {
           if (priority && bonus) {
@@ -577,7 +580,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
     // Start with base attributes
     const effectsBaseAndUnaugmentedTraits = addTraits(
-      { ...attributes },
+      { ...attributes, maxLoyalty: 25 },
       traitTemplates.filter((t) => !(t.tags || []).includes("Augmented"))
     );
 

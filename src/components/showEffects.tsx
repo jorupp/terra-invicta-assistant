@@ -49,6 +49,7 @@ export type ShowEffectsProps = Partial<
       playerIntel: number;
       playerMaxIntel: number;
       lastRecordedLoyalty: number;
+      maxLoyalty: number;
     } & CouncilorAttributes &
     Pick<
       TIOrgState,
@@ -124,7 +125,7 @@ export const ShowEffects = (
     highlightTier?: boolean;
   }
 ) => {
-  const maxLoyalty = props.traitTemplateNames?.includes("LoyaltyMonitor") ? 20 : 25;
+  const maxLoyalty = props.maxLoyalty || 25;
   const tier = props.tier || 0;
   const takeoverDefense = props.takeoverDefense || 0;
   const costMoney = (props.costMoney || 0) + (props.incomeMoney_month || 0);

@@ -90,6 +90,7 @@ function CouncilorTableRow({
           Security={stats.Security}
           ApparentLoyalty={stats.ApparentLoyalty}
           Loyalty={stats.Loyalty}
+          maxLoyalty={stats.maxLoyalty}
           xpModifier={stats.xpModifier}
           xp={stats.xp}
           traitTemplateNames={stats.traitTemplateNames}
