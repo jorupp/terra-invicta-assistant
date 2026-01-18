@@ -13,6 +13,7 @@ import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 import { defaultScoringWeights, loadWeightsFromStorage, ScoringWeights, ScoringWeightsDialog } from "./scoringWeights";
 import { Administration, MissionIcons, TraitIcons, UnknownIcon } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { twMerge } from "tailwind-merge";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
@@ -191,7 +192,10 @@ function OrgTableRow({
     return TraitIcons[trait] || Fallback;
   }
   return (
-    <TableRow key={org.id}>
+    <TableRow
+      key={org.id}
+      className={twMerge(org.isAdminOrg ? "bg-green-100" : "", org.type === "unassigned" ? "bg-yellow-100" : "")}
+    >
       <TableCell>{org.displayName}</TableCell>
       <TableCell>
         {org.template?.requiresNationality && (
@@ -340,7 +344,7 @@ export function getCouncilorsUi(analysis: Analysis) {
     playerMissionCounts,
     getOrganizationScore,
     "noMissionScore" // ignore missions when sorting orgs
-  );
+  ).toSorted((a, b) => (a.isAdminOrg === b.isAdminOrg ? 0 : a.isAdminOrg ? -1 : 1)); // admin orgs first
   const usedOrgs = analysis.playerCouncilors.flatMap((councilor) =>
     councilor.orgs.map((o) => ({ ...o, type: "used", councilor: councilor.displayName, councilorId: councilor.id }))
   );

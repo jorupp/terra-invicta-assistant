@@ -554,6 +554,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       MCBonus: org.MCBonus,
       miningBonus: org.miningBonus,
       XPModifier: org.XPModifier,
+      isAdminOrg: (org.tier || 0) < (org.administration || 0),
     };
   });
   const orgsById = new Map<number, (typeof orgs)[0]>(orgs.map((org) => [org.id, org]));
