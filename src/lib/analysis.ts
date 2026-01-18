@@ -103,7 +103,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       permaAbandonedNationIds: faction.permaAbandonedNations.map((i) => i.value),
       mcUsage: faction.missionControlUsage,
       mcCurrentLimit,
-      mcHateFloor: faction.missionControlUsage * mcMultiplier,
+      mcHateFloor: Math.floor(faction.missionControlUsage * mcMultiplier),
       mcAlienWarLimit: 50 / mcMultiplier,
     };
   });
