@@ -675,8 +675,8 @@ function CouncilorsComponent({
                       .map((m) => {
                         const MissionIcon = MissionIcons[m] || UnknownIcon;
                         return (
-                          <span className="inline-block -mt-2">
-                            <MissionIcon key={m} className="h-4 w-4" />
+                          <span key={m} className="inline-block -mt-2">
+                            <MissionIcon className="h-4 w-4" />
                           </span>
                         );
                       })}
