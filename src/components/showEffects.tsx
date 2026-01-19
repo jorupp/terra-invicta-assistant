@@ -397,14 +397,14 @@ export const ShowEffects = (
               console.log("Unknown tech category:", category);
               return (
                 <span key={index}>
-                  {pct(bonus)} <UnknownIcon className="border-green-500 border" title={`Unknown: ${category}`} />
+                  <UnknownIcon className="border-green-500 border" title={`Unknown: ${category}`} /> {pct(bonus)}
                   {spacer}
                 </span>
               );
             }
             return (
               <span key={index}>
-                {pct(bonus)} <TechIcon className="border-green-500 border" />
+                <TechIcon className="border-green-500 border" /> {pct(bonus)}
                 {spacer}
               </span>
             );
@@ -420,14 +420,14 @@ export const ShowEffects = (
               console.log("Unknown tech category:", category);
               return (
                 <span key={index}>
-                  {pct(bonus)} <UnknownIcon title={`Unknown: ${category}`} />
+                  <UnknownIcon title={`Unknown: ${category}`} /> {pct(bonus)}
                   {spacer}
                 </span>
               );
             }
             return (
               <span key={index}>
-                {pct(bonus)} <TechIcon />
+                <TechIcon /> {pct(bonus)}
                 {spacer}
               </span>
             );
