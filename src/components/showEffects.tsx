@@ -392,7 +392,7 @@ export const ShowEffects = (
 
       {councilorTechBonus.length > 0 && (
         <>
-          {councilorTechBonus.map(({ category, bonus }, index) => {
+          {councilorTechBonus.toSorted((a, b) => techBonusesOrder.get(a.category)! - techBonusesOrder.get(b.category)!).map(({ category, bonus }, index) => {
             const TechIcon = TechIcons[category as keyof typeof TechIcons];
             if (!TechIcon) {
               console.log("Unknown tech category:", category);
@@ -415,7 +415,7 @@ export const ShowEffects = (
 
       {techBonuses.length > 0 && (
         <>
-          {techBonuses.map(({ category, bonus }, index) => {
+          {techBonuses.toSorted((a, b) => techBonusesOrder.get(a.category)! - techBonusesOrder.get(b.category)!).map(({ category, bonus }, index) => {
             const TechIcon = TechIcons[category as keyof typeof TechIcons];
             if (!TechIcon) {
               console.log("Unknown tech category:", category);
@@ -511,3 +511,13 @@ export function combineEffects(p1: ShowEffectsProps, p2: ShowEffectsProps): Show
 function pct(value: number) {
   return (value * 100).toFixed(0) + "%";
 }
+
+export const techBonusesOrder = new Map<string, number>([
+  'Energy',
+  'InformationScience',
+  'LifeScience',
+  'Materials',
+  'MilitaryScience',
+  'SocialScience',
+  'SpaceScience',
+].map((i, ix) => [i, ix]));
