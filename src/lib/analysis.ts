@@ -472,6 +472,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     nationId: region.nation.value,
     boostPerYear: region.boostPerYear_dekatons,
     missionControl: region.missionControl,
+    populationInMillions: region.populationInMillions,
   }));
   const regionsById = new Map<number, (typeof regions)[0]>(regions.map((region) => [region.id, region]));
   const regionsByNationId = regions.reduce((acc, region) => {
@@ -520,6 +521,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const boostPerMonth = regions.reduce((acc, r) => acc + r.boostPerYear, 0) / 12;
       const mcPerCpCost = totalCpCost > 0 ? mc / totalCpCost : 0;
       const boostPerMonthPerCpCost = totalCpCost > 0 ? boostPerMonth / totalCpCost : 0;
+      const populationInMillions = regions.reduce((acc, r) => acc + r.populationInMillions, 0);
 
       return {
         id: nation.ID.value,
@@ -540,9 +542,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         mcPerCpCost,
         boostPerMonth,
         boostPerMonthPerCpCost,
+        populationInMillions,
       };
     })
-    .filter((i) => i.investmentPoints > 0);
+    .filter((i) => i.populationInMillions > 0);
   const nationsById = new Map<number, (typeof nations)[0]>(nations.map((nation) => [nation.id, nation]));
 
   const orgTemplates = new Map(
