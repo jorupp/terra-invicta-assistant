@@ -3,6 +3,7 @@
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
@@ -16,6 +17,8 @@ function HabHeader() {
         <TableHead>Name</TableHead>
         <TableHead>Most important upcoming completion</TableHead>
         <TableHead>Alerts</TableHead>
+        <TableHead>Current bonuses</TableHead>
+        <TableHead>Future bonuses</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -119,11 +122,23 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
   );
 
   return (
-    <>
-      <h3>Current Hab bonuses</h3>
-      <ShowHabEffects effects={activeEffects} />
-      <h3>Potential Hab bonuses</h3>
-      <ShowHabEffects effects={potentialEffects} />
+    <div className="space-y-2 mx-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Hab bonuses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ShowHabEffects effects={activeEffects} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Future Hab bonuses (including unpowered/under-construction)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ShowHabEffects effects={potentialEffects} />
+        </CardContent>
+      </Card>
       <Accordion type="single" collapsible defaultValue="habs">
         <AccordionItem value="habs">
           <AccordionTrigger>
@@ -150,6 +165,6 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <pre>{JSON.stringify(analysis.playerHabs, null, 2)}</pre>
         </CollapsibleContent>
       </Collapsible>
-    </>
+    </div>
   );
 }
