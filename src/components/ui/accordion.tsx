@@ -60,10 +60,55 @@ function AccordionContent({
   children,
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Radix Accordion doesnt update height when children updates.
+  // We need to manualy add a resize observer on children of the Content component
+  // to update the CSS variable height of the content.
+
+  // based on https://github.com/radix-ui/primitives/discussions/2562#discussioncomment-12014729 but using an additional div and MutationObserver
+  // not sure if the change was needed due to the structure Shadcn set up or if it's because we're using an accordion-tab-accordion rendering
+  React.useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    let resizeObserver: ResizeObserver | null = null;
+
+    const mutationObserver = new MutationObserver(() => {
+      const current = ref.current;
+      console.log({ resizeObserver, current });
+      if (resizeObserver) {
+        if (current) return;
+        resizeObserver.disconnect();
+        resizeObserver = null;
+      } else {
+        if (!current) return;
+        resizeObserver = new ResizeObserver(() => {
+          const currentHeight = ref.current?.clientHeight;
+          console.log("AccordionContent ResizeObserver", currentHeight);
+          if (currentHeight === undefined) return;
+
+          content.style.cssText = `--radix-accordion-content-height: ${currentHeight}px;`;
+        });
+
+        console.log('Observing accordion content children for resize', current);
+        resizeObserver.observe(current);
+      }
+    });
+    mutationObserver.observe(content!, { attributes: true, attributeFilter: ['data-state'], childList: false, subtree: false });
+
+    return () => {
+      resizeObserver?.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, []);
+
   return (
     <AccordionPrimitive.Content
       data-slot="accordion-content"
       className="data-open:animate-accordion-down data-closed:animate-accordion-up px-2 text-xs/relaxed overflow-hidden"
+      ref={contentRef}
       {...props}
     >
       <div
@@ -72,7 +117,9 @@ function AccordionContent({
           className
         )}
       >
-        {children}
+        <div ref={ref}>
+          {children}
+        </div>
       </div>
     </AccordionPrimitive.Content>
   )
