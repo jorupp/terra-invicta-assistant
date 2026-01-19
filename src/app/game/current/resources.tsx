@@ -121,6 +121,56 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
             </Table>
           </AccordionContent>
         </AccordionItem>
+        <AccordionItem value="owned">
+          <AccordionTrigger>Owned nations</AccordionTrigger>
+          <AccordionContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nation</TableHead>
+                  <TableHead>Control Points</TableHead>
+                  <TableHead>Unrest</TableHead>
+                  <TableHead>Total Spoils</TableHead>
+                  <TableHead>Total Spoils Per Point</TableHead>
+                  <TableHead>Total Spoils Per CP Cost</TableHead>
+                  <TableHead>Current MC / Boost</TableHead>
+                  <TableHead>Boost/mo Per CP Cost</TableHead>
+                  <TableHead>MC Per CP Cost</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {nations
+                  .filter((i) => i.controlPoints.some((cp) => cp.factionId === playerFactionId))
+                  .toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1))
+                  .map((nation) => (
+                    <TableRow key={nation.id}>
+                      <TableCell>{nation.displayName}</TableCell>
+                      <TableCell>
+                        <NationCPDetails {...{ analysis, nation }} />
+                      </TableCell>
+                      <TableCell>{nation.unrest.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <span
+                          title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(
+                            2
+                          )} IP`}
+                        >
+                          {nation.totalSpoils.toFixed(0)}
+                        </span>
+                      </TableCell>
+                      <TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell>
+                      <TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost />
+                      </TableCell>
+                      <TableCell>{nation.boostPerMonthPerCpCost.toFixed(2)}</TableCell>
+                      <TableCell>{nation.mcPerCpCost.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </AccordionContent>
+        </AccordionItem>
         <AccordionItem value="spoils">
           <AccordionTrigger>Spoil targets</AccordionTrigger>
           <AccordionContent>
