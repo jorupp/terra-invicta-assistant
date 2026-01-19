@@ -27,6 +27,12 @@ function HabHeader() {
 function ShowHabEffects({ effects }: { effects: ShowEffectsProps }) {
   return (
     <ShowEffects
+      incomeBoost_month={effects.incomeBoost_month}
+      incomeInfluence_month={effects.incomeInfluence_month}
+      incomeMissionControl={effects.incomeMissionControl}
+      incomeMoney_month={effects.incomeMoney_month}
+      incomeOps_month={effects.incomeOps_month}
+      incomeResearch_month={effects.incomeResearch_month}
       economyBonus={effects.economyBonus}
       welfareBonus={effects.welfareBonus}
       environmentBonus={effects.environmentBonus}

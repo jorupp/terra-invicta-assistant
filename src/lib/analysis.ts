@@ -330,24 +330,43 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }))
         .filter((i) => i.template);
       const moduleBonuses = activeModuleTemplates.map(({ active, template: t }) => {
-        const effects: ShowEffectsProps = { techBonuses: t.techBonuses };
+        const {
+          techBonuses,
+          incomeInfluence_month,
+          incomeMoney_month,
+          incomeOps_month,
+          incomeProjects,
+          incomeResearch_month,
+        } = t;
+
+        const effects: ShowEffectsProps = {
+          techBonuses,
+          incomeInfluence_month,
+          incomeMoney_month,
+          incomeOps_month,
+          projectCapacityGranted: incomeProjects,
+          incomeResearch_month,
+        };
         if (hab.inEarthLEO) {
           if (t.controlPointCapacity) {
             effects.controlPoints = t.controlPointCapacity;
           }
-          if (t.specialRules?.includes("LEOBonusEconomy")) effects.economyBonus = (effects.economyBonus || 0) + 0.1;
+          if (t.specialRules?.includes("LEOBonusEconomy"))
+            effects.economyBonus = (effects.economyBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusEnvironment"))
-            effects.environmentBonus = (effects.environmentBonus || 0) + 0.1;
+            effects.environmentBonus = (effects.environmentBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusGovernment"))
-            effects.governmentBonus = (effects.governmentBonus || 0) + 0.1;
+            effects.governmentBonus = (effects.governmentBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusKnowledge"))
-            effects.knowledgeBonus = (effects.knowledgeBonus || 0) + 0.1;
+            effects.knowledgeBonus = (effects.knowledgeBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusLaunchFacilities"))
-            effects.spaceDevBonus = (effects.spaceDevBonus || 0) + 0.1;
-          if (t.specialRules?.includes("LEOBonusMissionControl")) effects.MCBonus = (effects.MCBonus || 0) + 0.1;
+            effects.spaceDevBonus = (effects.spaceDevBonus || 0) + t.specialRulesValue!;
+          if (t.specialRules?.includes("LEOBonusMissionControl"))
+            effects.MCBonus = (effects.MCBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusOppression"))
-            effects.oppressionBonus = (effects.oppressionBonus || 0) + 0.1;
-          if (t.specialRules?.includes("LEOBonusWelfare")) effects.welfareBonus = (effects.welfareBonus || 0) + 0.1;
+            effects.oppressionBonus = (effects.oppressionBonus || 0) + t.specialRulesValue!;
+          if (t.specialRules?.includes("LEOBonusWelfare"))
+            effects.welfareBonus = (effects.welfareBonus || 0) + t.specialRulesValue!;
         }
         return { active, effects };
       });

@@ -589,6 +589,17 @@ export interface HabModule {
   alienModule: boolean;
   objectiveModule: boolean;
   disable: boolean;
+  incomeInfluence_month?: number;
+  incomeMoney_month?: number;
+  incomeOps_month?: number;
+  incomeProjects?: number;
+  incomeResearch_month?: number;
+  incomeAntimatter_month?: number;
+  incomeExotics_month?: number;
+  incomeMetals_month?: number;
+  incomeNobles_month?: number;
+  incomeFissiles_month?: number;
+  incomeVolatiles_month?: number;
 }
 
 export interface Hab {
