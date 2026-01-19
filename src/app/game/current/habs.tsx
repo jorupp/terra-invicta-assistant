@@ -1,5 +1,6 @@
 "use client";
 
+import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -20,8 +21,29 @@ function HabHeader() {
   );
 }
 
+function ShowHabEffects({ effects }: { effects: ShowEffectsProps }) {
+  return (
+    <ShowEffects
+      economyBonus={effects.economyBonus}
+      welfareBonus={effects.welfareBonus}
+      environmentBonus={effects.environmentBonus}
+      knowledgeBonus={effects.knowledgeBonus}
+      governmentBonus={effects.governmentBonus}
+      unityBonus={effects.unityBonus}
+      militaryBonus={effects.militaryBonus}
+      oppressionBonus={effects.oppressionBonus}
+      spoilsBonus={effects.spoilsBonus}
+      spaceDevBonus={effects.spaceDevBonus}
+      spaceflightBonus={effects.spaceflightBonus}
+      MCBonus={effects.MCBonus}
+      miningBonus={effects.miningBonus}
+      techBonuses={effects.techBonuses}
+    />
+  );
+}
+
 function HabTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: string }) {
-  const { highlightedCompletions, emptyModuleCount, missingMine } = hab;
+  const { highlightedCompletions, emptyModuleCount, missingMine, activeEffects, potentialEffects } = hab;
 
   return (
     <TableRow key={hab.id}>
@@ -37,6 +59,12 @@ function HabTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: stri
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
+      </TableCell>
+      <TableCell>
+        <ShowHabEffects effects={activeEffects} />
+      </TableCell>
+      <TableCell>
+        <ShowHabEffects effects={potentialEffects} />
       </TableCell>
     </TableRow>
   );
@@ -84,9 +112,18 @@ export function getHabsUi(analysis: Analysis) {
 function HabsComponent({ analysis }: { analysis: Analysis }) {
   const { playerHabs } = analysis;
   const time = formatDateTime(analysis.gameCurrentDateTime);
+  const activeEffects = playerHabs.reduce<ShowEffectsProps>((acc, hab) => combineEffects(acc, hab.activeEffects), {});
+  const potentialEffects = playerHabs.reduce<ShowEffectsProps>(
+    (acc, hab) => combineEffects(acc, hab.potentialEffects),
+    {}
+  );
 
   return (
     <>
+      <h3>Current Hab bonuses</h3>
+      <ShowHabEffects effects={activeEffects} />
+      <h3>Potential Hab bonuses</h3>
+      <ShowHabEffects effects={potentialEffects} />
       <Accordion type="single" collapsible defaultValue="habs">
         <AccordionItem value="habs">
           <AccordionTrigger>

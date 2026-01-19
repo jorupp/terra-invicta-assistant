@@ -234,10 +234,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     };
   });
   const fleetsById = new Map<number, (typeof fleets)[0]>(fleets.map((fleet) => [fleet.id, fleet]));
+  const habModuleTemplates = (await templates.habModules()).reduce((acc, mod) => {
+    acc.set(mod.dataName, mod);
+    return acc;
+  }, new Map<string, Awaited<ReturnType<typeof templates.habModules>>[0]>());
   const habModules = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabModuleState"].map(({ Value: mod }) => ({
     id: mod.ID.value,
     sectorId: mod.sector?.value,
-    templateName: mod.displayName,
+    templateName: mod.templateName,
     displayName: mod.displayName,
     destroyed: mod.destroyed,
     startBuildDate: mod.startBuildDate,
@@ -318,6 +322,42 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const mine = nonEmpty.filter((m) => isMine(m));
       const isBase = hab.habType === "Base";
       const missingMine = isBase && mine.length === 0;
+      const activeModuleTemplates = modules
+        .filter((i) => !i.destroyed)
+        .map((i) => ({
+          active: i.powered && (i.completionDate === noDate || i.completionDate <= gameCurrentDateTimeFormatted),
+          template: habModuleTemplates.get(i.templateName!)!,
+        }))
+        .filter((i) => i.template);
+      const moduleBonuses = activeModuleTemplates.map(({ active, template: t }) => {
+        const effects: ShowEffectsProps = { techBonuses: t.techBonuses };
+        if (hab.inEarthLEO) {
+          if (t.controlPointCapacity) {
+            effects.controlPoints = t.controlPointCapacity;
+          }
+          if (t.specialRules?.includes("LEOBonusEconomy")) effects.economyBonus = (effects.economyBonus || 0) + 0.1;
+          if (t.specialRules?.includes("LEOBonusEnvironment"))
+            effects.environmentBonus = (effects.environmentBonus || 0) + 0.1;
+          if (t.specialRules?.includes("LEOBonusGovernment"))
+            effects.governmentBonus = (effects.governmentBonus || 0) + 0.1;
+          if (t.specialRules?.includes("LEOBonusKnowledge"))
+            effects.knowledgeBonus = (effects.knowledgeBonus || 0) + 0.1;
+          if (t.specialRules?.includes("LEOBonusLaunchFacilities"))
+            effects.spaceDevBonus = (effects.spaceDevBonus || 0) + 0.1;
+          if (t.specialRules?.includes("LEOBonusMissionControl")) effects.MCBonus = (effects.MCBonus || 0) + 0.1;
+          if (t.specialRules?.includes("LEOBonusOppression"))
+            effects.oppressionBonus = (effects.oppressionBonus || 0) + 0.1;
+          if (t.specialRules?.includes("LEOBonusWelfare")) effects.welfareBonus = (effects.welfareBonus || 0) + 0.1;
+        }
+        return { active, effects };
+      });
+      const activeEffects = moduleBonuses
+        .filter((i) => i.active)
+        .reduce<ShowEffectsProps>((acc, curr) => combineEffects(acc, curr.effects), {});
+      const potentialEffects = moduleBonuses.reduce<ShowEffectsProps>(
+        (acc, curr) => combineEffects(acc, curr.effects),
+        {}
+      );
 
       return {
         id: hab.ID.value,
@@ -334,6 +374,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         highlightedCompletions,
         missingMine,
         finderSortOverride: hab.finderSortOverride,
+        activeEffects,
+        potentialEffects,
       };
     })
     .toSorted((a, b) =>

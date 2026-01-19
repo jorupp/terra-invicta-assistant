@@ -50,6 +50,7 @@ export type ShowEffectsProps = Partial<
       playerMaxIntel: number;
       lastRecordedLoyalty: number;
       maxLoyalty: number;
+      controlPoints: number;
     } & CouncilorAttributes &
     Pick<
       TIOrgState,
