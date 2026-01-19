@@ -1,42 +1,32 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Accordion as AccordionPrimitive } from "radix-ui"
+import * as React from "react";
+import { Accordion as AccordionPrimitive } from "radix-ui";
 
-import { cn } from "@/lib/utils"
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { cn } from "@/lib/utils";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
-function Accordion({
-  className,
-  ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Root>) {
+function Accordion({ className, ...props }: React.ComponentProps<typeof AccordionPrimitive.Root>) {
   return (
     <AccordionPrimitive.Root
       data-slot="accordion"
       className={cn("overflow-hidden rounded-md border flex w-full flex-col", className)}
       {...props}
     />
-  )
+  );
 }
 
-function AccordionItem({
-  className,
-  ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Item>) {
+function AccordionItem({ className, ...props }: React.ComponentProps<typeof AccordionPrimitive.Item>) {
   return (
     <AccordionPrimitive.Item
       data-slot="accordion-item"
       className={cn("data-open:bg-muted/50 not-last:border-b", className)}
       {...props}
     />
-  )
+  );
 }
 
-function AccordionTrigger({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+function AccordionTrigger({ className, children, ...props }: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
@@ -48,18 +38,20 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <ChevronDownIcon data-slot="accordion-trigger-icon" className="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden" />
-        <ChevronUpIcon data-slot="accordion-trigger-icon" className="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline" />
+        <ChevronDownIcon
+          data-slot="accordion-trigger-icon"
+          className="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden"
+        />
+        <ChevronUpIcon
+          data-slot="accordion-trigger-icon"
+          className="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline"
+        />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
-  )
+  );
 }
 
-function AccordionContent({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Content>) {
+function AccordionContent({ className, children, ...props }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
   const ref = React.useRef<HTMLDivElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
@@ -77,7 +69,6 @@ function AccordionContent({
 
     const mutationObserver = new MutationObserver(() => {
       const current = ref.current;
-      console.log({ resizeObserver, current });
       if (resizeObserver) {
         if (current) return;
         resizeObserver.disconnect();
@@ -86,17 +77,20 @@ function AccordionContent({
         if (!current) return;
         resizeObserver = new ResizeObserver(() => {
           const currentHeight = ref.current?.clientHeight;
-          console.log("AccordionContent ResizeObserver", currentHeight);
           if (currentHeight === undefined) return;
 
           content.style.cssText = `--radix-accordion-content-height: ${currentHeight}px;`;
         });
 
-        console.log('Observing accordion content children for resize', current);
         resizeObserver.observe(current);
       }
     });
-    mutationObserver.observe(content!, { attributes: true, attributeFilter: ['data-state'], childList: false, subtree: false });
+    mutationObserver.observe(content!, {
+      attributes: true,
+      attributeFilter: ["data-state"],
+      childList: false,
+      subtree: false,
+    });
 
     return () => {
       resizeObserver?.disconnect();
@@ -117,12 +111,10 @@ function AccordionContent({
           className
         )}
       >
-        <div ref={ref}>
-          {children}
-        </div>
+        <div ref={ref}>{children}</div>
       </div>
     </AccordionPrimitive.Content>
-  )
+  );
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
