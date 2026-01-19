@@ -349,6 +349,12 @@ export function getCouncilorsUi(analysis: Analysis) {
     councilor.orgs.map((o) => ({ ...o, type: "used", councilor: councilor.displayName, councilorId: councilor.id }))
   );
   const scoredUsedOrgs = scoreAndSort(usedOrgs, weights, playerMissionCounts, getOrganizationScore);
+  const scoredOwnedOrgs = scoreAndSort(
+    analysis.playerUnassignedOrgs.map((i) => ({ type: "unassigned", ...i })).concat(usedOrgs),
+    weights,
+    playerMissionCounts,
+    getOrganizationScore
+  );
 
   const bestAvailableCouncilor = scoredAvailableCouncilors[0]?.score.value;
   const worstExistingCouncilor = scoredBaseCouncilors[scoredBaseCouncilors.length - 1]?.score.value;
@@ -374,6 +380,7 @@ export function getCouncilorsUi(analysis: Analysis) {
           scoredBaseCouncilors,
           scoredOrgs,
           scoredUsedOrgs,
+          scoredOwnedOrgs,
         }}
       />
     ),
@@ -388,7 +395,7 @@ function CouncilorsComponent({
   scoredAvailableCouncilors,
   scoredBaseCouncilors,
   scoredOrgs,
-  scoredUsedOrgs,
+  scoredOwnedOrgs,
 }: {
   analysis: Analysis;
   weights: ScoringWeights;
@@ -397,11 +404,11 @@ function CouncilorsComponent({
   scoredAvailableCouncilors: (Analysis["playerAvailableCouncilors"][number] & { score: ScoreResult })[];
   scoredBaseCouncilors: (Analysis["playerCouncilors"][number] & { score: ScoreResult })[];
   scoredOrgs: (Analysis["playerAvailableOrgs"][number] & { type: string; score: ScoreResult })[];
-  scoredUsedOrgs: (Analysis["playerAvailableOrgs"][number] & {
+  scoredOwnedOrgs: (Analysis["playerAvailableOrgs"][number] & {
     type: string;
     score: ScoreResult;
-    councilor: string;
-    councilorId: number;
+    councilor?: string;
+    councilorId?: number;
   })[];
 }) {
   const {
@@ -614,7 +621,7 @@ function CouncilorsComponent({
             <Table>
               <OrgTableHeader costHeader="Councilor" />
               <TableBody>
-                {scoredUsedOrgs.toReversed().map((org) => (
+                {scoredOwnedOrgs.toReversed().map((org) => (
                   <OrgTableRow
                     key={org.id}
                     org={org}
