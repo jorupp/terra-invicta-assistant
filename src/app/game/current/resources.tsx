@@ -21,9 +21,9 @@ export function getResourcesUi(analysis: Analysis) {
     tab: (
       <>
         Resources (<PrioritySpoils /> ${spoils.toFixed(0)}, <MissionControl /> {mcUsage.toFixed(0)}/
-        {mcCurrentLimit.toFixed(0)} - L{" "}
+        {mcCurrentLimit.toFixed(0)} -
         <span title="If more MC is used than this, alien hate will never fall below 50">
-          {mcAlienWarLimit.toFixed(0)}
+          Lim {mcAlienWarLimit.toFixed(0)}
         </span>
         )
       </>
