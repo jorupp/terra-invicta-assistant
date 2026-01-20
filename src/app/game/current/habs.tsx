@@ -156,14 +156,16 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           </CardHeader>
           <CardContent>
             <ul>
-              {availableBoostProjects.map((project, ix) => {
-                const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                return (
-                  <li key={ix}>
-                    <Icon /> {project.friendlyName} ({project.researchCost})
-                  </li>
-                );
-              })}
+              {availableBoostProjects
+                .toSorted((a, b) => a.researchCost - b.researchCost)
+                .map((project, ix) => {
+                  const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                  return (
+                    <li key={ix}>
+                      <Icon /> {project.friendlyName} ({project.researchCost})
+                    </li>
+                  );
+                })}
             </ul>
           </CardContent>
         </Card>
@@ -175,14 +177,16 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           </CardHeader>
           <CardContent>
             <ul>
-              {availableCPProjects.map((project, ix) => {
-                const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                return (
-                  <li key={ix}>
-                    <Icon /> {project.friendlyName} ({project.researchCost})
-                  </li>
-                );
-              })}
+              {availableCPProjects
+                .toSorted((a, b) => a.researchCost - b.researchCost)
+                .map((project, ix) => {
+                  const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                  return (
+                    <li key={ix}>
+                      <Icon /> {project.friendlyName} ({project.researchCost})
+                    </li>
+                  );
+                })}
             </ul>
           </CardContent>
         </Card>
