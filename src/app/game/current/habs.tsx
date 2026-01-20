@@ -1,5 +1,6 @@
 "use client";
 
+import { TechIcons, UnknownIcon } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -119,7 +120,10 @@ export function getHabsUi(analysis: Analysis) {
 }
 
 function HabsComponent({ analysis }: { analysis: Analysis }) {
-  const { playerHabs } = analysis;
+  const {
+    playerHabs,
+    playerFaction: { availableBoostProjects, availableCPProjects },
+  } = analysis;
   const time = formatDateTime(analysis.gameCurrentDateTime);
   const activeEffects = playerHabs.reduce<ShowEffectsProps>((acc, hab) => combineEffects(acc, hab.activeEffects), {});
   const potentialEffects = playerHabs.reduce<ShowEffectsProps>(
@@ -145,6 +149,44 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <ShowHabEffects effects={potentialEffects} />
         </CardContent>
       </Card>
+      {availableBoostProjects.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Boost Projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul>
+              {availableBoostProjects.map((project, ix) => {
+                const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                return (
+                  <li key={ix}>
+                    <Icon /> {project.friendlyName} ({project.researchCost})
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+      {availableCPProjects.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Control Point Projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul>
+              {availableCPProjects.map((project, ix) => {
+                const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                return (
+                  <li key={ix}>
+                    <Icon /> {project.friendlyName} ({project.researchCost})
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
       <Accordion type="single" collapsible defaultValue="habs">
         <AccordionItem value="habs">
           <AccordionTrigger>

@@ -32,6 +32,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     displayName: playerState.displayName,
   };
 
+  const projects = (await templates.projects()).reduce((acc, project) => {
+    acc.set(project.dataName, project);
+    return acc;
+  }, new Map<string, Awaited<ReturnType<typeof templates.projects>>[0]>());
   const factions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].map(({ Value: faction }) => {
     const mcMultiplier =
       (difficulty === "Cinematic"
@@ -49,6 +53,16 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     );
     const mcCurrentLimit =
       mcDailyTransactions.length > 0 ? mcDailyTransactions[mcDailyTransactions.length - 1].Amount : 0;
+    const availableProjects = faction.availableProjectNames
+      .map((name) => projects.get(name))
+      .filter((i): i is NonNullable<typeof i> => !!i);
+    const availableBoostProjects = availableProjects
+      .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_LaunchFacilitiesPriorityBonus")) && !i.repeatable)
+      .map(({ friendlyName, techCategory, researchCost }) => ({ friendlyName, techCategory, researchCost }));
+    const availableCPProjects = availableProjects
+      .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_ControlPointMaintenanceBonus")) && !i.repeatable)
+      .map(({ friendlyName, techCategory, researchCost }) => ({ friendlyName, techCategory, researchCost }));
+
     return {
       id: faction.ID.value,
       templateName: faction.templateName,
@@ -105,6 +119,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       mcCurrentLimit,
       mcHateFloor: Math.floor(faction.missionControlUsage * mcMultiplier),
       mcAlienWarLimit: 50 / mcMultiplier,
+      availableBoostProjects,
+      availableCPProjects,
     };
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));

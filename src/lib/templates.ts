@@ -983,7 +983,7 @@ export interface PowerPlant {
 export interface Project {
   friendlyName: string;
   dataName: string;
-  techCategory: string;
+  techCategory: TechCategory;
   AI_techRole: string;
   researchCost: number;
   oneTimeGlobally: boolean;
