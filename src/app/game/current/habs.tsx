@@ -49,6 +49,7 @@ function ShowHabEffects({ effects }: { effects: ShowEffectsProps }) {
       MCBonus={effects.MCBonus}
       miningBonus={effects.miningBonus}
       techBonuses={effects.techBonuses}
+      controlPoints={effects.controlPoints}
     />
   );
 }

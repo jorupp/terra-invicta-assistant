@@ -3,6 +3,7 @@ import {
   Administration,
   Boost,
   Command,
+  ControlPoint,
   Currency,
   Espionage,
   Influence,
@@ -156,6 +157,7 @@ export const ShowEffects = (
   const playerIntel = props.playerIntel || 0;
   const xpModifier = props.xpModifier || 0;
   const xp = props.xp || 0;
+  const controlPoints = props.controlPoints || 0;
   const priorityEconomyBonus = props.economyBonus || 0;
   const priorityWelfareBonus = props.welfareBonus || 0;
   const priorityEnvironmentBonus = props.environmentBonus || 0;
@@ -311,6 +313,12 @@ export const ShowEffects = (
         )
       )}
 
+      {controlPoints !== 0 && (
+        <>
+          <ControlPoint /> {controlPoints}
+          {spacer}
+        </>
+      )}
       {priorityEconomyBonus !== 0 && (
         <>
           <PriorityEconomy /> {pct(priorityEconomyBonus)}
