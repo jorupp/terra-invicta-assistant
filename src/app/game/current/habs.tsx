@@ -34,6 +34,7 @@ function ShowHabEffects({ effects }: { effects: ShowEffectsProps }) {
       incomeMoney_month={effects.incomeMoney_month}
       incomeOps_month={effects.incomeOps_month}
       incomeResearch_month={effects.incomeResearch_month}
+      projectCapacityGranted={effects.projectCapacityGranted}
       economyBonus={effects.economyBonus}
       welfareBonus={effects.welfareBonus}
       environmentBonus={effects.environmentBonus}

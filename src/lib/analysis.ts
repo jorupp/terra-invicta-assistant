@@ -367,6 +367,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           if (t.controlPointCapacity) {
             effects.controlPoints = t.controlPointCapacity;
           }
+          if (t.incomeProjects) {
+            effects.projectCapacityGranted = t.incomeProjects;
+          }
           if (t.specialRules?.includes("LEOBonusEconomy"))
             effects.economyBonus = (effects.economyBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusEnvironment"))
