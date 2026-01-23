@@ -18,6 +18,19 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     year: time.currentDateTime.month === 1 ? time.currentDateTime.year - 1 : time.currentDateTime.year,
   };
   const gameCurrentDateTimeFormatted = formatDateTime(time.currentDateTime);
+  const globalTechState = (() => {
+    const globalTechState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIGlobalResearchState"][0].Value;
+    return {
+      ...globalTechState,
+      techProgress: globalTechState.techProgress.map((tp) => ({
+        ...tp,
+        factionContributions: tp.factionContributions.reduce((acc, curr) => {
+          acc.set(curr.Key.value, curr.Value);
+          return acc;
+        }, new Map<number, number>()),
+      })),
+    };
+  })();
 
   const playerState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIPlayerState"].find(
     (i) => !i.Value.isAI
@@ -36,6 +49,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     acc.set(project.dataName, project);
     return acc;
   }, new Map<string, Awaited<ReturnType<typeof templates.projects>>[0]>());
+  const techs = (await templates.techs()).reduce((acc, tech) => {
+    acc.set(tech.dataName, tech);
+    return acc;
+  }, new Map<string, Awaited<ReturnType<typeof templates.techs>>[0]>());
   const factions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].map(({ Value: faction }) => {
     const mcMultiplier =
       (difficulty === "Cinematic"
@@ -910,6 +927,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     factionsById,
     playerInterestedPlanets,
     playerVisibleCouncilors,
+    globalTechState,
+    techs,
+    projects,
   };
 }
 
