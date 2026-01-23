@@ -304,13 +304,24 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       module.templateName?.includes(" Core")
     );
   }
-  function isMine(module: (typeof habModules)[0]) {
-    return module.templateName?.includes("Mining") || module.templateName?.includes("Mine");
-  }
-
+  const habSites = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabSiteState"].map(
+    ({
+      Key: { value: id },
+      Value: {
+        parentBody: { value: parentBodyId },
+        water_day,
+        volatiles_day,
+        metals_day,
+        nobles_day,
+        fissiles_day,
+      },
+    }) => ({ id, parentBodyId, water_day, volatiles_day, metals_day, nobles_day, fissiles_day })
+  );
+  const habSitesById = new Map<number, (typeof habSites)[0]>(habSites.map((site) => [site.id, site]));
   const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"]
     .map(({ Value: hab }) => {
       const tier = hab.tier;
+      const site = habSitesById.get(hab.habSite?.value || 0);
       // there's probably some data to indicate which sectors are populated for a given tier + habType (shrug)
       const validSectors = new Set(
         tier === 1 ? [0] : tier === 2 ? (hab.habType === "Station" ? [0, 2, 4] : [0, 1, 2]) : [0, 1, 2, 3, 4]
@@ -318,7 +329,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const sectors = (habSectorsByHabId.get(hab.ID.value) || []).filter(
         (s) => s.exists && validSectors.has(s.sectorNum)
       );
-      const modules = sectors.flatMap((s) => s.habModules);
+      const modules = sectors
+        .flatMap((s) => s.habModules)
+        .map((m) => ({ ...m, template: habModuleTemplates.get(m.templateName!) }));
       const empty = modules.filter((m) => m.destroyed || m.startBuildDate === noDate);
       const underConstruction = modules.filter((m) => m.completionDate >= gameCurrentDateTimeFormatted && !m.destroyed);
       const highlightedCompletions = underConstruction
@@ -335,17 +348,17 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }))
         .filter((i, ix) => ix === 0 || isImportant(i));
       const nonEmpty = modules.filter((m) => !m.destroyed && m.startBuildDate !== noDate);
-      const mine = nonEmpty.filter((m) => isMine(m));
+      const mine = nonEmpty.filter((m) => m.template?.miningModifier);
       const isBase = hab.habType === "Base";
       const missingMine = isBase && mine.length === 0;
-      const activeModuleTemplates = modules
+      const moduleTemplates = modules
         .filter((i) => !i.destroyed)
         .map((i) => ({
           active: i.powered && (i.completionDate === noDate || i.completionDate <= gameCurrentDateTimeFormatted),
           template: habModuleTemplates.get(i.templateName!)!,
         }))
         .filter((i) => i.template);
-      const moduleBonuses = activeModuleTemplates.map(({ active, template: t }) => {
+      const moduleBonuses = moduleTemplates.map(({ active, template: t }) => {
         const {
           techBonuses,
           incomeInfluence_month,
@@ -414,6 +427,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         finderSortOverride: hab.finderSortOverride,
         activeEffects,
         potentialEffects,
+        site,
+        mine: mine[0],
       };
     })
     .toSorted((a, b) =>
@@ -437,9 +452,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       .filter((orbit) => playerOrbitIds.has(orbit.Key.value))
       .map((i) => i.Value.barycenter.value)
   );
-  const habSites = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabSiteState"];
   for (const hab of playerHabs) {
-    playerBarycenters.add(habSites.find((site) => site.Key.value === hab.habSiteId)?.Value.parentBody?.value);
+    playerBarycenters.add(habSitesById.get(hab.habSiteId || 0)?.parentBodyId);
   }
   const playerPlanetIds = new Set<number>(
     planets

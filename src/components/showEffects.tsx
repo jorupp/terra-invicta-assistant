@@ -1,4 +1,4 @@
-import { CouncilorAttributes, TIOrgState } from "@/lib/savefile";
+import { CouncilorAttributes, TIHabSiteState, TIOrgState } from "@/lib/savefile";
 import {
   Administration,
   Boost,
@@ -6,12 +6,15 @@ import {
   ControlPoint,
   Currency,
   Espionage,
+  Fissiles,
   Influence,
   Investigation,
   Loyalty,
+  Metals,
   MiningBonus,
   MissionControl,
   MissionIcons,
+  Nobles,
   Ops,
   Persuasion,
   PriorityBoost,
@@ -35,6 +38,8 @@ import {
   TraitCriminal,
   TraitGovernment,
   UnknownIcon,
+  Volatiles,
+  Water,
 } from "./icons";
 import { CouncilorTypeDataName, MissionDataName, Org, TechCategory, TraitDataName } from "@/lib/templates";
 import { twMerge } from "tailwind-merge";
@@ -53,6 +58,7 @@ export type ShowEffectsProps = Partial<
       maxLoyalty: number;
       controlPoints: number;
     } & CouncilorAttributes &
+    Pick<TIHabSiteState, 'water_day' | 'volatiles_day' | 'metals_day' | 'nobles_day' | 'fissiles_day'> &
     Pick<
       TIOrgState,
       | "tier"
@@ -184,6 +190,12 @@ export const ShowEffects = (
     props.typeTemplateName &&
     typesCanHaveCriminal.includes(props.typeTemplateName) &&
     !(props.traitTemplateNames || []).some((t) => governmentCriminalGroupTraits.includes(t));
+
+  const water_day = props.water_day || 0;
+  const volatiles_day = props.volatiles_day || 0;
+  const metals_day = props.metals_day || 0;
+  const nobles_day = props.nobles_day || 0;
+  const fissiles_day = props.fissiles_day || 0;
 
   return (
     <>
@@ -465,6 +477,37 @@ export const ShowEffects = (
               </span>
             );
           })}
+        </>
+      )}
+
+      {water_day !== 0 && (
+        <>
+          <Water /> {(water_day * 30).toFixed(2)}
+          {spacer}
+        </>
+      )}
+      {volatiles_day !== 0 && (
+        <>
+          <Volatiles /> {(volatiles_day * 30).toFixed(2)}
+          {spacer}
+        </>
+      )}
+      {metals_day !== 0 && (
+        <>
+          <Metals /> {(metals_day * 30).toFixed(2)}
+          {spacer}
+        </>
+      )}
+      {nobles_day !== 0 && (
+        <>
+          <Nobles /> {(nobles_day * 30).toFixed(2)}
+          {spacer}
+        </>
+      )}
+      {fissiles_day !== 0 && (
+        <>
+          <Fissiles /> {(fissiles_day * 30).toFixed(2)}
+          {spacer}
         </>
       )}
     </>

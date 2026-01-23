@@ -82,6 +82,69 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
   );
 }
 
+function HabMineHeader() {
+  return (
+    <TableHeader>
+      <TableRow>
+        <TableHead>Name</TableHead>
+        <TableHead>Most important upcoming completion</TableHead>
+        <TableHead>Alerts</TableHead>
+        <TableHead>Current base income</TableHead>
+        <TableHead>Future/potential base income</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+}
+
+function ShowHabMineEffects({
+  effects,
+}: {
+  effects: Partial<
+    Pick<
+      NonNullable<Analysis["playerHabs"][0]["site"]>,
+      "water_day" | "volatiles_day" | "metals_day" | "nobles_day" | "fissiles_day"
+    > &
+      Pick<NonNullable<Analysis["playerHabs"][0]["mine"]["template"]>, "miningModifier">
+  >;
+}) {
+  return (
+    <ShowEffects
+      water_day={(effects.water_day || 0) * (effects.miningModifier || 1)}
+      volatiles_day={(effects.volatiles_day || 0) * (effects.miningModifier || 1)}
+      metals_day={(effects.metals_day || 0) * (effects.miningModifier || 1)}
+      nobles_day={(effects.nobles_day || 0) * (effects.miningModifier || 1)}
+      fissiles_day={(effects.fissiles_day || 0) * (effects.miningModifier || 1)}
+    />
+  );
+}
+
+function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: string }) {
+  const { highlightedCompletions, emptyModuleCount, missingMine } = hab;
+  const effects = { ...hab.site, ...hab.mine?.template };
+
+  return (
+    <TableRow key={hab.id}>
+      <TableCell>{hab.displayName}</TableCell>
+      <TableCell>
+        {highlightedCompletions.map((highlightedCompletion, ix) => (
+          <Fragment key={ix}>
+            {ix > 0 && ", "}
+            {highlightedCompletion.templateName} in {highlightedCompletion.daysToCompletion?.toFixed(0)} days
+          </Fragment>
+        ))}
+      </TableCell>
+      <TableCell>
+        {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
+        {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
+      </TableCell>
+      <TableCell>{hab.mine?.powered ? <ShowHabMineEffects effects={effects} /> : null}</TableCell>
+      <TableCell>
+        <ShowHabMineEffects effects={effects} />
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export function getHabsUi(analysis: Analysis) {
   const { playerHabs } = analysis;
   const missingMines = playerHabs.filter((h) => h.missingMine);
@@ -131,6 +194,63 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
   const potentialEffects = playerHabs.reduce<ShowEffectsProps>(
     (acc, hab) => combineEffects(acc, hab.potentialEffects),
     {}
+  );
+
+  const mineable = playerHabs
+    .filter((h) => h.site)
+    .map((hab) => {
+      const mine = hab.mine;
+      const miningModifier = mine?.template?.miningModifier || 1;
+      const active = mine?.powered || false;
+      return {
+        active,
+        miningModifier,
+        water_day: (hab.site?.water_day || 0) * miningModifier,
+        volatiles_day: (hab.site?.volatiles_day || 0) * miningModifier,
+        metals_day: (hab.site?.metals_day || 0) * miningModifier,
+        nobles_day: (hab.site?.nobles_day || 0) * miningModifier,
+        fissiles_day: (hab.site?.fissiles_day || 0) * miningModifier,
+      };
+    });
+  const activeMineSummary = mineable.reduce(
+    (acc, cur) => {
+      if (cur.active) {
+        acc.count++;
+        acc.water_day += cur.water_day;
+        acc.volatiles_day += cur.volatiles_day;
+        acc.metals_day += cur.metals_day;
+        acc.nobles_day += cur.nobles_day;
+        acc.fissiles_day += cur.fissiles_day;
+      }
+      return acc;
+    },
+    {
+      count: 0,
+      water_day: 0,
+      volatiles_day: 0,
+      metals_day: 0,
+      nobles_day: 0,
+      fissiles_day: 0,
+    }
+  );
+  const mineSummary = mineable.reduce(
+    (acc, cur) => {
+      acc.count++;
+      acc.water_day += cur.water_day;
+      acc.volatiles_day += cur.volatiles_day;
+      acc.metals_day += cur.metals_day;
+      acc.nobles_day += cur.nobles_day;
+      acc.fissiles_day += cur.fissiles_day;
+      return acc;
+    },
+    {
+      count: 0,
+      water_day: 0,
+      volatiles_day: 0,
+      metals_day: 0,
+      nobles_day: 0,
+      fissiles_day: 0,
+    }
   );
 
   return (
@@ -204,6 +324,37 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
               <TableBody>
                 {playerHabs.map((hab) => (
                   <HabScienceTableRow hab={hab} key={hab.id} time={time} />
+                ))}
+              </TableBody>
+            </Table>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="mines">
+          <AccordionTrigger>
+            <span>Manage Mines</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <Card>
+              <CardHeader>
+                <CardTitle>Base income from active mines</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <span>{activeMineSummary.count} active mines</span> <ShowHabMineEffects effects={activeMineSummary} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Base income from potential mines</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <span>{mineSummary.count} potential mines</span> <ShowHabMineEffects effects={mineSummary} />
+              </CardContent>
+            </Card>
+            <Table>
+              <HabMineHeader />
+              <TableBody>
+                {playerHabs.map((hab) => (
+                  <HabMineTableRow hab={hab} key={hab.id} time={time} />
                 ))}
               </TableBody>
             </Table>
