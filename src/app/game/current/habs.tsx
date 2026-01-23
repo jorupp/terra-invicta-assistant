@@ -11,7 +11,7 @@ import { Analysis } from "@/lib/analysis";
 import { formatDateTime, noDate } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
 
-function HabHeader() {
+function HabScienceHeader() {
   return (
     <TableHeader>
       <TableRow>
@@ -25,7 +25,7 @@ function HabHeader() {
   );
 }
 
-function ShowHabEffects({ effects }: { effects: ShowEffectsProps }) {
+function ShowHabScienceEffects({ effects }: { effects: ShowEffectsProps }) {
   return (
     <ShowEffects
       incomeBoost_month={effects.incomeBoost_month}
@@ -54,7 +54,7 @@ function ShowHabEffects({ effects }: { effects: ShowEffectsProps }) {
   );
 }
 
-function HabTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: string }) {
+function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: string }) {
   const { highlightedCompletions, emptyModuleCount, missingMine, activeEffects, potentialEffects } = hab;
 
   return (
@@ -73,10 +73,10 @@ function HabTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: stri
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
       </TableCell>
       <TableCell>
-        <ShowHabEffects effects={activeEffects} />
+        <ShowHabScienceEffects effects={activeEffects} />
       </TableCell>
       <TableCell>
-        <ShowHabEffects effects={potentialEffects} />
+        <ShowHabScienceEffects effects={potentialEffects} />
       </TableCell>
     </TableRow>
   );
@@ -140,7 +140,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <CardTitle>Current Hab bonuses</CardTitle>
         </CardHeader>
         <CardContent>
-          <ShowHabEffects effects={activeEffects} />
+          <ShowHabScienceEffects effects={activeEffects} />
         </CardContent>
       </Card>
       <Card>
@@ -148,7 +148,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <CardTitle>Future Hab bonuses (including unpowered/under-construction)</CardTitle>
         </CardHeader>
         <CardContent>
-          <ShowHabEffects effects={potentialEffects} />
+          <ShowHabScienceEffects effects={potentialEffects} />
         </CardContent>
       </Card>
       {availableBoostProjects.length > 0 && (
@@ -200,10 +200,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           </AccordionTrigger>
           <AccordionContent>
             <Table>
-              <HabHeader />
+              <HabScienceHeader />
               <TableBody>
                 {playerHabs.map((hab) => (
-                  <HabTableRow hab={hab} key={hab.id} time={time} />
+                  <HabScienceTableRow hab={hab} key={hab.id} time={time} />
                 ))}
               </TableBody>
             </Table>
