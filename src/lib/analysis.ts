@@ -384,10 +384,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           incomeOps_month,
           incomeProjects,
           incomeResearch_month,
+          supportMaterials_month,
+          missionControl,
         } = t;
 
         const effects: ShowEffectsProps = {
           techBonuses,
+          incomeBoost_month: -(supportMaterials_month?.boost || 0),
+          incomeMissionControl: missionControl,
           incomeInfluence_month,
           incomeMoney_month,
           incomeOps_month,

@@ -600,6 +600,7 @@ export interface HabModule {
   incomeNobles_month?: number;
   incomeFissiles_month?: number;
   incomeVolatiles_month?: number;
+  missionControl?: number;
 }
 
 export interface Hab {
