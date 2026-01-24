@@ -307,6 +307,10 @@ function TechnologyGoalsDisplay({
         name,
         techCategory: both?.techCategory,
         friendlyName: both?.friendlyName || name,
+        displayName: both?.displayName,
+        summary: both?.summary,
+        description: both?.description,
+        quote: tech?.quote,
         researchCost,
         accumulatedResearch,
         remainingCost,
@@ -348,7 +352,8 @@ function TechnologyGoalsDisplay({
             <span className="mr-1">
               <Icon />
             </span>
-            {tech.friendlyName} ({tech.accumulatedResearch.toFixed(0)}/{tech.researchCost.toFixed(0)})
+            {tech.displayName ?? tech.friendlyName} ({tech.accumulatedResearch.toFixed(0)}/
+            {tech.researchCost.toFixed(0)})
             {goal && (
               <Button
                 variant="ghost"

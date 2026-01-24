@@ -2,6 +2,7 @@ import { SaveFile } from "./savefile";
 import { MissionDataName, templates } from "./templates";
 import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
 import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "./utils";
+import { localizations } from "./localization";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const mcMaskingTechs = new Set(
@@ -45,14 +46,37 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     displayName: playerState.displayName,
   };
 
-  const projects = (await templates.projects()).reduce((acc, project) => {
-    acc.set(project.dataName, project);
-    return acc;
-  }, new Map<string, Awaited<ReturnType<typeof templates.projects>>[0]>());
-  const techs = (await templates.techs()).reduce((acc, tech) => {
-    acc.set(tech.dataName, tech);
-    return acc;
-  }, new Map<string, Awaited<ReturnType<typeof templates.techs>>[0]>());
+  const projectLocalization = await localizations.project();
+  async function getProjectLocalization(name: string) {
+    return {
+      displayName: projectLocalization.get(`TIProjectTemplate.displayName.${name}`),
+      summary: projectLocalization.get(`TIProjectTemplate.summary.${name}`),
+      description: projectLocalization.get(`TIProjectTemplate.description.${name}`),
+    };
+  }
+  const projects = await (
+    await templates.projects()
+  ).reduce(async (acc, project) => {
+    const map = await acc;
+    map.set(project.dataName, { ...project, ...(await getProjectLocalization(project.dataName)) });
+    return map;
+  }, Promise.resolve(new Map<string, Awaited<ReturnType<typeof templates.projects>>[0] & { displayName?: string; summary?: string; description?: string }>()));
+  const techLocalization = await localizations.tech();
+  async function getTechLocalization(name: string) {
+    return {
+      displayName: techLocalization.get(`TITechTemplate.displayName.${name}`),
+      summary: techLocalization.get(`TITechTemplate.summary.${name}`),
+      description: techLocalization.get(`TITechTemplate.description.${name}`),
+      quote: techLocalization.get(`TITechTemplate.quote.${name}`),
+    };
+  }
+  const techs = await (
+    await templates.techs()
+  ).reduce(async (acc, tech) => {
+    const map = await acc;
+    map.set(tech.dataName, { ...tech, ...(await getTechLocalization(tech.dataName)) });
+    return map;
+  }, Promise.resolve(new Map<string, Awaited<ReturnType<typeof templates.techs>>[0] & { displayName?: string; summary?: string; description?: string; quote?: string }>()));
   const factions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].map(({ Value: faction }) => {
     const mcMultiplier =
       (difficulty === "Cinematic"
