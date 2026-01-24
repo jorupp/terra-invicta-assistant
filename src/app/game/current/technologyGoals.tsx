@@ -236,20 +236,7 @@ export function TechnologyGoalsList({
   );
 }
 
-function TechnologyGoalsDisplay({
-  goals,
-  onRemove,
-  analysis,
-}: {
-  goals: TechnologyGoal[];
-  onRemove: (id: string) => void;
-  analysis: Analysis;
-}) {
-  if (goals.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">No technology goals set. Click the button above to add some.</p>
-    );
-  }
+function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
   const availableProjects = new Set(analysis.playerFaction.availableProjectNames);
   const complete = new Set([
     ...analysis.globalTechState.finishedTechsNames,
@@ -257,11 +244,13 @@ function TechnologyGoalsDisplay({
   ]);
   const goalsByName = new Map(goals.map((g) => [g.name, g]));
   const required = new Map<string, number>();
+
   for (const goal of goalsByName.keys()) {
     if (!complete.has(goal)) {
       required.set(goal, 0);
     }
   }
+
   while (true) {
     let done = true;
     for (const req of Array.from(required.keys())) {
@@ -285,12 +274,14 @@ function TechnologyGoalsDisplay({
     }
     if (done) break;
   }
+
   const accumulatedResearchByName = new Map<string, number>([
     ...analysis.globalTechState.techProgress.map((i) => [i.techTemplateName, i.accumulatedResearch] as const),
     ...analysis.playerFaction.currentProjectProgress.map(
       (i) => [i.projectTemplateName, i.accumulatedResearch] as const
     ),
   ]);
+
   const techs = Array.from(required.keys())
     .map((name) => {
       const order = required.get(name)!;
@@ -327,6 +318,28 @@ function TechnologyGoalsDisplay({
       }
       return a.remainingCost - b.remainingCost;
     });
+
+  return techs;
+}
+
+function TechnologyGoalsDisplay({
+  goals,
+  onRemove,
+  analysis,
+}: {
+  goals: TechnologyGoal[];
+  onRemove: (id: string) => void;
+  analysis: Analysis;
+}) {
+  if (goals.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">No technology goals set. Click the button above to add some.</p>
+    );
+  }
+
+  const goalsByName = new Map(goals.map((g) => [g.name, g]));
+  const availableProjects = new Set(analysis.playerFaction.availableProjectNames);
+  const techs = buildTechsList(goals, analysis);
 
   return (
     <ul className="space-y-1">
