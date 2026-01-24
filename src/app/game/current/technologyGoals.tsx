@@ -221,16 +221,19 @@ export function TechnologyGoalsList({
       <p className="text-sm text-muted-foreground">No technology goals set. Click the button above to add some.</p>
     );
   }
-  return goals.map((goal) => (
-    <Card key={goal.id} className="mb-2">
-      <CardHeader>
-        <CardTitle>{goal.displayName}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <TechnologyGoalsDisplay key={goal.id} goals={[goal]} onRemove={onRemove} analysis={analysis} />
-      </CardContent>
-    </Card>
-  ));
+  return goals.map((goal) =>
+    analysis.globalTechState.finishedTechsNames.includes(goal.name) ||
+    analysis.playerFaction.finishedProjectNames.includes(goal.name) ? null : (
+      <Card key={goal.id} className="mb-2">
+        <CardHeader>
+          <CardTitle>{goal.displayName}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TechnologyGoalsDisplay key={goal.id} goals={[goal]} onRemove={onRemove} analysis={analysis} />
+        </CardContent>
+      </Card>
+    )
+  );
 }
 
 function TechnologyGoalsDisplay({
