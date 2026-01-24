@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Analysis } from "@/lib/analysis";
 import { formatDateTime, noDate } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
+import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "./technologyGoals";
 
 function HabScienceHeader() {
   return (
@@ -190,6 +191,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
     playerFaction: { availableBoostProjects, availableCPProjects },
   } = analysis;
   const time = formatDateTime(analysis.gameCurrentDateTime);
+  const { goals, addGoal, removeGoal } = useTechnologyGoals(analysis);
   const activeEffects = playerHabs.reduce<ShowEffectsProps>((acc, hab) => combineEffects(acc, hab.activeEffects), {});
   const potentialEffects = playerHabs.reduce<ShowEffectsProps>(
     (acc, hab) => combineEffects(acc, hab.potentialEffects),
@@ -253,6 +255,8 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
     }
   );
 
+  const techGoals = useTechnologyGoals(analysis);
+
   return (
     <div className="space-y-2 mx-2">
       <Card>
@@ -313,6 +317,22 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           </CardContent>
         </Card>
       )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Technology goals</span>
+            <TechnologyGoalsDialog
+              analysis={analysis}
+              goals={techGoals.goals}
+              onAdd={techGoals.addGoal}
+              onRemove={techGoals.removeGoal}
+            />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TechnologyGoalsList goals={techGoals.goals} onRemove={techGoals.removeGoal} />
+        </CardContent>
+      </Card>
       <Accordion type="single" collapsible defaultValue="habs">
         <AccordionItem value="habs">
           <AccordionTrigger>
