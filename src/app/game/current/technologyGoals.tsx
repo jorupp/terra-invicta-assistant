@@ -319,6 +319,7 @@ function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
           .map((i) => i.friendlyName) || [];
       const canResearch = prereqs.length === 0 && (tech ? true : availableProjects.has(name));
       const canResearchProject = canResearch && !!project;
+      const unlockChance = project?.factionAvailableChance || 100;
       return {
         isTech: !!tech,
         name,
@@ -335,6 +336,7 @@ function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
         prereqs,
         canResearch,
         canResearchProject,
+        unlockChance,
       };
     })
     .toSorted((a, b) => {
@@ -386,7 +388,7 @@ function TechnologyGoalsDisplay({
               <Icon />
             </span>
             {tech.displayName ?? tech.friendlyName} ({tech.accumulatedResearch.toFixed(0)}/
-            {tech.researchCost.toFixed(0)})
+            {tech.researchCost.toFixed(0)}){tech.unlockChance === 100 ? "" : ` - Chance: ${tech.unlockChance}%`}
             {goal.name === tech.name && (
               <Button
                 variant="ghost"
