@@ -317,37 +317,34 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           </CardContent>
         </Card>
       )}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>
-              Technology goals
-              {process.env.NEXT_PUBLIC_TECH_TREE_VIEWER ? (
-                <>
-                  {" - "}
-                  <a
-                    href={process.env.NEXT_PUBLIC_TECH_TREE_VIEWER}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    Drill into details
-                  </a>
-                </>
-              ) : null}
-            </span>
+      <Accordion type="multiple" defaultValue={["technology-goals"]}>
+        <AccordionItem value="technology-goals">
+          <AccordionTrigger>
+            <span>Technology goals</span>
+          </AccordionTrigger>
+          <AccordionContent>
             <TechnologyGoalsDialog
               analysis={analysis}
               goals={techGoals.goals}
               onAdd={techGoals.addGoal}
               onRemove={techGoals.removeGoal}
             />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TechnologyGoalsList analysis={analysis} goals={techGoals.goals} onRemove={techGoals.removeGoal} />
-        </CardContent>
-      </Card>
+            {process.env.NEXT_PUBLIC_TECH_TREE_VIEWER ? (
+              <a
+                href={process.env.NEXT_PUBLIC_TECH_TREE_VIEWER}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline ml-5"
+              >
+                Drill into details
+              </a>
+            ) : null}
+            <br />
+            <br />
+            <TechnologyGoalsList analysis={analysis} goals={techGoals.goals} onRemove={techGoals.removeGoal} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
       <Accordion type="single" collapsible defaultValue="habs">
         <AccordionItem value="habs">
           <AccordionTrigger>

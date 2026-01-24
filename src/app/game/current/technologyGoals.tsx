@@ -2,6 +2,7 @@
 
 import { Gears, TechIcons, UnknownIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Analysis } from "@/lib/analysis";
@@ -206,6 +207,32 @@ export function TechnologyGoalsDialog({
 }
 
 export function TechnologyGoalsList({
+  goals,
+  onRemove,
+  analysis,
+}: {
+  goals: TechnologyGoal[];
+  onRemove: (id: string) => void;
+  analysis: Analysis;
+}) {
+  if (goals.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">No technology goals set. Click the button above to add some.</p>
+    );
+  }
+  return goals.map((goal) => (
+    <Card key={goal.id} className="mb-2">
+      <CardHeader>
+        <CardTitle>{goal.displayName}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <TechnologyGoalsDisplay key={goal.id} goals={[goal]} onRemove={onRemove} analysis={analysis} />
+      </CardContent>
+    </Card>
+  ));
+}
+
+function TechnologyGoalsDisplay({
   goals,
   onRemove,
   analysis,
