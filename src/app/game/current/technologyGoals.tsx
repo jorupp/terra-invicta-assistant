@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Analysis } from "@/lib/analysis";
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { twMerge } from "tailwind-merge";
 
 const STORAGE_KEY = "technologyGoals";
 
@@ -246,6 +247,7 @@ function TechnologyGoalsDisplay({
       <p className="text-sm text-muted-foreground">No technology goals set. Click the button above to add some.</p>
     );
   }
+  const availableProjects = new Set(analysis.playerFaction.availableProjectNames);
   const complete = new Set([
     ...analysis.globalTechState.finishedTechsNames,
     ...analysis.playerFaction.finishedProjectNames,
@@ -339,7 +341,7 @@ function TechnologyGoalsDisplay({
             {tech.isTech ? (
               <span className="px-2 mr-1" />
             ) : (
-              <span className="mr-1">
+              <span className={twMerge("mr-1", availableProjects.has(tech.name) ? "" : "opacity-30")}>
                 <Gears />
               </span>
             )}

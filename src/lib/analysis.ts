@@ -139,6 +139,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       mcAlienWarLimit: 50 / mcMultiplier,
       availableBoostProjects,
       availableCPProjects,
+      availableProjectNames: faction.availableProjectNames,
     };
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
