@@ -188,7 +188,7 @@ export function getHabsUi(analysis: Analysis) {
 function HabsComponent({ analysis }: { analysis: Analysis }) {
   const {
     playerHabs,
-    playerFaction: { availableBoostProjects, availableCPProjects },
+    playerFaction: { availableBoostProjects, availableCPProjects, availableMaxOrgProjects },
   } = analysis;
   const time = formatDateTime(analysis.gameCurrentDateTime);
   const { goals, addGoal, removeGoal } = useTechnologyGoals(analysis);
@@ -304,6 +304,27 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <CardContent>
             <ul>
               {availableCPProjects
+                .toSorted((a, b) => a.researchCost - b.researchCost)
+                .map((project, ix) => {
+                  const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                  return (
+                    <li key={ix}>
+                      <Icon /> {project.friendlyName} ({project.researchCost})
+                    </li>
+                  );
+                })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+      {availableMaxOrgProjects.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Max Org Projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul>
+              {availableMaxOrgProjects
                 .toSorted((a, b) => a.researchCost - b.researchCost)
                 .map((project, ix) => {
                   const Icon = TechIcons[project.techCategory] || UnknownIcon;

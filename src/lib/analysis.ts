@@ -103,6 +103,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const availableCPProjects = availableProjects
       .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_ControlPointMaintenanceBonus")) && !i.repeatable)
       .map(({ friendlyName, techCategory, researchCost }) => ({ friendlyName, techCategory, researchCost }));
+    const availableMaxOrgProjects = availableProjects
+      .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_IncreaseMaxAvailableOrgs")) && !i.repeatable)
+      .map(({ friendlyName, techCategory, researchCost }) => ({ friendlyName, techCategory, researchCost }));
 
     return {
       id: faction.ID.value,
@@ -163,6 +166,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       mcAlienWarLimit: 50 / mcMultiplier,
       availableBoostProjects,
       availableCPProjects,
+      availableMaxOrgProjects,
       availableProjectNames: faction.availableProjectNames,
     };
   });
