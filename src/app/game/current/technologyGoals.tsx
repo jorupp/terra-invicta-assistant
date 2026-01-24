@@ -299,6 +299,16 @@ export function TechnologyGoalsList({
         const Icon = tech.techCategory ? TechIcons[tech.techCategory] || UnknownIcon : UnknownIcon;
         return (
           <li key={tech.name} title={tech.prereqs?.join(", ")}>
+            {process.env.NEXT_PUBLIC_TECH_TREE_VIEWER ? (
+              <a
+                href={process.env.NEXT_PUBLIC_TECH_TREE_VIEWER + "#/" + tech.name}
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-primary mr-2"
+              >
+                View
+              </a>
+            ) : null}
             {tech.isTech ? (
               <span className="px-2 mr-1" />
             ) : (

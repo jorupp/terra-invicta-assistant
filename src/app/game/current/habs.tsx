@@ -320,7 +320,22 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Technology goals</span>
+            <span>
+              Technology goals
+              {process.env.NEXT_PUBLIC_TECH_TREE_VIEWER ? (
+                <>
+                  {" - "}
+                  <a
+                    href={process.env.NEXT_PUBLIC_TECH_TREE_VIEWER}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    Drill into details
+                  </a>
+                </>
+              ) : null}
+            </span>
             <TechnologyGoalsDialog
               analysis={analysis}
               goals={techGoals.goals}
