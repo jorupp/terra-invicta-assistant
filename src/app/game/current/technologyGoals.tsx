@@ -221,19 +221,39 @@ export function TechnologyGoalsList({
       <p className="text-sm text-muted-foreground">No technology goals set. Click the button above to add some.</p>
     );
   }
-  return goals.map((goal) =>
-    analysis.globalTechState.finishedTechsNames.includes(goal.name) ||
-    analysis.playerFaction.finishedProjectNames.includes(goal.name) ? null : (
-      <Card key={goal.id} className="mb-2">
-        <CardHeader>
-          <CardTitle>{goal.displayName}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TechnologyGoalsDisplay key={goal.id} goals={[goal]} onRemove={onRemove} analysis={analysis} />
-        </CardContent>
-      </Card>
+
+  const displayedGoals = goals
+    .filter(
+      (goal) =>
+        !analysis.globalTechState.finishedTechsNames.includes(goal.name) &&
+        !analysis.playerFaction.finishedProjectNames.includes(goal.name)
     )
-  );
+    .map((goal) => {
+      const techs = buildTechsList([goal], analysis);
+      const totalRemainingCost = techs.reduce((sum, t) => sum + t.remainingCost, 0);
+      const canResearch = techs.some((t) => t.canResearch);
+      const canResearchProject = techs.some((t) => t.canResearchProject);
+      return { ...goal, techs, totalRemainingCost, canResearch, canResearchProject };
+    })
+    .toSorted((a, b) => {
+      if (a.canResearchProject !== b.canResearchProject) {
+        return a.canResearchProject ? -1 : 1;
+      }
+      if (a.canResearch !== b.canResearch) {
+        return a.canResearch ? -1 : 1;
+      }
+      return a.totalRemainingCost - b.totalRemainingCost;
+    });
+  return displayedGoals.map((goal) => (
+    <Card key={goal.id} className="mb-2">
+      <CardHeader>
+        <CardTitle>{goal.displayName}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <TechnologyGoalsDisplay key={goal.id} goal={goal} onRemove={onRemove} analysis={analysis} />
+      </CardContent>
+    </Card>
+  ));
 }
 
 function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
@@ -291,11 +311,14 @@ function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
       const researchCost = both?.researchCost || 0;
       const accumulatedResearch = accumulatedResearchByName.get(name) || 0;
       const remainingCost = Math.max(researchCost - accumulatedResearch, 0);
-      const prereqs = both?.prereqs
-        ?.map((i) => analysis.techs.get(i) || analysis.projects.get(i))
-        .filter((i): i is NonNullable<typeof i> => !!i)
-        .filter((i) => !complete.has(i.dataName))
-        .map((i) => i.friendlyName);
+      const prereqs =
+        both?.prereqs
+          ?.map((i) => analysis.techs.get(i) || analysis.projects.get(i))
+          .filter((i): i is NonNullable<typeof i> => !!i)
+          .filter((i) => !complete.has(i.dataName))
+          .map((i) => i.friendlyName) || [];
+      const canResearch = prereqs.length === 0 && (tech ? true : availableProjects.has(name));
+      const canResearchProject = canResearch && !!project;
       return {
         isTech: !!tech,
         name,
@@ -310,6 +333,8 @@ function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
         remainingCost,
         order,
         prereqs,
+        canResearch,
+        canResearchProject,
       };
     })
     .toSorted((a, b) => {
@@ -323,28 +348,20 @@ function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
 }
 
 function TechnologyGoalsDisplay({
-  goals,
+  goal,
   onRemove,
   analysis,
 }: {
-  goals: TechnologyGoal[];
+  goal: TechnologyGoal & { techs: ReturnType<typeof buildTechsList>; totalRemainingCost: number };
   onRemove: (id: string) => void;
   analysis: Analysis;
 }) {
-  if (goals.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">No technology goals set. Click the button above to add some.</p>
-    );
-  }
-
-  const goalsByName = new Map(goals.map((g) => [g.name, g]));
   const availableProjects = new Set(analysis.playerFaction.availableProjectNames);
-  const techs = buildTechsList(goals, analysis);
+  const { techs } = goal;
 
   return (
     <ul className="space-y-1">
       {techs.map((tech) => {
-        const goal = goalsByName.get(tech.name)?.id;
         const Icon = tech.techCategory ? TechIcons[tech.techCategory] || UnknownIcon : UnknownIcon;
         return (
           <li key={tech.name} title={tech.prereqs?.join(", ")}>
@@ -370,11 +387,11 @@ function TechnologyGoalsDisplay({
             </span>
             {tech.displayName ?? tech.friendlyName} ({tech.accumulatedResearch.toFixed(0)}/
             {tech.researchCost.toFixed(0)})
-            {goal && (
+            {goal.name === tech.name && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onRemove(goal)}
+                onClick={() => onRemove(goal.id)}
                 className="h-6 w-6 p-0"
                 title="Remove goal"
               >
