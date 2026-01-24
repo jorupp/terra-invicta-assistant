@@ -330,7 +330,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <TechnologyGoalsList goals={techGoals.goals} onRemove={techGoals.removeGoal} />
+          <TechnologyGoalsList analysis={analysis} goals={techGoals.goals} onRemove={techGoals.removeGoal} />
         </CardContent>
       </Card>
       <Accordion type="single" collapsible defaultValue="habs">

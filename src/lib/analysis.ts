@@ -87,6 +87,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       techNameContributionHistory: faction.techNameContributionHistory,
       unlockedVictoryObjective: faction.unlockedVictoryObjective,
       finishedProjectNames: faction.finishedProjectNames,
+      currentProjectProgress: faction.currentProjectProgress,
       atrocities: faction.atrocities,
       milestones: faction.milestones,
       missionControlUsage: faction.missionControlUsage,

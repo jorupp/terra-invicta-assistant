@@ -479,7 +479,12 @@ export interface TIFactionState extends BaseState {
 
   // Projects & Tech
   availableProjectNames: string[];
-  currentProjectProgress: Record<string, number>;
+  currentProjectProgress: {
+    projectTemplateName: string;
+    accumulatedResearch: number;
+    slot: number;
+    completed: boolean;
+  }[];
   favoredProjects: string[];
   hiddenProjects: string[];
   missedProjects: string[];

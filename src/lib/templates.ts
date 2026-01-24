@@ -998,6 +998,7 @@ export interface Project {
     value: number;
   }[];
   effects?: string[];
+  prereqs?: string[];
 }
 
 export interface Radiator {
