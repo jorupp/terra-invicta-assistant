@@ -747,6 +747,12 @@ function CouncilorsComponent({
             </Tabs>
           </AccordionContent>
         </AccordionItem>
+        <AccordionItem value="other-councilors">
+          <AccordionTrigger>Other Councilors</AccordionTrigger>
+          <AccordionContent>
+            <OtherCouncilorsByFaction {...{ analysis, weights }} />
+          </AccordionContent>
+        </AccordionItem>
       </Accordion>
 
       <div className="my-4">
@@ -766,6 +772,61 @@ function CouncilorsComponent({
         </CollapsibleContent>
       </Collapsible>
     </>
+  );
+}
+
+function OtherCouncilorsByFaction({ analysis, weights }: { analysis: Analysis; weights: ScoringWeights }) {
+  const { playerVisibleCouncilors, factionsById } = analysis;
+
+  const scoredBaseCouncilors = scoreAndSort(
+    playerVisibleCouncilors,
+    weights,
+    new Map<MissionDataName, number>(),
+    getBaseCouncilorScore
+  );
+
+  const councilorsByFactionId = scoredBaseCouncilors.reduce((acc, councilor) => {
+    const factionId = councilor.factionId || 0;
+    if (!acc.has(factionId)) {
+      acc.set(factionId, []);
+    }
+    acc.get(factionId)!.push(councilor);
+    return acc;
+  }, new Map<number, Analysis["playerCouncilors"][number][]>());
+
+  const factions = Array.from(councilorsByFactionId.keys())
+    .map((i) => factionsById.get(i!)!)
+    .filter((i) => i.id !== analysis.alienFaction.ID.value);
+
+  return (
+    <Tabs defaultValue={`faction-${factions[0].id}`}>
+      <TabsList>
+        {factions
+          .filter((i) => i.id !== analysis.alienFaction.ID.value)
+          .map((faction) => (
+            <TabsTrigger key={faction.id} value={`faction-${faction.id}`}>
+              {faction.displayName || "Unknown Faction"} ({councilorsByFactionId.get(faction.id)?.length || 0})
+            </TabsTrigger>
+          ))}
+      </TabsList>
+      {factions.map((faction) => (
+        <TabsContent key={faction.id} value={`faction-${faction.id}`}>
+          <Table>
+            <CouncilorTableHeader />
+            <TableBody>
+              {councilorsByFactionId.get(faction.id)?.map((councilor) => (
+                <CouncilorTableRow
+                  key={councilor.id}
+                  councilor={councilor}
+                  stats={councilor.effectsBaseAndUnaugmentedTraits}
+                  label={councilor.displayName!}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }
 

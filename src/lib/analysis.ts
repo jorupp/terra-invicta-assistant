@@ -955,6 +955,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     gameCurrentDateTimeFormatted,
     player,
     playerFaction,
+    alienFaction,
     playerHabs,
     playerFleets,
     playerPlanets,
