@@ -168,6 +168,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       availableCPProjects,
       availableMaxOrgProjects,
       availableProjectNames: faction.availableProjectNames,
+      missedProjects: faction.missedProjects || [],
     };
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
@@ -939,6 +940,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     )
     .filter((o) => o.template?.allowedOnMarket);
 
+  const playerStealableProjects = factions
+    .filter((i) => i.id !== alienFaction.ID.value)
+    .filter((i) => playerVisibleFactionIds.has(i.id))
+    .flatMap((faction) => {
+      return faction.finishedProjectNames.map((projectName) => ({ projectName, factionId: faction.id }));
+    })
+    .filter((i) => playerFaction.missedProjects.includes(i.projectName));
+
   return {
     fileName,
     lastModified,
@@ -964,6 +973,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     globalTechState,
     techs,
     projects,
+    playerStealableProjects,
   };
 }
 

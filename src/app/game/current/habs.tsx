@@ -1,6 +1,6 @@
 "use client";
 
-import { TechIcons, UnknownIcon } from "@/components/icons";
+import { FactionIcons, TechIcons, UnknownIcon } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -189,6 +189,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
   const {
     playerHabs,
     playerFaction: { availableBoostProjects, availableCPProjects, availableMaxOrgProjects },
+    playerStealableProjects,
   } = analysis;
   const time = formatDateTime(analysis.gameCurrentDateTime);
   const { goals, addGoal, removeGoal } = useTechnologyGoals(analysis);
@@ -334,6 +335,32 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                     </li>
                   );
                 })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+      {playerStealableProjects.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Stealable Projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul>
+              {playerStealableProjects.map(({ projectName, factionId }, ix) => {
+                const faction = analysis.factionsById.get(factionId);
+                if (!faction) return null;
+                const FactionIcon = faction.templateName
+                  ? FactionIcons[faction.templateName]
+                  : UnknownIcon || UnknownIcon;
+                const project = analysis.projects.get(projectName);
+                if (!project) return null;
+                const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                return (
+                  <li key={ix}>
+                    <FactionIcon /> {faction.displayName} <Icon /> {project.displayName} ({project.researchCost})
+                  </li>
+                );
+              })}
             </ul>
           </CardContent>
         </Card>
