@@ -275,7 +275,14 @@ const NationCPDetails = ({ analysis, nation }: { nation: Analysis["nations"][0];
               ? FactionIcons[faction.templateName as keyof typeof FactionIcons]
               : ControlPoint;
             return (
-              <FactionIcon key={cp.id} className={twMerge(cp.benefitsDisabled ? "bg-red-200" : "", "p-1 rounded")} />
+              <FactionIcon
+                key={cp.id}
+                className={twMerge(
+                  cp.benefitsDisabled ? "bg-red-200" : "",
+                  "p-1 rounded",
+                  cp.defended ? "bg-green-100" : ""
+                )}
+              />
             );
           })
         : null}{" "}
