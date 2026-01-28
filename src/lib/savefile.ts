@@ -489,7 +489,7 @@ export interface TIFactionState extends BaseState {
   hiddenProjects: string[];
   missedProjects: string[];
   sabotagedProjects: string[];
-  activeProjectTriggers: Record<string, boolean>;
+  activeProjectTriggers: { projectTemplateName: string; monthlyTriggerValue: number }[];
   researchWeights: Record<string, number>;
   longtermTechTarget: string | null;
   techRaceSlot: number;

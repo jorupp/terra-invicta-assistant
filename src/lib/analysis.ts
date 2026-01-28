@@ -169,6 +169,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       availableMaxOrgProjects,
       availableProjectNames: faction.availableProjectNames,
       missedProjects: faction.missedProjects || [],
+      potentialProjects: (faction.activeProjectTriggers || []).map((i) => i.projectTemplateName),
     };
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
@@ -946,8 +947,21 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     .flatMap((faction) => {
       return faction.finishedProjectNames.map((projectName) => ({ projectName, factionId: faction.id }));
     })
-    .filter((i) => playerFaction.missedProjects.includes(i.projectName));
-
+    .filter(
+      (i) =>
+        !playerFaction.availableProjectNames.includes(i.projectName) &&
+        !playerFaction.finishedProjectNames.includes(i.projectName)
+    )
+    .filter((i) => {
+      const project = projects.get(i.projectName);
+      if (!project) return true;
+      const prereqs = project.prereqs || [];
+      if (!prereqs.every((i) => !i.startsWith("Project_") || playerFaction.finishedProjectNames.includes(i)))
+        return false;
+      const factionPrereq = project.factionPrereq || [];
+      if (factionPrereq.length === 0) return true;
+      return factionPrereq.includes(playerFaction.templateName!);
+    });
   return {
     fileName,
     lastModified,
