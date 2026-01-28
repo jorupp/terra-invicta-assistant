@@ -60,7 +60,7 @@ export function useTechnologyGoals(analysis: Analysis) {
       id: `${type}-${name}-${Date.now()}`,
       type,
       name,
-      displayName: item.friendlyName || name,
+      displayName: item.displayName || item.friendlyName || name,
     };
 
     const updatedGoals = [...goals, newGoal];
@@ -101,14 +101,14 @@ function TechnologyGoalsDialogContent({
   const techOptions = Array.from(analysis.techs.values())
     .map((tech) => ({
       name: tech.dataName,
-      displayName: tech.friendlyName || tech.dataName,
+      displayName: tech.displayName || tech.friendlyName || tech.dataName,
     }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
   const projectOptions = Array.from(analysis.projects.values())
     .map((project) => ({
       name: project.dataName,
-      displayName: project.friendlyName || project.dataName,
+      displayName: project.displayName || project.friendlyName || project.dataName,
     }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
