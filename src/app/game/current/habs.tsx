@@ -1,6 +1,6 @@
 "use client";
 
-import { FactionIcons, TechIcons, UnknownIcon } from "@/components/icons";
+import { CombatScore, FactionIcons, TechIcons, UnknownIcon } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ function HabScienceHeader() {
     <TableHeader>
       <TableRow>
         <TableHead>Name</TableHead>
+        <TableHead>
+          <CombatScore />
+        </TableHead>
         <TableHead>Most important upcoming completion</TableHead>
         <TableHead>Alerts</TableHead>
         <TableHead>Current bonuses</TableHead>
@@ -24,6 +27,10 @@ function HabScienceHeader() {
       </TableRow>
     </TableHeader>
   );
+}
+
+function ShowHabCombatEffects({ effects }: { effects: ShowEffectsProps }) {
+  return <ShowEffects combatScore={effects.combatScore} />;
 }
 
 function ShowHabScienceEffects({ effects }: { effects: ShowEffectsProps }) {
@@ -62,6 +69,9 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
     <TableRow key={hab.id}>
       <TableCell>{hab.displayName}</TableCell>
       <TableCell>
+        <ShowHabCombatEffects effects={activeEffects} />
+      </TableCell>
+      <TableCell>
         {highlightedCompletions.map((highlightedCompletion, ix) => (
           <Fragment key={ix}>
             {ix > 0 && ", "}
@@ -88,6 +98,9 @@ function HabMineHeader() {
     <TableHeader>
       <TableRow>
         <TableHead>Name</TableHead>
+        <TableHead>
+          <CombatScore />
+        </TableHead>
         <TableHead>Most important upcoming completion</TableHead>
         <TableHead>Alerts</TableHead>
         <TableHead>Current base income</TableHead>
@@ -126,6 +139,9 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
   return (
     <TableRow key={hab.id}>
       <TableCell>{hab.displayName}</TableCell>
+      <TableCell>
+        <ShowHabCombatEffects effects={hab.activeEffects} />
+      </TableCell>
       <TableCell>
         {highlightedCompletions.map((highlightedCompletion, ix) => (
           <Fragment key={ix}>

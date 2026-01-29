@@ -462,6 +462,22 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         (acc, curr) => combineEffects(acc, curr.effects),
         {}
       );
+      const defenseModules = moduleTemplates.map(({ active, template: t }) => {
+        if (t.spaceCombatModule) {
+          return { active, tier: t.tier || 1 };
+        }
+      });
+      // *very* ballparking this
+      const activeDefense = defenseModules
+        .filter((m) => m?.active)
+        .map((m) => Math.pow(10, m!.tier - 1))
+        .reduce((a, b) => a + b, 0);
+      activeEffects.combatScore = activeDefense;
+      const potentialDefense = defenseModules
+        .filter((m) => m)
+        .map((m) => Math.pow(10, m!.tier - 1))
+        .reduce((a, b) => a + b, 0);
+      potentialEffects.combatScore = potentialDefense;
 
       return {
         id: hab.ID.value,

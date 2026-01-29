@@ -2,6 +2,7 @@ import { CouncilorAttributes, TIHabSiteState, TIOrgState } from "@/lib/savefile"
 import {
   Administration,
   Boost,
+  CombatScore,
   Command,
   ControlPoint,
   Currency,
@@ -57,6 +58,7 @@ export type ShowEffectsProps = Partial<
       lastRecordedLoyalty: number;
       maxLoyalty: number;
       controlPoints: number;
+      combatScore: number;
     } & CouncilorAttributes &
     Pick<TIHabSiteState, 'water_day' | 'volatiles_day' | 'metals_day' | 'nobles_day' | 'fissiles_day'> &
     Pick<
@@ -196,6 +198,7 @@ export const ShowEffects = (
   const metals_day = props.metals_day || 0;
   const nobles_day = props.nobles_day || 0;
   const fissiles_day = props.fissiles_day || 0;
+  const combatScore = props.combatScore || 0;
 
   return (
     <>
@@ -507,6 +510,12 @@ export const ShowEffects = (
       {fissiles_day !== 0 && (
         <>
           <Fissiles /> {(fissiles_day * 30).toFixed(2)}
+          {spacer}
+        </>
+      )}
+      {combatScore !== 0 && (
+        <>
+          <CombatScore /> {combatScore.toFixed(0)}
           {spacer}
         </>
       )}

@@ -601,6 +601,7 @@ export interface HabModule {
   incomeFissiles_month?: number;
   incomeVolatiles_month?: number;
   missionControl?: number;
+  spaceCombatModule?: boolean;
 }
 
 export interface Hab {
