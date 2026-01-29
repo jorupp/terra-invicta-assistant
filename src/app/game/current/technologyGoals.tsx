@@ -388,7 +388,10 @@ function TechnologyGoalsDisplay({
               <Icon />
             </span>
             {tech.displayName ?? tech.friendlyName} ({tech.accumulatedResearch.toFixed(0)}/
-            {tech.researchCost.toFixed(0)}){tech.unlockChance === 100 ? "" : ` - Chance: ${tech.unlockChance}%`}
+            {tech.researchCost.toFixed(0)})
+            {tech.unlockChance === 100 || availableProjects.has(tech.name)
+              ? ""
+              : ` - Base Chance: ${tech.unlockChance}%`}
             {goal.name === tech.name && (
               <Button
                 variant="ghost"
