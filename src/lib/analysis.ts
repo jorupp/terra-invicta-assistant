@@ -459,6 +459,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             effects.oppressionBonus = (effects.oppressionBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusWelfare"))
             effects.welfareBonus = (effects.welfareBonus || 0) + t.specialRulesValue!;
+          if (t.specialRules?.includes("LEOBonusArmyCombatValue"))
+            effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
         }
         return { active, effects };
       });

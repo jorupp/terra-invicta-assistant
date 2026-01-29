@@ -58,6 +58,7 @@ function ShowHabScienceEffects({ effects }: { effects: ShowEffectsProps }) {
       miningBonus={effects.miningBonus}
       techBonuses={effects.techBonuses}
       controlPoints={effects.controlPoints}
+      miltechBonus={effects.miltechBonus}
     />
   );
 }

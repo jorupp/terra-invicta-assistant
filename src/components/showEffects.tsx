@@ -12,6 +12,7 @@ import {
   Investigation,
   Loyalty,
   Metals,
+  Miltech,
   MiningBonus,
   MissionControl,
   MissionIcons,
@@ -59,6 +60,7 @@ export type ShowEffectsProps = Partial<
       maxLoyalty: number;
       controlPoints: number;
       combatScore: number;
+      miltechBonus: number;
     } & CouncilorAttributes &
     Pick<TIHabSiteState, 'water_day' | 'volatiles_day' | 'metals_day' | 'nobles_day' | 'fissiles_day'> &
     Pick<
@@ -178,6 +180,7 @@ export const ShowEffects = (
   const priorityFundingBonus = props.spaceDevBonus || 0;
   const priorityMcBonus = props.MCBonus || 0;
   const priorityBoostBonus = props.spaceflightBonus || 0;
+  const miltechBonus = props.miltechBonus || 0;
   const miningBonus = props.miningBonus || 0;
   const councilorTechBonus = props.councilorTechBonus || [];
   const techBonuses = props.techBonuses || [];
@@ -409,6 +412,12 @@ export const ShowEffects = (
       {miningBonus !== 0 && (
         <>
           <MiningBonus /> {pct(miningBonus)}
+          {spacer}
+        </>
+      )}
+      {miltechBonus !== 0 && (
+        <>
+          <Miltech /> {miltechBonus.toFixed(2)}
           {spacer}
         </>
       )}
