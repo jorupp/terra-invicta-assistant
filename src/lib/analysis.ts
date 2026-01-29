@@ -403,10 +403,16 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const missingMine = isBase && mine.length === 0;
       const moduleTemplates = modules
         .filter((i) => !i.destroyed)
-        .map((i) => ({
-          active: i.powered && (i.completionDate === noDate || i.completionDate <= gameCurrentDateTimeFormatted),
-          template: habModuleTemplates.get(i.templateName!)!,
-        }))
+        .map((i) => {
+          const template = habModuleTemplates.get(i.templateName!)!;
+          return {
+            active:
+              (i.powered && (i.completionDate === noDate || i.completionDate <= gameCurrentDateTimeFormatted)) ||
+              template?.coreModule ||
+              false,
+            template,
+          };
+        })
         .filter((i) => i.template);
       const moduleBonuses = moduleTemplates.map(({ active, template: t }) => {
         const {
