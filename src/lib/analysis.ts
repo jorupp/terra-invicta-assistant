@@ -980,6 +980,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     .filter((i) => {
       const project = projects.get(i.projectName);
       if (!project) return true;
+      if (project.oneTimeGlobally) return false;
       const prereqs = project.prereqs || [];
       if (!prereqs.every((i) => !i.startsWith("Project_") || playerFaction.finishedProjectNames.includes(i)))
         return false;
