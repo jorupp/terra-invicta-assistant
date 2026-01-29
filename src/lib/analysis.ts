@@ -346,7 +346,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
   function isImportant(module: (typeof habModules)[0]) {
     return (
-      module.templateName?.includes("Mining") ||
+      module.templateName?.includes("Defense") ||
+      module.templateName?.includes("Battlestation") ||
       module.templateName?.includes("Mine") ||
       module.templateName?.includes("Dock") ||
       module.templateName?.includes("Depot") ||
