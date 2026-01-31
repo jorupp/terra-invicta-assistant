@@ -11,18 +11,39 @@ import { diffDateTime, smartRound, sortByDateTime, toDays } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
+function getNationBg(nation: Pick<Analysis["nations"][0], "wastedOppression" | "tooHighUnrest" | "couldBuildBoost">) {
+  return twMerge(
+    nation.couldBuildBoost ? "bg-green-100" : "",
+    nation.tooHighUnrest ? "bg-yellow-100" : "",
+    nation.wastedOppression ? "bg-red-100" : ""
+  );
+}
+
 export function getResourcesUi(analysis: Analysis) {
   const spoils = analysis.playerFaction.monthlyTransactionSummary
     .filter((i) => i.resource === "Money" && i.source === "Spoils")
     .reduce((sum, i) => sum + i.amount, 0);
   const { mcUsage, mcCurrentLimit, mcAlienWarLimit } = analysis.playerFaction;
+  const nationBg = getNationBg(
+    analysis.nations
+      .filter((i) => i.controlPoints.some((cp) => cp.factionId === analysis.playerFaction.id))
+      .reduce(
+        (acc, nation) => {
+          acc.wastedOppression = acc.wastedOppression || nation.wastedOppression;
+          acc.tooHighUnrest = acc.tooHighUnrest || nation.tooHighUnrest;
+          acc.couldBuildBoost = acc.couldBuildBoost || nation.couldBuildBoost;
+          return acc;
+        },
+        { wastedOppression: false as boolean, tooHighUnrest: false as boolean, couldBuildBoost: false as boolean }
+      )
+  );
 
   return {
     key: "resources",
     tab: (
       <>
-        Resources (<PrioritySpoils /> ${spoils.toFixed(0)}, <MissionControl /> {mcUsage.toFixed(0)}/
-        {mcCurrentLimit.toFixed(0)} -
+        <span className={twMerge(nationBg, "px-1 py-0.5 -mx-1 -my-0.5 rounded")}>Resources</span>
+        (<PrioritySpoils /> ${spoils.toFixed(0)}, <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
         <span title="If more MC is used than this, alien hate will never fall below 50">
           Lim {mcAlienWarLimit.toFixed(0)}
         </span>
@@ -148,15 +169,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                   .filter((i) => i.controlPoints.some((cp) => cp.factionId === playerFactionId))
                   .toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1))
                   .map((nation) => (
-                    <TableRow
-                      key={nation.id}
-                      className={twMerge(
-                        nation.allocatedPriorities.Oppression > 0 && nation.unrest <= 0.01 ? "bg-red-100" : "", // oppression not really needed with no unrest
-                        nation.unrest > 2 ? "bg-yellow-100" : "", // unrest high enough to start loosing IP
-                        nation.allocatedPriorities.Spoils > 0 && nation.boostPerMonth > 0 ? "bg-green-100" : "", // spoils when we could be building boost
-                        ""
-                      )}
-                    >
+                    <TableRow key={nation.id} className={getNationBg(nation)}>
                       <TableCell>{nation.displayName}</TableCell>
                       <TableCell>
                         <NationCPDetails {...{ analysis, nation }} />

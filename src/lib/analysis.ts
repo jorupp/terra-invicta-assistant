@@ -666,6 +666,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           return acc;
         }, {} as Record<keyof (typeof controlPoints)[0]["controlPointPriorities"], number>);
 
+      const wastedOppression = allocatedPriorities.Oppression > 0 && nation.unrest <= 0.01; // oppression not really needed with no unrest
+      const tooHighUnrest = nation.unrest > 2; // unrest high enough to start loosing IP
+      const couldBuildBoost = allocatedPriorities.Spoils > 0 && boostPerMonth > 0; // spoils when we could be building boost
+
       return {
         id: nation.ID.value,
         templateName: nation.templateName,
@@ -687,6 +691,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         boostPerMonthPerCpCost,
         populationInMillions,
         allocatedPriorities,
+        wastedOppression,
+        tooHighUnrest,
+        couldBuildBoost,
       };
     })
     .filter((i) => i.populationInMillions > 0);
