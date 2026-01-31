@@ -787,6 +787,7 @@ function OtherCouncilorsByFaction({ analysis, weights }: { analysis: Analysis; w
 
   const councilorsByFactionId = scoredBaseCouncilors.reduce((acc, councilor) => {
     const factionId = councilor.factionId || 0;
+    if (!factionId) return acc;
     if (!acc.has(factionId)) {
       acc.set(factionId, []);
     }
