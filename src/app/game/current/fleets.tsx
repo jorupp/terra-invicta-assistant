@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
 import { MissionControl } from "@/components/icons";
+import { twMerge } from "tailwind-merge";
 
 export function getFleetsUi(analysis: Analysis) {
   const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
@@ -16,7 +17,11 @@ export function getFleetsUi(analysis: Analysis) {
     return acc;
   }, new Map<string, typeof analysis.alienFleetsToPlayerOrbits>());
   const label = [
-    ...byTarget.entries().map(([target, fleets]) => {
+    ...byTarget.entries().map(([target, rawFleets]) => {
+      const fleets = rawFleets.filter((f) => f.deltaV > 0);
+      if (fleets.length === 0) {
+        return null;
+      }
       // now that we know the arrival of the first one, find all arriving within 14 days to summarize MC
       const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime || analysis.gameCurrentDateTime)[0];
       const firstFleets = fleets.filter(
@@ -52,7 +57,7 @@ export function getFleetsUi(analysis: Analysis) {
         </>
       );
     }),
-  ];
+  ].filter((i) => !!i);
 
   return {
     key: "fleets",
@@ -105,7 +110,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
         </TableHeader>
         <TableBody>
           {fleets.map((fleet) => (
-            <TableRow key={fleet.id}>
+            <TableRow key={fleet.id} className={twMerge(fleet.deltaV === 0 ? "bg-gray-500/5" : "")}>
               <TableCell className="font-medium">{fleet.displayName}</TableCell>
               <TableCell>{fleet.targetOrbitName}</TableCell>
               <TableCell>{fleet.arrivalTimeFormatted || "-"}</TableCell>
