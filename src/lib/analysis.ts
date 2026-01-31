@@ -242,6 +242,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     displayName: ship.displayName,
     templateName: ship.templateName,
     missionControlConsumption: ship.missionControlConsumption,
+    currentMass_kg: ship.currentMass_kg,
+    currentDeltaV_kps: ship.currentDeltaV_kps,
+    currentMaxDeltaV_kps: ship.currentMaxDeltaV_kps,
   }));
   const shipsById = new Map<number, (typeof ships)[0]>(ships.map((ship) => [ship.id, ship]));
 
@@ -264,6 +267,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       });
 
     const totalMC = fleetShips.reduce((acc, i) => acc + i.ship.missionControlConsumption, 0);
+    const totalMass = fleetShips.reduce((acc, i) => acc + i.ship.currentMass_kg, 0);
+    const maxShipMass = fleetShips.reduce((acc, i) => Math.max(acc, i.ship.currentMass_kg), 0);
+    const deltaV = fleetShips.reduce((acc, i) => Math.min(acc, i.ship.currentDeltaV_kps), Infinity);
     const shipsByHullType = fleetShips.reduce((acc, { hull }) => {
       if (hull) {
         acc.set(hull.friendlyName, (acc.get(hull.friendlyName) || 0) + 1);
@@ -311,6 +317,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       shipsByRole: [...shipsByRole.entries()]
         .map(([role, count]) => ({ role, count }))
         .toSorted((a, b) => a.count - b.count),
+      totalMass,
+      maxShipMass,
+      deltaV,
     };
   });
   const fleetsById = new Map<number, (typeof fleets)[0]>(fleets.map((fleet) => [fleet.id, fleet]));

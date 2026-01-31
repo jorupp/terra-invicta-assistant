@@ -94,6 +94,9 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
             <TableHead>Arrival Date</TableHead>
             <TableHead className="text-right">Days to Arrival</TableHead>
             <TableHead className="text-right">MC Used</TableHead>
+            <TableHead className="text-right">Total Mass</TableHead>
+            <TableHead className="text-right">Max Ship Mass</TableHead>
+            {/* <TableHead className="text-right">DeltaV</TableHead> */}
             <TableHead>Ships Hulls</TableHead>
             <TableHead>Ships Roles</TableHead>
             <TableHead>Operation</TableHead>
@@ -110,6 +113,9 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                 {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
               </TableCell>
               <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
+              <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
+              <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
+              {/* <TableCell className="text-right">{fleet.deltaV !== null ? fleet.deltaV.toFixed(0) : "—"}</TableCell> */}
               <TableCell>
                 {fleet.shipsByHullType.length > 0
                   ? fleet.shipsByHullType
