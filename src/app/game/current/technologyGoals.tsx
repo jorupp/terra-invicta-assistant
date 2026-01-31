@@ -208,6 +208,12 @@ export function TechnologyGoalsDialog({
   return <TechnologyGoalsDialogContent analysis={analysis} goals={goals} onAdd={onAdd} onRemove={onRemove} />;
 }
 
+function isValidGoal(goal: TechnologyGoal, analysis: Analysis) {
+  return (
+    !analysis.globalTechState.finishedTechsNames.includes(goal.name) &&
+    !analysis.playerFaction.finishedProjectNames.includes(goal.name)
+  );
+}
 export function TechnologyGoalsList({
   goals,
   onRemove,
@@ -223,12 +229,10 @@ export function TechnologyGoalsList({
     );
   }
 
+  const completeGoals = goals.filter((g) => !isValidGoal(g, analysis));
+
   const displayedGoals = goals
-    .filter(
-      (goal) =>
-        !analysis.globalTechState.finishedTechsNames.includes(goal.name) &&
-        !analysis.playerFaction.finishedProjectNames.includes(goal.name)
-    )
+    .filter((g) => isValidGoal(g, analysis))
     .map((goal) => {
       const techs = buildTechsList([goal], analysis);
       const totalRemainingCost = techs.reduce((sum, t) => sum + t.remainingCost, 0);
@@ -245,16 +249,34 @@ export function TechnologyGoalsList({
       }
       return a.totalRemainingCost - b.totalRemainingCost;
     });
-  return displayedGoals.map((goal) => (
-    <Card key={goal.id} className="mb-2">
-      <CardHeader>
-        <CardTitle>{goal.displayName}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <TechnologyGoalsDisplay key={goal.id} goal={goal} onRemove={onRemove} analysis={analysis} />
-      </CardContent>
-    </Card>
-  ));
+  return (
+    <>
+      {completeGoals.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Complete Goals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {completeGoals.map((goal) => (
+              <Button variant="ghost" size="sm" onClick={() => onRemove(goal.id)} title="Remove goal">
+                <XIcon className="h-4 w-4" /> {goal.displayName}
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
+      {displayedGoals.map((goal) => (
+        <Card key={goal.id} className="mb-2">
+          <CardHeader>
+            <CardTitle>{goal.displayName}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TechnologyGoalsDisplay key={goal.id} goal={goal} onRemove={onRemove} analysis={analysis} />
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
 }
 
 function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
