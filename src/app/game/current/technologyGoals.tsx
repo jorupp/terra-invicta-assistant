@@ -9,6 +9,7 @@ import { Analysis } from "@/lib/analysis";
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
+import { ResearchLink } from "./researchLink";
 
 const STORAGE_KEY = "technologyGoals";
 
@@ -367,16 +368,6 @@ function TechnologyGoalsDisplay({
         const Icon = tech.techCategory ? TechIcons[tech.techCategory] || UnknownIcon : UnknownIcon;
         return (
           <li key={tech.name} title={tech.prereqs?.join(", ")}>
-            {process.env.NEXT_PUBLIC_TECH_TREE_VIEWER ? (
-              <a
-                href={process.env.NEXT_PUBLIC_TECH_TREE_VIEWER + "#/" + tech.name}
-                target="_blank"
-                rel="noreferrer"
-                className="underline hover:text-primary mr-2"
-              >
-                View
-              </a>
-            ) : null}
             {tech.isTech ? (
               <span className="px-2 mr-1" />
             ) : (
@@ -387,8 +378,8 @@ function TechnologyGoalsDisplay({
             <span className="mr-1">
               <Icon />
             </span>
-            {tech.displayName ?? tech.friendlyName} ({tech.accumulatedResearch.toFixed(0)}/
-            {tech.researchCost.toFixed(0)})
+            <ResearchLink name={tech.name} displayName={tech.displayName ?? tech.friendlyName} className="mr-2" />(
+            {tech.accumulatedResearch.toFixed(0)}/{tech.researchCost.toFixed(0)})
             {tech.unlockChance === 100 || availableProjects.has(tech.name)
               ? ""
               : ` - Base Chance: ${tech.unlockChance}%`}

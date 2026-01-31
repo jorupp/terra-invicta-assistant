@@ -99,13 +99,28 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       .filter((i): i is NonNullable<typeof i> => !!i);
     const availableBoostProjects = availableProjects
       .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_LaunchFacilitiesPriorityBonus")) && !i.repeatable)
-      .map(({ friendlyName, techCategory, researchCost }) => ({ friendlyName, techCategory, researchCost }));
+      .map(({ friendlyName, techCategory, researchCost, dataName }) => ({
+        friendlyName,
+        techCategory,
+        researchCost,
+        dataName,
+      }));
     const availableCPProjects = availableProjects
       .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_ControlPointMaintenanceBonus")) && !i.repeatable)
-      .map(({ friendlyName, techCategory, researchCost }) => ({ friendlyName, techCategory, researchCost }));
+      .map(({ friendlyName, techCategory, researchCost, dataName }) => ({
+        friendlyName,
+        techCategory,
+        researchCost,
+        dataName,
+      }));
     const availableMaxOrgProjects = availableProjects
       .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_IncreaseMaxAvailableOrgs")) && !i.repeatable)
-      .map(({ friendlyName, techCategory, researchCost }) => ({ friendlyName, techCategory, researchCost }));
+      .map(({ friendlyName, techCategory, researchCost, dataName }) => ({
+        friendlyName,
+        techCategory,
+        researchCost,
+        dataName,
+      }));
 
     return {
       id: faction.ID.value,

@@ -11,6 +11,7 @@ import { Analysis } from "@/lib/analysis";
 import { formatDateTime, noDate } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
 import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "./technologyGoals";
+import { ResearchLink } from "./researchLink";
 
 function HabScienceHeader() {
   return (
@@ -306,7 +307,8 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                   const Icon = TechIcons[project.techCategory] || UnknownIcon;
                   return (
                     <li key={ix}>
-                      <Icon /> {project.friendlyName} ({project.researchCost})
+                      <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                      {project.researchCost})
                     </li>
                   );
                 })}
@@ -327,7 +329,8 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                   const Icon = TechIcons[project.techCategory] || UnknownIcon;
                   return (
                     <li key={ix}>
-                      <Icon /> {project.friendlyName} ({project.researchCost})
+                      <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                      {project.researchCost})
                     </li>
                   );
                 })}
@@ -348,7 +351,8 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                   const Icon = TechIcons[project.techCategory] || UnknownIcon;
                   return (
                     <li key={ix}>
-                      <Icon /> {project.friendlyName} ({project.researchCost})
+                      <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                      {project.researchCost})
                     </li>
                   );
                 })}
@@ -374,7 +378,8 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 const Icon = TechIcons[project.techCategory] || UnknownIcon;
                 return (
                   <li key={ix}>
-                    <FactionIcon /> {faction.displayName} <Icon /> {project.displayName} ({project.researchCost})
+                    <FactionIcon /> {faction.displayName} <Icon />{" "}
+                    <ResearchLink name={projectName} displayName={project.displayName!} /> ({project.researchCost})
                   </li>
                 );
               })}
@@ -394,16 +399,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
               onAdd={techGoals.addGoal}
               onRemove={techGoals.removeGoal}
             />
-            {process.env.NEXT_PUBLIC_TECH_TREE_VIEWER ? (
-              <a
-                href={process.env.NEXT_PUBLIC_TECH_TREE_VIEWER}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline ml-5"
-              >
-                Drill into details
-              </a>
-            ) : null}
+            <ResearchLink displayName="Tech Tree" className="ml-5" />
             <br />
             <br />
             <TechnologyGoalsList analysis={analysis} goals={techGoals.goals} onRemove={techGoals.removeGoal} />
