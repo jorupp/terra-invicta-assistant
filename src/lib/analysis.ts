@@ -235,6 +235,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     hullHardpoints: h.hullHardpoints,
     internalModules: h.internalModules,
     missionControl: h.missionControl,
+    constructionTier: h.consTier,
   }));
   const shipHullsByDataName = new Map<string, (typeof shipHulls)[0]>(shipHulls.map((hull) => [hull.dataName, hull]));
   const ships = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceShipState"].map(({ Value: ship }) => ({
