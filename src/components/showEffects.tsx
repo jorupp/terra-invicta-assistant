@@ -62,7 +62,7 @@ export type ShowEffectsProps = Partial<
       combatScore: number;
       miltechBonus: number;
     } & CouncilorAttributes &
-    Pick<TIHabSiteState, 'water_day' | 'volatiles_day' | 'metals_day' | 'nobles_day' | 'fissiles_day'> &
+    Pick<TIHabSiteState, "water_day" | "volatiles_day" | "metals_day" | "nobles_day" | "fissiles_day"> &
     Pick<
       TIOrgState,
       | "tier"
@@ -424,47 +424,51 @@ export const ShowEffects = (
 
       {councilorTechBonus.length > 0 && (
         <>
-          {councilorTechBonus.toSorted((a, b) => techBonusesOrder.get(a.category)! - techBonusesOrder.get(b.category)!).map(({ category, bonus }, index) => {
-            const TechIcon = TechIcons[category as keyof typeof TechIcons];
-            if (!TechIcon) {
-              console.log("Unknown tech category:", category);
+          {councilorTechBonus
+            .toSorted((a, b) => techBonusesOrder.get(a.category)! - techBonusesOrder.get(b.category)!)
+            .map(({ category, bonus }, index) => {
+              const TechIcon = TechIcons[category as keyof typeof TechIcons];
+              if (!TechIcon) {
+                console.log("Unknown tech category:", category);
+                return (
+                  <span key={index}>
+                    <UnknownIcon className="border-green-500 border" title={`Unknown: ${category}`} /> {pct(bonus)}
+                    {spacer}
+                  </span>
+                );
+              }
               return (
                 <span key={index}>
-                  <UnknownIcon className="border-green-500 border" title={`Unknown: ${category}`} /> {pct(bonus)}
+                  <TechIcon className="border-green-500 border" /> {pct(bonus)}
                   {spacer}
                 </span>
               );
-            }
-            return (
-              <span key={index}>
-                <TechIcon className="border-green-500 border" /> {pct(bonus)}
-                {spacer}
-              </span>
-            );
-          })}
+            })}
         </>
       )}
 
       {techBonuses.length > 0 && (
         <>
-          {techBonuses.toSorted((a, b) => techBonusesOrder.get(a.category)! - techBonusesOrder.get(b.category)!).map(({ category, bonus }, index) => {
-            const TechIcon = TechIcons[category as keyof typeof TechIcons];
-            if (!TechIcon) {
-              console.log("Unknown tech category:", category);
+          {techBonuses
+            .toSorted((a, b) => techBonusesOrder.get(a.category)! - techBonusesOrder.get(b.category)!)
+            .map(({ category, bonus }, index) => {
+              const TechIcon = TechIcons[category as keyof typeof TechIcons];
+              if (!TechIcon) {
+                console.log("Unknown tech category:", category);
+                return (
+                  <span key={index}>
+                    <UnknownIcon title={`Unknown: ${category}`} /> {pct(bonus)}
+                    {spacer}
+                  </span>
+                );
+              }
               return (
                 <span key={index}>
-                  <UnknownIcon title={`Unknown: ${category}`} /> {pct(bonus)}
+                  <TechIcon /> {pct(bonus)}
                   {spacer}
                 </span>
               );
-            }
-            return (
-              <span key={index}>
-                <TechIcon /> {pct(bonus)}
-                {spacer}
-              </span>
-            );
-          })}
+            })}
         </>
       )}
 
@@ -581,12 +585,8 @@ export function pct(value: number) {
   return (value * 100).toFixed(0) + "%";
 }
 
-export const techBonusesOrder = new Map<string, number>([
-  'Energy',
-  'InformationScience',
-  'LifeScience',
-  'Materials',
-  'MilitaryScience',
-  'SocialScience',
-  'SpaceScience',
-].map((i, ix) => [i, ix]));
+export const techBonusesOrder = new Map<string, number>(
+  ["Energy", "InformationScience", "LifeScience", "Materials", "MilitaryScience", "SocialScience", "SpaceScience"].map(
+    (i, ix) => [i, ix]
+  )
+);

@@ -476,7 +476,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           if (t.specialRules?.includes("LEOBonusKnowledge"))
             effects.knowledgeBonus = (effects.knowledgeBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusLaunchFacilities"))
-            effects.spaceDevBonus = (effects.spaceDevBonus || 0) + t.specialRulesValue!;
+            effects.spaceflightBonus = (effects.spaceflightBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusMissionControl"))
             effects.MCBonus = (effects.MCBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusOppression"))
@@ -485,6 +485,15 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             effects.welfareBonus = (effects.welfareBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusArmyCombatValue"))
             effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
+          // don't have these wired up to anything yet
+          // if (t.specialRules?.includes("LEOBonusAlienDetection"))
+          //   effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
+          // if (t.specialRules?.includes("LEOBonusHumanDetection"))
+          //   effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
+          // if (t.specialRules?.includes("LEOBonusOppression"))
+          //   effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
+          // if (t.specialRules?.includes("LEOBonusPropagandaStrength"))
+          //   effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
         }
         return { active, effects };
       });
