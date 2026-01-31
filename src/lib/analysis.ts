@@ -687,7 +687,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }, {} as Record<keyof (typeof controlPoints)[0]["controlPointPriorities"], number>);
 
       const wastedOppression = allocatedPriorities.Oppression > 0 && nation.unrest <= 0.01; // oppression not really needed with no unrest
-      const tooHighUnrest = nation.unrest > 2; // unrest high enough to start loosing IP
+      const tooHighUnrest = nation.unrest > 2 && (allocatedPriorities.Oppression || 0) < 0.5; // unrest high enough to start losing IP and not doing anything about it
       const spoilsWithoutAllCPs =
         allocatedPriorities.Spoils > 0 &&
         controlPoints.some((cp) => cp.benefitsDisabled || cp.factionId !== playerFaction.id); // spoils but not all CPs controlled by player
