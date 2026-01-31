@@ -668,6 +668,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       const wastedOppression = allocatedPriorities.Oppression > 0 && nation.unrest <= 0.01; // oppression not really needed with no unrest
       const tooHighUnrest = nation.unrest > 2; // unrest high enough to start loosing IP
+      const spoilsWithoutAllCPs =
+        allocatedPriorities.Spoils > 0 &&
+        controlPoints.some((cp) => cp.benefitsDisabled || cp.factionId !== playerFaction.id); // spoils but not all CPs controlled by player
       const couldBuildBoost = allocatedPriorities.Spoils > 0 && boostPerMonth > 0; // spoils when we could be building boost
 
       return {
@@ -693,6 +696,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         allocatedPriorities,
         wastedOppression,
         tooHighUnrest,
+        spoilsWithoutAllCPs,
         couldBuildBoost,
       };
     })

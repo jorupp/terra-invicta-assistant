@@ -11,10 +11,13 @@ import { diffDateTime, smartRound, sortByDateTime, toDays } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
-function getNationBg(nation: Pick<Analysis["nations"][0], "wastedOppression" | "tooHighUnrest" | "couldBuildBoost">) {
+function getNationBg(
+  nation: Pick<Analysis["nations"][0], "wastedOppression" | "tooHighUnrest" | "couldBuildBoost" | "spoilsWithoutAllCPs">
+) {
   return twMerge(
     nation.couldBuildBoost ? "bg-green-100" : "",
     nation.tooHighUnrest ? "bg-yellow-100" : "",
+    nation.spoilsWithoutAllCPs ? "bg-yellow-100" : "",
     nation.wastedOppression ? "bg-red-100" : ""
   );
 }
@@ -32,9 +35,15 @@ export function getResourcesUi(analysis: Analysis) {
           acc.wastedOppression = acc.wastedOppression || nation.wastedOppression;
           acc.tooHighUnrest = acc.tooHighUnrest || nation.tooHighUnrest;
           acc.couldBuildBoost = acc.couldBuildBoost || nation.couldBuildBoost;
+          acc.spoilsWithoutAllCPs = acc.spoilsWithoutAllCPs || nation.spoilsWithoutAllCPs;
           return acc;
         },
-        { wastedOppression: false as boolean, tooHighUnrest: false as boolean, couldBuildBoost: false as boolean }
+        {
+          wastedOppression: false as boolean,
+          tooHighUnrest: false as boolean,
+          couldBuildBoost: false as boolean,
+          spoilsWithoutAllCPs: false as boolean,
+        }
       )
   );
 
