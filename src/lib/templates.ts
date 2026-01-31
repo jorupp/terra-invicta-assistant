@@ -1001,6 +1001,7 @@ export interface Project {
   }[];
   effects?: string[];
   prereqs?: string[];
+  requiredMilestone?: string;
 }
 
 export interface Radiator {
