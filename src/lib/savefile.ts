@@ -266,7 +266,28 @@ export interface TIControlPoint extends BaseState {
   totalWeightsForControlPoint: number;
   numPrioritiesWithWeight: number;
   positionInNation: number;
-  controlPointPriorities: Record<string, number>;
+  controlPointPriorities: {
+    Economy: number;
+    Welfare: number;
+    Environment: number;
+    Knowledge: number;
+    Government: number;
+    Unity: number;
+    Oppression: number;
+    Funding: number;
+    Spoils: number;
+    Civilian_InitiateSpaceflightProgram: number;
+    LaunchFacilities: number;
+    MissionControl: number;
+    Military_FoundMilitary: number;
+    Military: number;
+    Military_BuildArmy: number;
+    Military_BuildNavy: number;
+    Military_InitiateNuclearProgram: number;
+    Military_BuildNuclearWeapons: number;
+    Military_BuildSpaceDefenses: number;
+    Military_BuildSTOSquadron: number;
+  };
   gameStateSubjectCreated: boolean;
 }
 
@@ -450,8 +471,8 @@ export interface TIFactionState extends BaseState {
   fleetWetMassDuringHighestShipMaintainence: number;
 
   // Resources & Economy
-  resources: Record<string, number>;
-  baseIncomes_year: Record<string, number>;
+  resources: Resources;
+  baseIncomes_year: Resources;
   boostAccounts: KeyValuePair<IDValue, number>[];
   globalResearchPurse: number;
   Transactions: Record<string, Transaction[]>;
@@ -490,7 +511,7 @@ export interface TIFactionState extends BaseState {
   missedProjects: string[];
   sabotagedProjects: string[];
   activeProjectTriggers: { projectTemplateName: string; monthlyTriggerValue: number }[];
-  researchWeights: Record<string, number>;
+  researchWeights: [number, number, number, number, number, number | undefined];
   longtermTechTarget: string | null;
   techRaceSlot: number;
   lastTechRaceDate: DateTime | null;
@@ -1353,6 +1374,23 @@ export interface FactionGoal_JoinFleet extends FactionGoalBase {
 
 export interface FactionGoal_SpaceifyNation extends FactionGoalBase {
   nation: IDValue;
+}
+
+export interface Resources {
+  Money: number;
+  Influence: number;
+  Operations: number;
+  Research: number;
+  Projects: number;
+  Boost: number;
+  MissionControl: number;
+  Water: number;
+  Volatiles: number;
+  Metals: number;
+  NobleMetals: number;
+  Fissiles: number;
+  Antimatter: number;
+  Exotics: number;
 }
 
 export interface SaveFile {

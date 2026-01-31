@@ -577,7 +577,7 @@ export function combineEffects(p1: ShowEffectsProps, p2: ShowEffectsProps): Show
   return result;
 }
 
-function pct(value: number) {
+export function pct(value: number) {
   return (value * 100).toFixed(0) + "%";
 }
 

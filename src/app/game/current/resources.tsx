@@ -1,6 +1,7 @@
 "use client";
 
 import { Boost, ControlPoint, FactionIcons, MissionControl, PrioritySpoils } from "@/components/icons";
+import { pct } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -129,6 +130,10 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                 <TableRow>
                   <TableHead>Nation</TableHead>
                   <TableHead>Control Points</TableHead>
+                  <TableHead>Opp P</TableHead>
+                  <TableHead>Boost P</TableHead>
+                  <TableHead>MC P</TableHead>
+                  <TableHead>Spoil P</TableHead>
                   <TableHead>Unrest</TableHead>
                   <TableHead>Total Spoils</TableHead>
                   <TableHead>Total Spoils Per Point</TableHead>
@@ -143,10 +148,34 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                   .filter((i) => i.controlPoints.some((cp) => cp.factionId === playerFactionId))
                   .toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1))
                   .map((nation) => (
-                    <TableRow key={nation.id}>
+                    <TableRow
+                      key={nation.id}
+                      className={twMerge(
+                        nation.allocatedPriorities.Oppression > 0 && nation.unrest <= 0.01 ? "bg-red-100" : "", // oppression not really needed with no unrest
+                        nation.unrest > 2 ? "bg-yellow-100" : "", // unrest high enough to start loosing IP
+                        nation.allocatedPriorities.Spoils > 0 && nation.boostPerMonth > 0 ? "bg-green-100" : "", // spoils when we could be building boost
+                        ""
+                      )}
+                    >
                       <TableCell>{nation.displayName}</TableCell>
                       <TableCell>
                         <NationCPDetails {...{ analysis, nation }} />
+                      </TableCell>
+                      <TableCell>
+                        {nation.allocatedPriorities.Oppression ? pct(nation.allocatedPriorities.Oppression) : null}
+                      </TableCell>
+                      <TableCell>
+                        {nation.allocatedPriorities.LaunchFacilities
+                          ? pct(nation.allocatedPriorities.LaunchFacilities)
+                          : null}
+                      </TableCell>
+                      <TableCell>
+                        {nation.allocatedPriorities.MissionControl
+                          ? pct(nation.allocatedPriorities.MissionControl)
+                          : null}
+                      </TableCell>
+                      <TableCell>
+                        {nation.allocatedPriorities.Spoils ? pct(nation.allocatedPriorities.Spoils) : null}
                       </TableCell>
                       <TableCell>{nation.unrest.toFixed(2)}</TableCell>
                       <TableCell>

@@ -618,6 +618,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     benefitsDisabled: cp.benefitsDisabled,
     crackdownExpiration: cp.crackdownExpiration,
     defended: cp.defended,
+    controlPointPriorities: cp.controlPointPriorities,
   }));
   const controlPointsByNationId = controlPoints.reduce((acc, cp) => {
     if (!cp.nationId) return acc;
@@ -648,6 +649,22 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const mcPerCpCost = totalCpCost > 0 ? mc / totalCpCost : 0;
       const boostPerMonthPerCpCost = totalCpCost > 0 ? boostPerMonth / totalCpCost : 0;
       const populationInMillions = regions.reduce((acc, r) => acc + r.populationInMillions, 0);
+      // allocate priorities like they work in game - as % within CP, then averaged across CPs
+      const allocatedPriorities = controlPoints
+        .map((cp) => {
+          const priorities = cp.controlPointPriorities;
+          const totalPriorities = Object.values(priorities).reduce((acc, val) => acc + val, 0);
+          const entries = Object.entries(priorities) as [keyof typeof priorities, number][];
+          return Object.fromEntries(
+            entries.map(([key, val]) => [key, totalPriorities > 0 ? val / totalPriorities / controlPoints.length : 0])
+          ) as typeof priorities;
+        })
+        .reduce((acc, pri) => {
+          (Object.keys(pri) as (keyof typeof pri)[]).forEach((key) => {
+            acc[key] = (acc[key] || 0) + pri[key];
+          });
+          return acc;
+        }, {} as Record<keyof (typeof controlPoints)[0]["controlPointPriorities"], number>);
 
       return {
         id: nation.ID.value,
@@ -669,6 +686,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         boostPerMonth,
         boostPerMonthPerCpCost,
         populationInMillions,
+        allocatedPriorities,
       };
     })
     .filter((i) => i.populationInMillions > 0);
