@@ -260,14 +260,20 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       .map((ship) => {
         const design = ship.templateName ? shipDesignsByDataName.get(ship.templateName) : null;
         const hull = design?.hullName ? shipHullsByDataName.get(design.hullName) : null;
+        // attempt to compensate for alien ships that are all 1 MC
+        const estimatedMc =
+          ship.missionControlConsumption > 1 || hull?.constructionTier === 1
+            ? ship.missionControlConsumption
+            : hull?.constructionTier || 1;
         return {
           ship,
           design,
           hull,
+          estimatedMc,
         };
       });
 
-    const totalMC = fleetShips.reduce((acc, i) => acc + i.ship.missionControlConsumption, 0);
+    const totalMC = fleetShips.reduce((acc, i) => acc + i.estimatedMc, 0);
     const totalMass = fleetShips.reduce((acc, i) => acc + i.ship.currentMass_kg, 0);
     const maxShipMass = fleetShips.reduce((acc, i) => Math.max(acc, i.ship.currentMass_kg), 0);
     const deltaV = fleetShips.reduce((acc, i) => Math.min(acc, i.ship.currentDeltaV_kps), Infinity);
