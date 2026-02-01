@@ -22,6 +22,7 @@ function HabScienceHeader() {
           <CombatScore />
         </TableHead>
         <TableHead>Most important upcoming completion</TableHead>
+        <TableHead title="Days to complete">D2C</TableHead>
         <TableHead>Alerts</TableHead>
         <TableHead>Current bonuses</TableHead>
         <TableHead>Future bonuses</TableHead>
@@ -77,10 +78,11 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
         {highlightedCompletions.map((highlightedCompletion, ix) => (
           <Fragment key={ix}>
             {ix > 0 && ", "}
-            {highlightedCompletion.templateName} in {highlightedCompletion.daysToCompletion?.toFixed(0)} days
+            {highlightedCompletion.displayName} in {highlightedCompletion.daysToCompletion?.toFixed(0)} days
           </Fragment>
         ))}
       </TableCell>
+      <TableCell>{hab.maxDaysToCompletion ? hab.maxDaysToCompletion.toFixed(0) : ""}</TableCell>
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}

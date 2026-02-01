@@ -416,6 +416,16 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         .map((m) => ({ ...m, template: habModuleTemplates.get(m.templateName!) }));
       const empty = modules.filter((m) => m.destroyed || m.startBuildDate === noDate);
       const underConstruction = modules.filter((m) => m.completionDate >= gameCurrentDateTimeFormatted && !m.destroyed);
+      const maxCompletionDate = underConstruction.reduce((acc, curr) => {
+        if (curr.completionDate > acc) {
+          return curr.completionDate;
+        }
+        return acc;
+      }, gameCurrentDateTimeFormatted);
+      const maxDaysToCompletion = maxCompletionDate
+        ? (new Date(maxCompletionDate).getTime() - new Date(gameCurrentDateTimeFormatted).getTime()) /
+          (1000 * 60 * 60 * 24)
+        : null;
       const highlightedCompletions = underConstruction
         .toSorted((a, b) => {
           if (isImportant(a) && !isImportant(b)) return -1;
@@ -548,6 +558,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         potentialEffects,
         site,
         mine: mine[0],
+        maxCompletionDate,
+        maxDaysToCompletion,
       };
     })
     .toSorted((a, b) =>
