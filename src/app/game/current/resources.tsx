@@ -1,6 +1,6 @@
 "use client";
 
-import { Boost, ControlPoint, FactionIcons, MissionControl, PrioritySpoils } from "@/components/icons";
+import { Boost, ControlPoint, FactionIcons, MissionControl, PrioritySpoils, ResourceIcons } from "@/components/icons";
 import { pct } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -103,7 +103,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
     "Volatiles",
     "Metals",
     "NobleMetals",
-    "Nuclear",
+    "Fissiles",
     "Exotics",
     ...byResource.keys(),
   ]);
@@ -125,7 +125,13 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                 <TableRow>
                   <TableHead>Source</TableHead>
                   {resources.map((resource) => (
-                    <TableHead key={resource}>{resource}</TableHead>
+                    <TableHead key={resource}>
+                      {(() => {
+                        const Icon = ResourceIcons[resource as keyof typeof ResourceIcons];
+                        return Icon ? <Icon /> : null;
+                      })()}{" "}
+                      {resource}
+                    </TableHead>
                   ))}
                 </TableRow>
               </TableHeader>

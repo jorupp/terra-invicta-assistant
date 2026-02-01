@@ -57,11 +57,33 @@ export const Gears = Projects;
 export const ControlPoint = buildIcon("ControlPoint", "https://wiki.hoodedhorse.com/images/mbhh_ti/f/f9/ICO_ControlPoint_empty.png");
 export const Water = buildIcon("Water", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/90/ICO_water.png");
 export const Volatiles = buildIcon("Volatiles", "https://wiki.hoodedhorse.com/images/mbhh_ti/c/cc/ICO_volatiles.png");
-export const Metals = buildIcon("Metals", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/a3/ICO_metal.png");
-export const Nobles = buildIcon("Nobles", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/95/ICO_metal_noble.png");
+export const Metals = buildIcon("Metals", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/a3/ICO_metal.png", true);
+export const Nobles = buildIcon("Nobles", "https://wiki.hoodedhorse.com/images/mbhh_ti/9/95/ICO_metal_noble.png", true);
 export const Fissiles = buildIcon("Fissiles", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/db/ICO_fissile.png");
 export const Exotics = buildIcon("Exotics", "https://wiki.hoodedhorse.com/images/mbhh_ti/a/a6/ICO_exotics.png");
 export const Antimatter = buildIcon("Antimatter", "https://wiki.hoodedhorse.com/images/mbhh_ti/3/38/ICO_antimatter.png");
+export const ResourceIcons = {
+  Money: Currency,
+  Currency,
+  Influence,
+  Operations: Ops,
+  Ops,
+  Boost,
+  MissionControl,
+  Research,
+  Projects,
+  Gears,
+  ControlPoint,
+  Water,
+  Volatiles,
+  Metals,
+  NobleMetals: Nobles,
+  Nobles,
+  Fissiles,
+  Exotics,
+  Antimatter,
+};
+
 export const Persuasion = buildIcon("Persuasion", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/4c/ICO_persuasion.png");
 export const Investigation = buildIcon("Investigation", "https://wiki.hoodedhorse.com/images/mbhh_ti/7/77/ICO_investigation.png");
 export const Espionage = buildIcon("Espionage", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/56/ICO_espionage.png");
