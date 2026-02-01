@@ -258,7 +258,7 @@ export function TechnologyGoalsList({
           </CardHeader>
           <CardContent>
             {completeGoals.map((goal) => (
-              <Button variant="ghost" size="sm" onClick={() => onRemove(goal.id)} title="Remove goal">
+              <Button key={goal.name} variant="ghost" size="sm" onClick={() => onRemove(goal.id)} title="Remove goal">
                 <XIcon className="h-4 w-4" /> {goal.displayName}
               </Button>
             ))}
