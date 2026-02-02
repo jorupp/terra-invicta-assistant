@@ -10,7 +10,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Project Goals
 
-This is a utility designed to be run on a second screen alongside [Terra Invicta](https://store.steampowered.com/app/1176470/Terra_Invicta/) ([wiki](https://wiki.hoodedhorse.com/Terra_Invicta/Terra_Invicta_Official_Wiki)).  It is designed to provide a deeper insight into the current state of a game, and to help with planning and decision making.  It does not aim to replace the in-game UI, nor to allow you to see information that is normally not available to you in the game (ie. locations/skills of non-visible enemy councilors, detailed stats of enemy ships, etc), but provide a more convenient way to view information that is already available in the game.
+This is a utility designed to be run on a second screen alongside [Terra Invicta](https://store.steampowered.com/app/1176470/Terra_Invicta/) ([wiki](https://wiki.hoodedhorse.com/Terra_Invicta/Terra_Invicta_Official_Wiki)). It is designed to provide a deeper insight into the current state of a game, and to help with planning and decision making. It does not aim to replace the in-game UI, nor to allow you to see information that is normally not available to you in the game (ie. locations/skills of non-visible enemy councilors, detailed stats of enemy ships, etc), but provide a more convenient way to view information that is already available in the game.
 
 Things this utility intends to provide:
 
@@ -25,6 +25,9 @@ Things this utility intends to provide:
 
 ## Data sources
 
-1. Terra Invicta Save Game - primary source of data, contains most of the information about the current game state.  Default location is `My Games\TerraInvicta\Saves`.
-2. Terra Invicta Game Files - secondary source of data, contains static information about councilors, orgs, techs, ships, etc.  Default location is `steamapps\common\Terra Invicta\TerraInvicta_Data\StreamingAssets\Templates`.
+1. Terra Invicta Save Game - primary source of data, contains most of the information about the current game state. Default location is `My Games\TerraInvicta\Saves`.
+2. Terra Invicta Game Files - secondary source of data, contains static information about councilors, orgs, techs, ships, etc. Default location is `steamapps\common\Terra Invicta\TerraInvicta_Data\StreamingAssets\Templates`.
 
+## Ideas
+
+Dynamic drive chart (like https://wiki.hoodedhorse.com/Terra_Invicta/Spaceships) based on current tech and some soon-reachable plus some filters (tech complete, global tech complete, global tech in progress, number of global techs missing, amount of research needed to reach it, etc.).
