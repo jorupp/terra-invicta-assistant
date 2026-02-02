@@ -1,6 +1,6 @@
 "use client";
 
-import { CombatScore, FactionIcons, TechIcons, UnknownIcon } from "@/components/icons";
+import { CombatScore, FactionIcons, HabPower, TechIcons, UnknownIcon } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { formatDateTime, noDate } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
 import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "./technologyGoals";
 import { ResearchLink } from "./researchLink";
+import { twMerge } from "tailwind-merge";
 
 function HabScienceHeader() {
   return (
@@ -24,6 +25,9 @@ function HabScienceHeader() {
         <TableHead>Most important upcoming completion</TableHead>
         <TableHead title="Days to complete">D2C</TableHead>
         <TableHead>Alerts</TableHead>
+        <TableHead>
+          <HabPower />
+        </TableHead>
         <TableHead>Current bonuses</TableHead>
         <TableHead>Future bonuses</TableHead>
       </TableRow>
@@ -70,7 +74,9 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
 
   return (
     <TableRow key={hab.id}>
-      <TableCell>{hab.displayName}</TableCell>
+      <TableCell>
+        <span title={`site: ${hab.habSiteId}, body: ${hab.site?.parentBodyId}`}>{hab.displayName}</span>
+      </TableCell>
       <TableCell>
         <ShowHabCombatEffects effects={activeEffects} />
       </TableCell>
@@ -86,6 +92,14 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
+      </TableCell>
+      <TableCell>
+        <span
+          title={`Current power: ${hab.activePower?.toFixed(0)}`}
+          className={twMerge(hab.futurePower < 0 ? "bg-red-100 p-1 rounded" : "")}
+        >
+          {hab.futurePower?.toFixed(0)}
+        </span>
       </TableCell>
       <TableCell>
         <ShowHabScienceEffects effects={activeEffects} />
@@ -277,6 +291,9 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
   );
 
   const techGoals = useTechnologyGoals(analysis);
+  const habsWithoutSolarPowerMultipler = playerHabs
+    .filter((hab) => hab.hasSolar && !hab.solarMultiplier)
+    .toSorted((a, b) => a.finderSortOverride - b.finderSortOverride);
 
   return (
     <div className="space-y-2 mx-2">
@@ -414,14 +431,28 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             <span>Manage Habs</span>
           </AccordionTrigger>
           <AccordionContent>
-            <Table>
-              <HabScienceHeader />
-              <TableBody>
-                {playerHabs.map((hab) => (
-                  <HabScienceTableRow hab={hab} key={hab.id} time={time} />
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              {habsWithoutSolarPowerMultipler.length > 0 && (
+                <>
+                  <h3>Habs without Solar Power Multiplier</h3>
+                  <ul>
+                    {habsWithoutSolarPowerMultipler.map((hab) => (
+                      <li key={hab.id}>
+                        {hab.displayName} - site/orbit id: {hab.habSiteId || hab.orbitStateId}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              <Table>
+                <HabScienceHeader />
+                <TableBody>
+                  {playerHabs.map((hab) => (
+                    <HabScienceTableRow hab={hab} key={hab.id} time={time} />
+                  ))}
+                </TableBody>
+              </Table>
+            </>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="mines">

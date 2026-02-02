@@ -238,3 +238,4 @@ export const TraitIcons: Partial<Record<TraitDataName, typeof Building2>> = {
 export const DeltaV = buildIcon("Delta V", "https://wiki.hoodedhorse.com/images/mbhh_ti/c/cb/ICO_battle_Delta_V_text.png");
 export const CombatScore = buildIcon("Combat Score", "https://wiki.hoodedhorse.com/images/mbhh_ti/5/53/ICO_combat_score.png", true);
 export const Miltech = buildIcon("Miltech", "https://wiki.hoodedhorse.com/images/mbhh_ti/d/df/ICO_army_level.png");
+export const HabPower = buildIcon("Power", "https://wiki.hoodedhorse.com/images/mbhh_ti/4/4f/ICO_hab_power.png", true);

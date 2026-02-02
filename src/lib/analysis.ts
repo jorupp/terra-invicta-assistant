@@ -224,6 +224,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         id: body.ID.value,
         displayName: body.displayName,
         templateName: body.templateName,
+        solarMirrorBonusByFactionId: new Map(body.solarMirrorBonus.map((i) => [i.Key.value, i.Value])),
       },
     ])
   );
@@ -404,6 +405,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     .map(({ Value: hab }) => {
       const tier = hab.tier;
       const site = habSitesById.get(hab.habSite?.value || 0);
+      const body = site ? bodiesById.get(site.parentBodyId) : null;
+      const solarMirrorBonus = body ? body.solarMirrorBonusByFactionId.get(hab.faction.value) || 0 : 0;
+      const solarMultiplier = getSolarMultiplier(site?.id || hab.orbitState?.value);
+      const mineMultipler = getMineMultipler(site?.parentBodyId);
+
       // there's probably some data to indicate which sectors are populated for a given tier + habType (shrug)
       const validSectors = new Set(
         tier === 1 ? [0] : tier === 2 ? (hab.habType === "Station" ? [0, 2, 4] : [0, 1, 2]) : [0, 1, 2, 3, 4]
@@ -527,7 +533,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           return { active, tier: t.tier || 1 };
         }
       });
-      // *very* ballparking this
+      // *very* ballparking this - mostly to allow comparing stations to each other, not to _actually_ estimate the game's combat score (or any kind of real combat effectiveness)
       const activeDefense = defenseModules
         .filter((m) => m?.active)
         .map((m) => Math.pow(10, m!.tier - 1))
@@ -538,6 +544,28 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         .map((m) => Math.pow(10, m!.tier - 1))
         .reduce((a, b) => a + b, 0);
       potentialEffects.combatScore = potentialDefense;
+
+      const power = moduleTemplates.map(({ active, template: t }) => {
+        const basePower = t.power || 0;
+        const specialRules = t.specialRules || [];
+        if (specialRules.includes("Solar_Power_Variable_Output")) {
+          if (!solarMultiplier) {
+            return { active, power: 0, isSolar: true };
+          }
+          const power = basePower * (solarMultiplier || 0) + solarMirrorBonus * t.tier;
+
+          return { active, power, isSolar: true };
+        }
+        if (specialRules.includes("Cost_Scales_With_Gravity")) {
+          return { active, power: basePower * mineMultipler, isSolar: false }; // overestimate for now
+        }
+
+        return { active, power: basePower, isSolar: false };
+      });
+
+      const activePower = Math.round(power.filter(({ active }) => active).reduce((a, b) => a + b.power, 0));
+      const futurePower = Math.round(power.reduce((a, b) => a + b.power, 0));
+      const hasSolar = power.some((p) => p.isSolar);
 
       return {
         id: hab.ID.value,
@@ -560,6 +588,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         mine: mine[0],
         maxCompletionDate,
         maxDaysToCompletion,
+        solarMultiplier,
+        solarMirrorBonus,
+        activePower,
+        futurePower,
+        hasSolar,
       };
     })
     .toSorted((a, b) =>
@@ -1102,3 +1135,78 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 }
 
 export type Analysis = Awaited<ReturnType<typeof analyzeData>>;
+
+function getSolarMultiplier(id: number | undefined): number | undefined {
+  if (!id) return undefined;
+
+  // TODO: find something in data files or something to drive this - or maybe it's dynamic based on semi-major axis + latitude???
+  // anyway for now, just hard-code
+  switch (id) {
+    case 4835:
+      return 3.34;
+    case 4838:
+      return 3.34;
+    case 4841:
+      return 4.98;
+    case 4847:
+      return 0.762;
+    case 4846:
+      return 0.773;
+    case 4855:
+      return 0.781;
+    case 4885:
+    case 4875:
+    case 4884:
+    case 4877:
+    case 4894:
+    case 4887:
+    case 4897:
+    case 4880:
+    case 4895:
+    case 4882:
+    case 4879:
+      return 0.162; // all the mars surface ones
+  }
+
+  return undefined;
+}
+
+function getMineMultipler(id: number | undefined): number {
+  if (!id) return 2;
+
+  // TODO: find something in data files or something to drive this - or maybe it's dynamic based on distance + gravity???
+  // some from https://wiki.hoodedhorse.com/Terra_Invicta/Habs
+  switch (id) {
+    // some random asteroids/comets
+    case 166:
+    case 186:
+    case 117:
+    case 167:
+    case 108:
+    case 247:
+    case 238:
+    case 373:
+    case 200:
+    case 236:
+    case 220:
+      return 0.5077;
+    case 6: // Luna
+      return 0.5077;
+    case 7: // Mars
+      return 0.9342;
+    case 102: // Ceres
+      return 0.7699;
+    case 3: // Mercury
+      return 1.9641;
+    // case 1: // Callisto
+    //   return 0.9123;
+    // case 1: // Io
+    //   return 1.4960;
+    // case 1: // Titan
+    //   return 0.8865;
+    // case 1: // Pluto
+    //   return 1.5029 ;
+  }
+
+  return 2;
+}
