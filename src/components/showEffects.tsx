@@ -506,37 +506,37 @@ export const ShowEffects = (
 
       {water !== 0 && (
         <>
-          <Water /> {water.toFixed(2)}
+          <Water /> {smartRound(water)}
           {spacer}
         </>
       )}
       {volatiles !== 0 && (
         <>
-          <Volatiles /> {volatiles.toFixed(2)}
+          <Volatiles /> {smartRound(volatiles)}
           {spacer}
         </>
       )}
       {metals !== 0 && (
         <>
-          <Metals /> {metals.toFixed(2)}
+          <Metals /> {smartRound(metals)}
           {spacer}
         </>
       )}
       {nobles !== 0 && (
         <>
-          <Nobles /> {nobles.toFixed(2)}
+          <Nobles /> {smartRound(nobles)}
           {spacer}
         </>
       )}
       {fissiles !== 0 && (
         <>
-          <Fissiles /> {fissiles.toFixed(2)}
+          <Fissiles /> {smartRound(fissiles)}
           {spacer}
         </>
       )}
       {antimatter !== 0 && (
         <>
-          <Antimatter /> {antimatter.toFixed(2)}
+          <Antimatter /> {smartRound(antimatter)}
           {spacer}
         </>
       )}
