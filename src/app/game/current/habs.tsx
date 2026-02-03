@@ -141,11 +141,11 @@ function ShowHabMineEffects({
 }) {
   return (
     <ShowEffects
-      water_day={(effects.water_day || 0) * (effects.miningModifier || 1)}
-      volatiles_day={(effects.volatiles_day || 0) * (effects.miningModifier || 1)}
-      metals_day={(effects.metals_day || 0) * (effects.miningModifier || 1)}
-      nobles_day={(effects.nobles_day || 0) * (effects.miningModifier || 1)}
-      fissiles_day={(effects.fissiles_day || 0) * (effects.miningModifier || 1)}
+      water={(effects.water_day || 0) * (effects.miningModifier || 1) * 30}
+      volatiles={(effects.volatiles_day || 0) * (effects.miningModifier || 1) * 30}
+      metals={(effects.metals_day || 0) * (effects.miningModifier || 1) * 30}
+      nobles={(effects.nobles_day || 0) * (effects.miningModifier || 1) * 30}
+      fissiles={(effects.fissiles_day || 0) * (effects.miningModifier || 1) * 30}
     />
   );
 }

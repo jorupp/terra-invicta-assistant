@@ -62,9 +62,13 @@ export type ShowEffectsProps = Partial<
       controlPoints: number;
       combatScore: number;
       miltechBonus: number;
-    } & CouncilorAttributes &
-    Pick<TIHabSiteState, "water_day" | "volatiles_day" | "metals_day" | "nobles_day" | "fissiles_day"> & {
-      antimatter_day?: number;
+    } & CouncilorAttributes & {
+      water?: number;
+      volatiles?: number;
+      metals?: number;
+      nobles?: number;
+      fissiles?: number;
+      antimatter?: number;
     } &
     Pick<
       TIOrgState,
@@ -199,12 +203,12 @@ export const ShowEffects = (
     typesCanHaveCriminal.includes(props.typeTemplateName) &&
     !(props.traitTemplateNames || []).some((t) => governmentCriminalGroupTraits.includes(t));
 
-  const water_day = props.water_day || 0;
-  const volatiles_day = props.volatiles_day || 0;
-  const metals_day = props.metals_day || 0;
-  const nobles_day = props.nobles_day || 0;
-  const fissiles_day = props.fissiles_day || 0;
-  const antimatter_day = props.antimatter_day || 0;
+  const water = props.water || 0;
+  const volatiles = props.volatiles || 0;
+  const metals = props.metals || 0;
+  const nobles = props.nobles || 0;
+  const fissiles = props.fissiles || 0;
+  const antimatter = props.antimatter || 0;
   const combatScore = props.combatScore || 0;
 
   return (
@@ -500,39 +504,39 @@ export const ShowEffects = (
         </>
       )}
 
-      {water_day !== 0 && (
+      {water !== 0 && (
         <>
-          <Water /> {(water_day * 30).toFixed(2)}
+          <Water /> {water.toFixed(2)}
           {spacer}
         </>
       )}
-      {volatiles_day !== 0 && (
+      {volatiles !== 0 && (
         <>
-          <Volatiles /> {(volatiles_day * 30).toFixed(2)}
+          <Volatiles /> {volatiles.toFixed(2)}
           {spacer}
         </>
       )}
-      {metals_day !== 0 && (
+      {metals !== 0 && (
         <>
-          <Metals /> {(metals_day * 30).toFixed(2)}
+          <Metals /> {metals.toFixed(2)}
           {spacer}
         </>
       )}
-      {nobles_day !== 0 && (
+      {nobles !== 0 && (
         <>
-          <Nobles /> {(nobles_day * 30).toFixed(2)}
+          <Nobles /> {nobles.toFixed(2)}
           {spacer}
         </>
       )}
-      {fissiles_day !== 0 && (
+      {fissiles !== 0 && (
         <>
-          <Fissiles /> {(fissiles_day * 30).toFixed(2)}
+          <Fissiles /> {fissiles.toFixed(2)}
           {spacer}
         </>
       )}
-      {antimatter_day !== 0 && (
+      {antimatter !== 0 && (
         <>
-          <Antimatter /> {(antimatter_day * 30).toFixed(2)}
+          <Antimatter /> {antimatter.toFixed(2)}
           {spacer}
         </>
       )}

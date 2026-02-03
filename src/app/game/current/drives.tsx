@@ -32,14 +32,14 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
           {drives.map((drive) => {
             const isUnlocked = analysis.playerFaction.finishedProjectNames.includes(drive.requiredProjectName);
             
-            // Multiply by 10 and convert to per-day values for ShowEffects
+            // Multiply by 10 for per-tank values
             const propellantEffects = {
-              water_day: drive.propellantMaterials.water * 10,
-              volatiles_day: drive.propellantMaterials.volatiles * 10,
-              metals_day: drive.propellantMaterials.metals * 10,
-              nobles_day: drive.propellantMaterials.nobleMetals * 10,
-              fissiles_day: drive.propellantMaterials.fissiles * 10,
-              antimatter_day: drive.propellantMaterials.antimatter * 10,
+              water: drive.propellantMaterials.water * 10,
+              volatiles: drive.propellantMaterials.volatiles * 10,
+              metals: drive.propellantMaterials.metals * 10,
+              nobles: drive.propellantMaterials.nobleMetals * 10,
+              fissiles: drive.propellantMaterials.fissiles * 10,
+              antimatter: drive.propellantMaterials.antimatter * 10,
             };
 
             return (
