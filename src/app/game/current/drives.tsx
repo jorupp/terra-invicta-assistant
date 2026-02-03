@@ -12,6 +12,8 @@ type SortColumn =
   | "EV_kps"
   | "efficiency"
   | "cooling"
+  | "powerRequiredGW"
+  | "radiatorTons"
   | "thrustRating"
   | "exhaustRating"
   | "overallRating"
@@ -58,6 +60,12 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
       case "cooling":
         compareValue = a.cooling.localeCompare(b.cooling);
         break;
+      case "powerRequiredGW":
+        compareValue = a.powerRequiredGW - b.powerRequiredGW;
+        break;
+      case "radiatorTons":
+        compareValue = (a.radiatorTons ?? Infinity) - (b.radiatorTons ?? Infinity);
+        break;
       case "thrustRating":
         compareValue = a.thrustRating - b.thrustRating;
         break;
@@ -92,7 +100,19 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Drive Systems</h3>
+      <div>
+        <h3 className="text-lg font-semibold">Drive Systems</h3>
+        {analysis.bestRadiator && (
+          <p className="text-sm text-muted-foreground mt-1">
+            Best available radiator: <span className="font-medium">{analysis.bestRadiator.friendlyName}</span> ({smartRound(1 / analysis.bestRadiator.gwPerTon)} ton/GW)
+          </p>
+        )}
+        {!analysis.bestRadiator && (
+          <p className="text-sm text-muted-foreground mt-1">
+            No radiators available yet
+          </p>
+        )}
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -128,8 +148,22 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("cooling")}>
               Cooling <SortIcon column="cooling" />
             </TableHead>
-            <TableHead title="Propellant per tank">Propellant</TableHead>
+            <TableHead>Propellant</TableHead>
             <TableHead title="Required Power Plant">Power Plant</TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("powerRequiredGW")}
+              title="Power Required (GW)"
+            >
+              Power (GW) <SortIcon column="powerRequiredGW" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("radiatorTons")}
+              title="Radiator Mass (tons)"
+            >
+              Radiator (t) <SortIcon column="radiatorTons" />
+            </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("thrustRating")}
@@ -200,6 +234,12 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   <ShowEffects {...propellantEffects} />
                 </TableCell>
                 <TableCell className="text-xs">{drive.requiredPowerPlantDisplayName || "None"}</TableCell>
+                <TableCell className="text-right">
+                  {!isNaN(drive.powerRequiredGW) ? smartRound(drive.powerRequiredGW) : "-"}
+                </TableCell>
+                <TableCell className="text-right">
+                  {drive.radiatorTons !== undefined ? smartRound(drive.radiatorTons) : "-"}
+                </TableCell>
                 <TableCell className="text-right">{drive.thrustRating.toFixed(2)}</TableCell>
                 <TableCell className="text-right">{drive.exhaustRating.toFixed(2)}</TableCell>
                 <TableCell className="text-right">{drive.overallRating.toFixed(2)}</TableCell>

@@ -1188,6 +1188,30 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     return { techResearchRemaining, projectResearchRemaining };
   }
   
+  // Load radiators and calculate cooling efficiency (GW per ton)
+  const allRadiators = await templates.radiators();
+  const availableRadiators = allRadiators.filter(radiator => {
+    if (!radiator.requiredProjectName) return true;
+    return playerFaction!.finishedProjectNames.includes(radiator.requiredProjectName);
+  });
+  
+  // note: this was completely made up by claude-sonnet-4.5 - I told it to guess since I didn't know the formula and I know TI likes to model real-world physics.
+  // Calculate GW per ton for each radiator
+  // Power dissipated (W) = specificPower_2s_KWkg * 1000 (to convert kW to W) * mass (kg)
+  // So for 1 ton (1000 kg): power = specificPower_2s_KWkg * 1000 * 1000 = specificPower_2s_KWkg * 1,000,000 W
+  // Convert to GW: GW per ton = specificPower_2s_KWkg * 1,000,000 / 1,000,000,000 = specificPower_2s_KWkg / 1000
+  const radiatorsWithEfficiency = availableRadiators.map(radiator => ({
+    ...radiator,
+    gwPerTon: radiator.specificPower_2s_KWkg / 1000,
+  }));
+  
+  // Find the best radiator (highest GW per ton)
+  const bestRadiator = radiatorsWithEfficiency.length > 0 
+    ? radiatorsWithEfficiency.reduce((best, current) => {
+        return current.gwPerTon > best.gwPerTon ? current : best;
+      })
+    : undefined;
+  
   const drives = Array.from(drivesByBaseName.values()).map((drive) => {
     const { techResearchRemaining, projectResearchRemaining } = calculateRemainingResearch(drive.requiredProjectName);
     
@@ -1219,6 +1243,21 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const driveClassificationDisplayName = driveLocalization.get(`TIDriveTemplate.Class.${drive.driveClassification}`) || drive.driveClassification;
     const powerPlantDisplayName = drive.requiredPowerPlant ? (powerPlantLocalization.get(`TIPowerPlantTemplate.PowerPlantRequirement.${drive.requiredPowerPlant}`) || drive.requiredPowerPlant) : "";
     
+    // Calculate radiator mass for Calc/Closed cooling drives
+    let radiatorTons: number | undefined = undefined;
+    const powerRequiredGW = parseFloat(drive.thrustRating_GW);
+    
+    if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
+      // Parse the thrust rating (in GW) from string
+      if (!isNaN(powerRequiredGW) && powerRequiredGW > 0) {
+        // Waste heat = input power * (1 - efficiency)
+        // For a drive, waste heat ≈ thrustGW / efficiency * (1 - efficiency)
+        const wasteHeatGW = (powerRequiredGW / drive.efficiency) * (1 - drive.efficiency);
+        // Radiator tons needed = waste heat GW / (GW per ton)
+        radiatorTons = wasteHeatGW / bestRadiator.gwPerTon;
+      }
+    }
+    
     return {
       dataName: drive.dataName,
       friendlyName: displayName,
@@ -1233,11 +1272,13 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       driveClassificationDisplayName,
       thrusters: drive.thrusters,
       cooling: drive.cooling,
+      powerRequiredGW,
       thrustRating,
       exhaustRating,
       overallRating,
       unlockChance: unlockChance === 100 || isProjectComplete ? undefined : unlockChance,
       expensivePropellant,
+      radiatorTons,
       techResearchRemaining,
       projectResearchRemaining,
     };
@@ -1271,6 +1312,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     projects,
     playerStealableProjects,
     drives,
+    bestRadiator: bestRadiator ? {
+      friendlyName: bestRadiator.friendlyName,
+      gwPerTon: bestRadiator.gwPerTon,
+    } : undefined,
   };
 }
 

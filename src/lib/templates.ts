@@ -1008,6 +1008,7 @@ export interface Project {
 export interface Radiator {
   dataName: string;
   friendlyName: string;
+  requiredProjectName?: string;
   specificMass_2s_kgm2: number;
   specificPower_2s_KWkg: number;
   operatingTemp_K: number;
