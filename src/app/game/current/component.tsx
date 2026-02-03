@@ -10,6 +10,7 @@ import { loadAndAnalyzeFile } from "./actions";
 import { Loader } from "lucide-react";
 import { getHabsUi } from "./habs";
 import { getResourcesUi } from "./resources";
+import { getDrivesUi } from "./drives";
 
 export default function CurrentGameComponent() {
   const filename = useCurrent();
@@ -52,7 +53,7 @@ export default function CurrentGameComponent() {
 }
 
 function RenderGameComponent({ analysis }: { analysis: Analysis }) {
-  const tabs = [getCouncilorsUi(analysis), getFleetsUi(analysis), getHabsUi(analysis), getResourcesUi(analysis)];
+  const tabs = [getCouncilorsUi(analysis), getFleetsUi(analysis), getHabsUi(analysis), getResourcesUi(analysis), getDrivesUi(analysis)];
   return (
     <div>
       <h2>

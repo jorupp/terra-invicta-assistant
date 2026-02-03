@@ -1108,24 +1108,95 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const allDrives = await templates.drives();
   const drivesByBaseName = new Map<string, typeof allDrives[0]>();
   for (const drive of allDrives) {
-    const baseName = drive.dataName.replace(/_x\d+$/, "");
+    // Skip disabled drives
+    if (drive.disabled) {
+      continue;
+    }
+    
+    // Try multiple patterns to remove thruster count suffix
+    // Patterns: "_x1", " x1", "x1" at end of dataName or friendlyName
+    const baseName = drive.dataName
+      .replace(/_x\d+$/, "")  // Pattern: Name_x1
+      .replace(/\sx\d+$/, "")  // Pattern: Name x1
+      .replace(/x\d+$/, "");   // Pattern: Namex1
+    
     const existing = drivesByBaseName.get(baseName);
     if (!existing || drive.thrusters > existing.thrusters) {
       drivesByBaseName.set(baseName, drive);
     }
   }
-  const drives = Array.from(drivesByBaseName.values()).map((drive) => ({
-    dataName: drive.dataName,
-    friendlyName: drive.friendlyName,
-    thrust_N: drive.thrust_N,
-    EV_kps: drive.EV_kps,
-    efficiency: drive.efficiency,
-    propellantMaterials: drive.perTankPropellantMaterials,
-    requiredProjectName: drive.requiredProjectName,
-    requiredPowerPlant: drive.requiredPowerPlant,
-    driveClassification: drive.driveClassification,
-    thrusters: drive.thrusters,
-  }));
+  
+  function calculateRemainingResearch(targetName: string): { techResearchRemaining: number; projectResearchRemaining: number } {
+    const complete = new Set([
+      ...globalTechState.finishedTechsNames,
+      ...playerFaction!.finishedProjectNames,
+    ]);
+    const required = new Set<string>();
+    
+    if (!complete.has(targetName)) {
+      required.add(targetName);
+    }
+    
+    while (true) {
+      let done = true;
+      for (const req of Array.from(required)) {
+        const prereqs = techs.get(req)?.prereqs || projects.get(req)?.prereqs;
+        if (!prereqs) continue;
+        for (const prereq of prereqs) {
+          if (!complete.has(prereq) && !required.has(prereq)) {
+            required.add(prereq);
+            done = false;
+          }
+        }
+      }
+      if (done) break;
+    }
+    
+    const accumulatedResearchByName = new Map<string, number>([
+      ...globalTechState.techProgress.map((i) => [i.techTemplateName, i.accumulatedResearch] as const),
+      ...playerFaction!.currentProjectProgress.map((i) => [i.projectTemplateName, i.accumulatedResearch] as const),
+    ]);
+    
+    let techResearchRemaining = 0;
+    let projectResearchRemaining = 0;
+    
+    for (const name of required) {
+      const tech = techs.get(name);
+      const project = projects.get(name);
+      const both = tech || project;
+      if (!both) continue;
+      
+      const accumulatedResearch = accumulatedResearchByName.get(name) || 0;
+      const remainingCost = Math.max(both.researchCost - accumulatedResearch, 0);
+      
+      if (tech) {
+        techResearchRemaining += remainingCost;
+      } else {
+        projectResearchRemaining += remainingCost;
+      }
+    }
+    
+    return { techResearchRemaining, projectResearchRemaining };
+  }
+  
+  const drives = Array.from(drivesByBaseName.values()).map((drive) => {
+    const { techResearchRemaining, projectResearchRemaining } = calculateRemainingResearch(drive.requiredProjectName);
+    
+    return {
+      dataName: drive.dataName,
+      friendlyName: drive.friendlyName,
+      thrust_N: drive.thrust_N,
+      EV_kps: drive.EV_kps,
+      efficiency: drive.efficiency,
+      propellantMaterials: drive.perTankPropellantMaterials,
+      requiredProjectName: drive.requiredProjectName,
+      requiredPowerPlant: drive.requiredPowerPlant,
+      driveClassification: drive.driveClassification,
+      thrusters: drive.thrusters,
+      techResearchRemaining,
+      projectResearchRemaining,
+    };
+  });
 
   return {
     fileName,

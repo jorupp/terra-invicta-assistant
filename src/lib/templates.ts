@@ -367,6 +367,7 @@ export interface Drive {
   thrustCap: number;
   cooling: string;
   powerGen: string;
+  disabled?: boolean;
   weightedBuildMaterials: {
     water: number;
     volatiles: number;
