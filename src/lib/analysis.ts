@@ -1113,6 +1113,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       continue;
     }
     
+    // Skip alien drives
+    if (drive.requiredProjectName.startsWith("Project_Alien")) {
+      continue;
+    }
+    
     // Try multiple patterns to remove thruster count suffix
     // Patterns: "_x1", " x1", "x1" at end of dataName or friendlyName
     const baseName = drive.dataName

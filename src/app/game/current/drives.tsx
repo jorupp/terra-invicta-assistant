@@ -1,15 +1,73 @@
 import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ShowEffects } from "@/components/showEffects";
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+
+type SortColumn =
+  | "friendlyName"
+  | "driveClassification"
+  | "thrust_N"
+  | "EV_kps"
+  | "efficiency"
+  | "techResearchRemaining"
+  | "projectResearchRemaining";
+type SortDirection = "asc" | "desc";
 
 function DrivesTable({ analysis }: { analysis: Analysis }) {
-  const drives = analysis.drives.sort((a, b) => {
-    // Sort by classification first, then by EV_kps
-    if (a.driveClassification !== b.driveClassification) {
-      return a.driveClassification.localeCompare(b.driveClassification);
+  const [sortColumn, setSortColumn] = useState<SortColumn>("driveClassification");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
     }
-    return a.EV_kps - b.EV_kps;
+  };
+
+  const drives = analysis.drives.toSorted((a, b) => {
+    let compareValue = 0;
+
+    switch (sortColumn) {
+      case "friendlyName":
+        compareValue = a.friendlyName.localeCompare(b.friendlyName);
+        break;
+      case "driveClassification":
+        compareValue = a.driveClassification.localeCompare(b.driveClassification);
+        if (compareValue === 0) {
+          compareValue = a.EV_kps - b.EV_kps;
+        }
+        break;
+      case "thrust_N":
+        compareValue = a.thrust_N - b.thrust_N;
+        break;
+      case "EV_kps":
+        compareValue = a.EV_kps - b.EV_kps;
+        break;
+      case "efficiency":
+        compareValue = a.efficiency - b.efficiency;
+        break;
+      case "techResearchRemaining":
+        compareValue = a.techResearchRemaining - b.techResearchRemaining;
+        break;
+      case "projectResearchRemaining":
+        compareValue = a.projectResearchRemaining - b.projectResearchRemaining;
+        break;
+    }
+
+    return sortDirection === "asc" ? compareValue : -compareValue;
   });
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === "asc" ? (
+      <ChevronUp className="inline h-4 w-4" />
+    ) : (
+      <ChevronDown className="inline h-4 w-4" />
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -17,15 +75,47 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Drive Name</TableHead>
-            <TableHead>Classification</TableHead>
-            <TableHead className="text-right">Thrust (kN)</TableHead>
-            <TableHead className="text-right">Exhaust Velocity (km/s)</TableHead>
-            <TableHead className="text-right">Efficiency</TableHead>
+            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("friendlyName")}>
+              Drive Name <SortIcon column="friendlyName" />
+            </TableHead>
+            <TableHead
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("driveClassification")}
+            >
+              Classification <SortIcon column="driveClassification" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("thrust_N")}
+            >
+              Thrust (kN) <SortIcon column="thrust_N" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("EV_kps")}
+            >
+              Exhaust Velocity (km/s) <SortIcon column="EV_kps" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("efficiency")}
+            >
+              Efficiency <SortIcon column="efficiency" />
+            </TableHead>
             <TableHead>Propellant (per tank)</TableHead>
             <TableHead>Required Power Plant</TableHead>
-            <TableHead className="text-right">Tech Research Remaining</TableHead>
-            <TableHead className="text-right">Project Research Remaining</TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("techResearchRemaining")}
+            >
+              Tech Research Remaining <SortIcon column="techResearchRemaining" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("projectResearchRemaining")}
+            >
+              Project Research Remaining <SortIcon column="projectResearchRemaining" />
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
