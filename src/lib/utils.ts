@@ -107,5 +107,7 @@ export const noDate = "0001-01-01T00:00:00.0000000";
 
 export function smartRound(value: number): string {
   const digits = value === 0 || Math.round(value) === value ? 0 : Math.max(0, 3 - Math.log10(Math.abs(value)));
-  return value.toFixed(digits).replace(/\.?0+$/, "");
+  const formatted = value.toFixed(digits);
+  // Only remove trailing zeros if there's a decimal point
+  return formatted.includes('.') ? formatted.replace(/\.?0+$/, '') : formatted;
 }
