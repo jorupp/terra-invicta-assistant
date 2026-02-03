@@ -1,6 +1,7 @@
 import { CouncilorAttributes, TIHabSiteState, TIOrgState } from "@/lib/savefile";
 import {
   Administration,
+  Antimatter,
   Boost,
   CombatScore,
   Command,
@@ -62,7 +63,9 @@ export type ShowEffectsProps = Partial<
       combatScore: number;
       miltechBonus: number;
     } & CouncilorAttributes &
-    Pick<TIHabSiteState, "water_day" | "volatiles_day" | "metals_day" | "nobles_day" | "fissiles_day"> &
+    Pick<TIHabSiteState, "water_day" | "volatiles_day" | "metals_day" | "nobles_day" | "fissiles_day"> & {
+      antimatter_day?: number;
+    } &
     Pick<
       TIOrgState,
       | "tier"
@@ -201,6 +204,7 @@ export const ShowEffects = (
   const metals_day = props.metals_day || 0;
   const nobles_day = props.nobles_day || 0;
   const fissiles_day = props.fissiles_day || 0;
+  const antimatter_day = props.antimatter_day || 0;
   const combatScore = props.combatScore || 0;
 
   return (
@@ -523,6 +527,12 @@ export const ShowEffects = (
       {fissiles_day !== 0 && (
         <>
           <Fissiles /> {(fissiles_day * 30).toFixed(2)}
+          {spacer}
+        </>
+      )}
+      {antimatter_day !== 0 && (
+        <>
+          <Antimatter /> {(antimatter_day * 30).toFixed(2)}
           {spacer}
         </>
       )}
