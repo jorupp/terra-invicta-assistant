@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ShowEffects } from "@/components/showEffects";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { smartRound } from "@/lib/utils";
 
 type SortColumn =
   | "friendlyName"
@@ -160,14 +161,14 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("techResearchRemaining")}
-              title="Tech Research Remaining"
+              title="Tech Research Remaining (in thousands)"
             >
               Tech Res. <SortIcon column="techResearchRemaining" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("projectResearchRemaining")}
-              title="Project Research Remaining"
+              title="Project Research Remaining (in thousands)"
             >
               Proj. Res. <SortIcon column="projectResearchRemaining" />
             </TableHead>
@@ -206,10 +207,10 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   {drive.unlockChance !== undefined ? `${drive.unlockChance}%` : ""}
                 </TableCell>
                 <TableCell className="text-right">
-                  {drive.techResearchRemaining > 0 ? drive.techResearchRemaining.toFixed(0) : "-"}
+                  {drive.techResearchRemaining > 0 ? smartRound(drive.techResearchRemaining / 1000) : "-"}
                 </TableCell>
                 <TableCell className="text-right">
-                  {drive.projectResearchRemaining > 0 ? drive.projectResearchRemaining.toFixed(0) : "-"}
+                  {drive.projectResearchRemaining > 0 ? smartRound(drive.projectResearchRemaining / 1000) : "-"}
                 </TableCell>
               </TableRow>
             );
