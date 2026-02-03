@@ -169,18 +169,18 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
           {drives.map((drive) => {
             const isUnlocked = analysis.playerFaction.finishedProjectNames.includes(drive.requiredProjectName);
             
-            // Multiply by 10 for per-tank values
+            // Propellant values are already multiplied by 10 in the analysis
             const propellantEffects = {
-              water: drive.propellantMaterials.water * 10,
-              volatiles: drive.propellantMaterials.volatiles * 10,
-              metals: drive.propellantMaterials.metals * 10,
-              nobles: drive.propellantMaterials.nobleMetals * 10,
-              fissiles: drive.propellantMaterials.fissiles * 10,
-              antimatter: drive.propellantMaterials.antimatter * 10,
+              water: drive.propellantMaterials.water,
+              volatiles: drive.propellantMaterials.volatiles,
+              metals: drive.propellantMaterials.metals,
+              nobles: drive.propellantMaterials.nobleMetals,
+              fissiles: drive.propellantMaterials.fissiles,
+              antimatter: drive.propellantMaterials.antimatter,
             };
 
             return (
-              <TableRow key={drive.dataName}>
+              <TableRow key={drive.dataName} className={drive.expensivePropellant ? "bg-yellow-50" : ""}>
                 <TableCell className="font-medium">{drive.friendlyName}</TableCell>
                 <TableCell>{drive.driveClassification}</TableCell>
                 <TableCell className="text-right">{(drive.thrust_N / 1000).toFixed(1)}</TableCell>

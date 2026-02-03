@@ -1195,13 +1195,25 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const unlockChance = project?.factionAvailableChance ?? 100;
     const isProjectComplete = playerFaction!.finishedProjectNames.includes(drive.requiredProjectName);
     
+    // Multiply propellant materials by 10 for per-tank values
+    const propellantMaterials = {
+      water: drive.perTankPropellantMaterials.water * 10,
+      volatiles: drive.perTankPropellantMaterials.volatiles * 10,
+      metals: drive.perTankPropellantMaterials.metals * 10,
+      nobleMetals: drive.perTankPropellantMaterials.nobleMetals * 10,
+      fissiles: drive.perTankPropellantMaterials.fissiles * 10,
+      antimatter: drive.perTankPropellantMaterials.antimatter * 10,
+    };
+    
+    const expensivePropellant = propellantMaterials.fissiles > 1 || propellantMaterials.antimatter > 0.01;
+    
     return {
       dataName: drive.dataName,
       friendlyName: drive.friendlyName,
       thrust_N: drive.thrust_N,
       EV_kps: drive.EV_kps,
       efficiency: drive.efficiency,
-      propellantMaterials: drive.perTankPropellantMaterials,
+      propellantMaterials,
       requiredProjectName: drive.requiredProjectName,
       requiredPowerPlant: drive.requiredPowerPlant,
       driveClassification: drive.driveClassification,
@@ -1211,6 +1223,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       exhaustRating,
       overallRating,
       unlockChance: unlockChance === 100 || isProjectComplete ? undefined : unlockChance,
+      expensivePropellant,
       techResearchRemaining,
       projectResearchRemaining,
     };
