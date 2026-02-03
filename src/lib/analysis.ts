@@ -1104,6 +1104,29 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       if (factionPrereq.length === 0) return true;
       return factionPrereq.includes(playerFaction.templateName!);
     });
+
+  const allDrives = await templates.drives();
+  const drivesByBaseName = new Map<string, typeof allDrives[0]>();
+  for (const drive of allDrives) {
+    const baseName = drive.dataName.replace(/_x\d+$/, "");
+    const existing = drivesByBaseName.get(baseName);
+    if (!existing || drive.thrusters > existing.thrusters) {
+      drivesByBaseName.set(baseName, drive);
+    }
+  }
+  const drives = Array.from(drivesByBaseName.values()).map((drive) => ({
+    dataName: drive.dataName,
+    friendlyName: drive.friendlyName,
+    thrust_N: drive.thrust_N,
+    EV_kps: drive.EV_kps,
+    efficiency: drive.efficiency,
+    propellantMaterials: drive.perTankPropellantMaterials,
+    requiredProjectName: drive.requiredProjectName,
+    requiredPowerPlant: drive.requiredPowerPlant,
+    driveClassification: drive.driveClassification,
+    thrusters: drive.thrusters,
+  }));
+
   return {
     fileName,
     lastModified,
@@ -1131,6 +1154,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     techs,
     projects,
     playerStealableProjects,
+    drives,
   };
 }
 
