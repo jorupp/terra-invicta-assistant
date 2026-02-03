@@ -77,6 +77,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     map.set(tech.dataName, { ...tech, ...(await getTechLocalization(tech.dataName)) });
     return map;
   }, Promise.resolve(new Map<string, Awaited<ReturnType<typeof templates.techs>>[0] & { displayName?: string; summary?: string; description?: string; quote?: string }>()));
+  
+  const driveLocalization = await localizations.drive();
+  const powerPlantLocalization = await localizations.powerPlant();
+  
   const factions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].map(({ Value: faction }) => {
     const mcMultiplier =
       (difficulty === "Cinematic"
@@ -1212,6 +1216,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       .replace(/\sx\d+$/, "")  // Remove " x6" etc
       .replace(/_x\d+$/, "");  // Remove "_x6" etc
     
+    const driveClassificationDisplayName = driveLocalization.get(`TIDriveTemplate.Class.${drive.driveClassification}`) || drive.driveClassification;
+    const powerPlantDisplayName = drive.requiredPowerPlant ? (powerPlantLocalization.get(`TIPowerPlantTemplate.PowerPlantRequirement.${drive.requiredPowerPlant}`) || drive.requiredPowerPlant) : "";
+    
     return {
       dataName: drive.dataName,
       friendlyName: displayName,
@@ -1221,7 +1228,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       propellantMaterials,
       requiredProjectName: drive.requiredProjectName,
       requiredPowerPlant: drive.requiredPowerPlant,
+      requiredPowerPlantDisplayName: powerPlantDisplayName,
       driveClassification: drive.driveClassification,
+      driveClassificationDisplayName,
       thrusters: drive.thrusters,
       cooling: drive.cooling,
       thrustRating,

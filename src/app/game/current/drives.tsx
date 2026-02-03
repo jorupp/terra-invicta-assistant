@@ -191,7 +191,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             return (
               <TableRow key={drive.dataName} className={drive.expensivePropellant ? "bg-yellow-50" : ""}>
                 <TableCell className="font-medium">{drive.friendlyName}</TableCell>
-                <TableCell>{drive.driveClassification}</TableCell>
+                <TableCell>{drive.driveClassificationDisplayName}</TableCell>
                 <TableCell className="text-right">{(drive.thrust_N / 1000).toFixed(1)}</TableCell>
                 <TableCell className="text-right">{drive.EV_kps.toFixed(1)}</TableCell>
                 <TableCell className="text-right">{(drive.efficiency * 100).toFixed(1)}%</TableCell>
@@ -199,7 +199,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 <TableCell className="text-xs">
                   <ShowEffects {...propellantEffects} />
                 </TableCell>
-                <TableCell className="text-xs">{drive.requiredPowerPlant || "None"}</TableCell>
+                <TableCell className="text-xs">{drive.requiredPowerPlantDisplayName || "None"}</TableCell>
                 <TableCell className="text-right">{drive.thrustRating.toFixed(2)}</TableCell>
                 <TableCell className="text-right">{drive.exhaustRating.toFixed(2)}</TableCell>
                 <TableCell className="text-right">{drive.overallRating.toFixed(2)}</TableCell>
