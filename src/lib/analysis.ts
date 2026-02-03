@@ -1187,6 +1187,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const drives = Array.from(drivesByBaseName.values()).map((drive) => {
     const { techResearchRemaining, projectResearchRemaining } = calculateRemainingResearch(drive.requiredProjectName);
     
+    const thrustRating = Math.log(drive.thrust_N) / Math.log(4);  // log4
+    const exhaustRating = Math.log2(drive.EV_kps);
+    const overallRating = thrustRating * exhaustRating;
+    
+    const project = projects.get(drive.requiredProjectName);
+    const unlockChance = project?.factionAvailableChance ?? 100;
+    const isProjectComplete = playerFaction!.finishedProjectNames.includes(drive.requiredProjectName);
+    
     return {
       dataName: drive.dataName,
       friendlyName: drive.friendlyName,
@@ -1198,6 +1206,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       requiredPowerPlant: drive.requiredPowerPlant,
       driveClassification: drive.driveClassification,
       thrusters: drive.thrusters,
+      cooling: drive.cooling,
+      thrustRating,
+      exhaustRating,
+      overallRating,
+      unlockChance: unlockChance === 100 || isProjectComplete ? undefined : unlockChance,
       techResearchRemaining,
       projectResearchRemaining,
     };

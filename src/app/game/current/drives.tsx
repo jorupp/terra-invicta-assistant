@@ -10,6 +10,11 @@ type SortColumn =
   | "thrust_N"
   | "EV_kps"
   | "efficiency"
+  | "cooling"
+  | "thrustRating"
+  | "exhaustRating"
+  | "overallRating"
+  | "unlockChance"
   | "techResearchRemaining"
   | "projectResearchRemaining";
 type SortDirection = "asc" | "desc";
@@ -48,6 +53,21 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
         break;
       case "efficiency":
         compareValue = a.efficiency - b.efficiency;
+        break;
+      case "cooling":
+        compareValue = a.cooling.localeCompare(b.cooling);
+        break;
+      case "thrustRating":
+        compareValue = a.thrustRating - b.thrustRating;
+        break;
+      case "exhaustRating":
+        compareValue = a.exhaustRating - b.exhaustRating;
+        break;
+      case "overallRating":
+        compareValue = a.overallRating - b.overallRating;
+        break;
+      case "unlockChance":
+        compareValue = (a.unlockChance ?? 100) - (b.unlockChance ?? 100);
         break;
       case "techResearchRemaining":
         compareValue = a.techResearchRemaining - b.techResearchRemaining;
@@ -102,8 +122,35 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             >
               Efficiency <SortIcon column="efficiency" />
             </TableHead>
+            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("cooling")}>
+              Cooling <SortIcon column="cooling" />
+            </TableHead>
             <TableHead>Propellant (per tank)</TableHead>
             <TableHead>Required Power Plant</TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("thrustRating")}
+            >
+              Thrust Rating <SortIcon column="thrustRating" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("exhaustRating")}
+            >
+              Exhaust Rating <SortIcon column="exhaustRating" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("overallRating")}
+            >
+              Overall Rating <SortIcon column="overallRating" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("unlockChance")}
+            >
+              Base Unlock Chance <SortIcon column="unlockChance" />
+            </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("techResearchRemaining")}
@@ -139,10 +186,17 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 <TableCell className="text-right">{(drive.thrust_N / 1000).toFixed(1)}</TableCell>
                 <TableCell className="text-right">{drive.EV_kps.toFixed(1)}</TableCell>
                 <TableCell className="text-right">{(drive.efficiency * 100).toFixed(1)}%</TableCell>
+                <TableCell>{drive.cooling || "None"}</TableCell>
                 <TableCell className="text-xs">
                   <ShowEffects {...propellantEffects} />
                 </TableCell>
                 <TableCell className="text-xs">{drive.requiredPowerPlant || "None"}</TableCell>
+                <TableCell className="text-right">{drive.thrustRating.toFixed(2)}</TableCell>
+                <TableCell className="text-right">{drive.exhaustRating.toFixed(2)}</TableCell>
+                <TableCell className="text-right">{drive.overallRating.toFixed(2)}</TableCell>
+                <TableCell className="text-right">
+                  {drive.unlockChance !== undefined ? `${drive.unlockChance}%` : ""}
+                </TableCell>
                 <TableCell className="text-right">
                   {drive.techResearchRemaining > 0 ? drive.techResearchRemaining.toFixed(0) : "-"}
                 </TableCell>
