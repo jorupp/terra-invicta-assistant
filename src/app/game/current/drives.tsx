@@ -107,14 +107,16 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("thrust_N")}
+              title="Thrust (kilonewtons)"
             >
               Thrust (kN) <SortIcon column="thrust_N" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("EV_kps")}
+              title="Exhaust Velocity (km/s)"
             >
-              Exhaust Velocity (km/s) <SortIcon column="EV_kps" />
+              EV (km/s) <SortIcon column="EV_kps" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
@@ -125,43 +127,49 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("cooling")}>
               Cooling <SortIcon column="cooling" />
             </TableHead>
-            <TableHead>Propellant (per tank)</TableHead>
-            <TableHead>Required Power Plant</TableHead>
+            <TableHead title="Propellant per tank">Propellant</TableHead>
+            <TableHead title="Required Power Plant">Power Plant</TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("thrustRating")}
+              title="Thrust Rating"
             >
-              Thrust Rating <SortIcon column="thrustRating" />
+              Thrust <SortIcon column="thrustRating" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("exhaustRating")}
+              title="Exhaust Rating"
             >
-              Exhaust Rating <SortIcon column="exhaustRating" />
+              Exhaust <SortIcon column="exhaustRating" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("overallRating")}
+              title="Overall Rating"
             >
-              Overall Rating <SortIcon column="overallRating" />
+              Overall <SortIcon column="overallRating" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("unlockChance")}
+              title="Base Unlock Chance"
             >
-              Base Unlock Chance <SortIcon column="unlockChance" />
+              Unlock % <SortIcon column="unlockChance" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("techResearchRemaining")}
+              title="Tech Research Remaining"
             >
-              Tech Research Remaining <SortIcon column="techResearchRemaining" />
+              Tech Res. <SortIcon column="techResearchRemaining" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("projectResearchRemaining")}
+              title="Project Research Remaining"
             >
-              Project Research Remaining <SortIcon column="projectResearchRemaining" />
+              Proj. Res. <SortIcon column="projectResearchRemaining" />
             </TableHead>
           </TableRow>
         </TableHeader>

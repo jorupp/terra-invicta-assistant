@@ -1106,7 +1106,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     });
 
   const allDrives = await templates.drives();
-  const drivesByBaseName = new Map<string, typeof allDrives[0]>();
+  const drivesByBaseName = new Map<string, typeof allDrives[0] & { baseName: string }>();
   for (const drive of allDrives) {
     // Skip disabled drives
     if (drive.disabled) {
@@ -1127,7 +1127,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     
     const existing = drivesByBaseName.get(baseName);
     if (!existing || drive.thrusters > existing.thrusters) {
-      drivesByBaseName.set(baseName, drive);
+      drivesByBaseName.set(baseName, { ...drive, baseName });
     }
   }
   
@@ -1207,9 +1207,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     
     const expensivePropellant = propellantMaterials.fissiles > 1 || propellantMaterials.antimatter > 0.01;
     
+    // Clean up friendly name by removing thruster count suffix
+    const displayName = drive.friendlyName
+      .replace(/\sx\d+$/, "")  // Remove " x6" etc
+      .replace(/_x\d+$/, "");  // Remove "_x6" etc
+    
     return {
       dataName: drive.dataName,
-      friendlyName: drive.friendlyName,
+      friendlyName: displayName,
       thrust_N: drive.thrust_N,
       EV_kps: drive.EV_kps,
       efficiency: drive.efficiency,
