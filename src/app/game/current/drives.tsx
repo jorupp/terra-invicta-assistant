@@ -4,6 +4,7 @@ import { ShowEffects } from "@/components/showEffects";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { smartRound } from "@/lib/utils";
+import { ResearchLink } from "./researchLink";
 
 type SortColumn =
   | "friendlyName"
@@ -224,7 +225,9 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
 
             return (
               <TableRow key={drive.dataName} className={drive.expensivePropellant ? "bg-yellow-50" : ""}>
-                <TableCell className="font-medium">{drive.friendlyName}</TableCell>
+                <TableCell className="font-medium">
+                  <ResearchLink name={drive.requiredProjectName} displayName={drive.friendlyName} />
+                </TableCell>
                 <TableCell>{drive.driveClassificationDisplayName}</TableCell>
                 <TableCell className="text-right">{(drive.thrust_N / 1000).toFixed(1)}</TableCell>
                 <TableCell className="text-right">{drive.EV_kps.toFixed(1)}</TableCell>
