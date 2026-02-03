@@ -53,9 +53,15 @@ export default function CurrentGameComponent() {
 }
 
 function RenderGameComponent({ analysis }: { analysis: Analysis }) {
-  const tabs = [getCouncilorsUi(analysis), getFleetsUi(analysis), getHabsUi(analysis), getResourcesUi(analysis), getDrivesUi(analysis)];
+  const tabs = [
+    getCouncilorsUi(analysis),
+    getFleetsUi(analysis),
+    getHabsUi(analysis),
+    getResourcesUi(analysis),
+    getDrivesUi(analysis),
+  ];
   return (
-    <div>
+    <div className="mx-2">
       <h2>
         Game: {analysis.fileName} ({analysis.lastModified?.toLocaleString()}) - Game date:{" "}
         {analysis.gameCurrentDateTimeFormatted.split(" ")[0]}
@@ -71,7 +77,7 @@ function RenderGameComponent({ analysis }: { analysis: Analysis }) {
           ))}
         </TabsList>
         {tabs.map((tab) => (
-          <TabsContent key={tab.key} value={tab.key} className="mt-4">
+          <TabsContent key={tab.key} value={tab.key}>
             {tab.content}
           </TabsContent>
         ))}

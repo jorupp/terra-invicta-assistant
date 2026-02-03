@@ -113,7 +113,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
   const resources = [...resourcesSet];
 
   return (
-    <>
+    <div className="space-y-2">
       <Accordion type="single" collapsible defaultValue="transactions">
         <AccordionItem value="transactions">
           <AccordionTrigger>
@@ -304,7 +304,6 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
         </AccordionItem>
       </Accordion>
 
-      <br />
       <Collapsible>
         <CollapsibleTrigger asChild>
           <Button variant="outline">Debug Data</Button>
@@ -314,7 +313,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
           <pre>{JSON.stringify(nations, null, 2)}</pre>
         </CollapsibleContent>
       </Collapsible>
-    </>
+    </div>
   );
 }
 

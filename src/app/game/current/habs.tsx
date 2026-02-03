@@ -296,7 +296,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
     .toSorted((a, b) => a.finderSortOverride - b.finderSortOverride);
 
   return (
-    <div className="space-y-2 mx-2">
+    <div className="space-y-2">
       <Card>
         <CardHeader>
           <CardTitle>Current Hab bonuses</CardTitle>

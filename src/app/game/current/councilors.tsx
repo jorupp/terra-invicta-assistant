@@ -538,7 +538,7 @@ function CouncilorsComponent({
 
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
-    <>
+    <div className="space-y-2">
       <Accordion type="single" collapsible defaultValue="existing">
         <AccordionItem value="existing">
           <AccordionTrigger>
@@ -771,7 +771,7 @@ function CouncilorsComponent({
           <pre>{JSON.stringify(analysis.playerFaction, null, 2)}</pre>
         </CollapsibleContent>
       </Collapsible>
-    </>
+    </div>
   );
 }
 
