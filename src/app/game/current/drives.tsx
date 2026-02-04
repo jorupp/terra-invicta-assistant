@@ -19,6 +19,7 @@ type SortColumn =
   | "exhaustRating"
   | "overallRating"
   | "unlockChance"
+  | "tanksAffordable"
   | "techResearchRemaining"
   | "projectResearchRemaining";
 type SortDirection = "asc" | "desc";
@@ -79,6 +80,9 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
       case "unlockChance":
         compareValue = (a.unlockChance ?? 100) - (b.unlockChance ?? 100);
         break;
+      case "tanksAffordable":
+        compareValue = a.tanksAffordable - b.tanksAffordable;
+        break;
       case "techResearchRemaining":
         compareValue = a.techResearchRemaining - b.techResearchRemaining;
         break;
@@ -105,14 +109,11 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
         <h3 className="text-lg font-semibold">Drive Systems</h3>
         {analysis.bestRadiator && (
           <p className="text-sm text-muted-foreground mt-1">
-            Best available radiator: <span className="font-medium">{analysis.bestRadiator.friendlyName}</span> ({smartRound(1 / analysis.bestRadiator.gwPerTon)} ton/GW)
+            Best available radiator: <span className="font-medium">{analysis.bestRadiator.friendlyName}</span> (
+            {smartRound(1 / analysis.bestRadiator.gwPerTon)} ton/GW)
           </p>
         )}
-        {!analysis.bestRadiator && (
-          <p className="text-sm text-muted-foreground mt-1">
-            No radiators available yet
-          </p>
-        )}
+        {!analysis.bestRadiator && <p className="text-sm text-muted-foreground mt-1">No radiators available yet</p>}
       </div>
       <Table>
         <TableHeader>
@@ -120,10 +121,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("friendlyName")}>
               Drive Name <SortIcon column="friendlyName" />
             </TableHead>
-            <TableHead
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleSort("driveClassification")}
-            >
+            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("driveClassification")}>
               Classification <SortIcon column="driveClassification" />
             </TableHead>
             <TableHead
@@ -140,10 +138,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             >
               EV (km/s) <SortIcon column="EV_kps" />
             </TableHead>
-            <TableHead
-              className="text-right cursor-pointer hover:bg-muted/50"
-              onClick={() => handleSort("efficiency")}
-            >
+            <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("efficiency")}>
               Efficiency <SortIcon column="efficiency" />
             </TableHead>
             <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("cooling")}>
@@ -195,6 +190,13 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("tanksAffordable")}
+              title="Fuel tanks affordable with current resources"
+            >
+              Tanks <SortIcon column="tanksAffordable" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("techResearchRemaining")}
               title="Tech Research Remaining (in thousands)"
             >
@@ -212,7 +214,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
         <TableBody>
           {drives.map((drive) => {
             const isUnlocked = analysis.playerFaction.finishedProjectNames.includes(drive.requiredProjectName);
-            
+
             // Propellant values are already multiplied by 10 in the analysis
             const propellantEffects = {
               water: drive.propellantMaterials.water,
@@ -223,8 +225,18 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
               antimatter: drive.propellantMaterials.antimatter,
             };
 
+            // Determine row background based on tanks affordable
+            const rowClassName =
+              drive.tanksAffordable < 10
+                ? "bg-gray-100"
+                : drive.tanksAffordable < 100
+                ? "bg-red-100"
+                : drive.tanksAffordable < 500
+                ? "bg-yellow-100"
+                : "";
+
             return (
-              <TableRow key={drive.dataName} className={drive.expensivePropellant ? "bg-yellow-50" : ""}>
+              <TableRow key={drive.dataName} className={rowClassName}>
                 <TableCell className="font-medium">
                   <ResearchLink name={drive.requiredProjectName} displayName={drive.friendlyName} />
                 </TableCell>
@@ -249,6 +261,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 <TableCell className="text-right">
                   {drive.unlockChance !== undefined ? `${drive.unlockChance}%` : ""}
                 </TableCell>
+                <TableCell className="text-right">{drive.tanksAffordable}</TableCell>
                 <TableCell className="text-right">
                   {drive.techResearchRemaining > 0 ? smartRound(drive.techResearchRemaining / 1000) : "-"}
                 </TableCell>

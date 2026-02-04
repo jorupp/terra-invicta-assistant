@@ -189,6 +189,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       availableProjectNames: faction.availableProjectNames,
       missedProjects: faction.missedProjects || [],
       potentialProjects: (faction.activeProjectTriggers || []).map((i) => i.projectTemplateName),
+      resources: faction.resources,
     };
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
@@ -1233,7 +1234,15 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       antimatter: drive.perTankPropellantMaterials.antimatter * 10,
     };
     
-    const expensivePropellant = propellantMaterials.fissiles > 1 || propellantMaterials.antimatter > 0.01;
+    // Calculate how many tanks the player can afford with current resources
+    const tanksAffordable = Math.floor(Math.min(
+      propellantMaterials.water > 0 ? playerFaction!.resources.Water / propellantMaterials.water : Infinity,
+      propellantMaterials.volatiles > 0 ? playerFaction!.resources.Volatiles / propellantMaterials.volatiles : Infinity,
+      propellantMaterials.metals > 0 ? playerFaction!.resources.Metals / propellantMaterials.metals : Infinity,
+      propellantMaterials.nobleMetals > 0 ? playerFaction!.resources.NobleMetals / propellantMaterials.nobleMetals : Infinity,
+      propellantMaterials.fissiles > 0 ? playerFaction!.resources.Fissiles / propellantMaterials.fissiles : Infinity,
+      propellantMaterials.antimatter > 0 ? playerFaction!.resources.Antimatter / propellantMaterials.antimatter : Infinity,
+    ));
     
     // Clean up friendly name by removing thruster count suffix
     const displayName = drive.friendlyName
@@ -1277,7 +1286,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       exhaustRating,
       overallRating,
       unlockChance: unlockChance === 100 || isProjectComplete ? undefined : unlockChance,
-      expensivePropellant,
+      tanksAffordable,
       radiatorTons,
       techResearchRemaining,
       projectResearchRemaining,
