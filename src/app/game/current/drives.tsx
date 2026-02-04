@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 
 type SortColumn =
   | "friendlyName"
-  | "driveClassification"
   | "thrust_N"
   | "EV_kps"
   | "efficiency"
@@ -29,7 +28,7 @@ type SortColumn =
 type SortDirection = "asc" | "desc";
 
 function DrivesTable({ analysis }: { analysis: Analysis }) {
-  const [sortColumn, setSortColumn] = useState<SortColumn>("driveClassification");
+  const [sortColumn, setSortColumn] = useState<SortColumn>("friendlyName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const { goals, addGoal, removeGoal } = useTechnologyGoals(analysis);
 
@@ -58,12 +57,6 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
     switch (sortColumn) {
       case "friendlyName":
         compareValue = a.friendlyName.localeCompare(b.friendlyName);
-        break;
-      case "driveClassification":
-        compareValue = a.driveClassification.localeCompare(b.driveClassification);
-        if (compareValue === 0) {
-          compareValue = a.EV_kps - b.EV_kps;
-        }
         break;
       case "thrust_N":
         compareValue = a.thrust_N - b.thrust_N;
@@ -139,7 +132,8 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead colSpan={17}></TableHead>
+            <TableHead></TableHead>
+            <TableHead colSpan={16}></TableHead>
             <TableHead
               colSpan={3}
               className="text-center border-l-2 whitespace-normal"
@@ -147,30 +141,31 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             >
               Hypothetical Ship
             </TableHead>
-            <TableHead></TableHead>
           </TableRow>
           <TableRow>
+            <TableHead title="Add/Remove Technology Goal">Goal</TableHead>
             <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("friendlyName")}>
               Drive Name <SortIcon column="friendlyName" />
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("driveClassification")}>
-              Classification <SortIcon column="driveClassification" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("thrust_N")}
               title="Thrust (kilonewtons)"
             >
-              Thrust (kN) <SortIcon column="thrust_N" />
+              Thrust <SortIcon column="thrust_N" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("EV_kps")}
               title="Exhaust Velocity (km/s)"
             >
-              EV (km/s) <SortIcon column="EV_kps" />
+              EV <SortIcon column="EV_kps" />
             </TableHead>
-            <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("efficiency")}>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("efficiency")}
+              title="Efficiency (%)"
+            >
               Efficiency <SortIcon column="efficiency" />
             </TableHead>
             <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("cooling")}>
@@ -183,14 +178,14 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
               onClick={() => handleSort("powerRequiredGW")}
               title="Power Required (GW)"
             >
-              Power (GW) <SortIcon column="powerRequiredGW" />
+              Power <SortIcon column="powerRequiredGW" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("radiatorTons")}
               title="Radiator Mass (tons)"
             >
-              Radiator (t) <SortIcon column="radiatorTons" />
+              Radiator <SortIcon column="radiatorTons" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
@@ -216,9 +211,9 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("unlockChance")}
-              title="Base Unlock Chance"
+              title="Base Unlock Chance (%)"
             >
-              Unlock % <SortIcon column="unlockChance" />
+              Unlock <SortIcon column="unlockChance" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
@@ -230,35 +225,34 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("techResearchRemaining")}
-              title="Tech Research Remaining (in thousands)"
+              title="Tech Research Remaining (thousands)"
             >
-              Tech Res. <SortIcon column="techResearchRemaining" />
+              Tech Res <SortIcon column="techResearchRemaining" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("projectResearchRemaining")}
-              title="Project Research Remaining (in thousands)"
+              title="Project Research Remaining (thousands)"
             >
-              Proj. Res. <SortIcon column="projectResearchRemaining" />
+              Proj Res <SortIcon column="projectResearchRemaining" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50 border-l-2"
               onClick={() => handleSort("shipDeltaV")}
-              title="Ship Delta-V (10k tons + radiator + 100 fuel tanks)"
+              title="Ship Delta-V (km/s, 10k tons + radiator + 100 fuel tanks)"
             >
-              ΔV (km/s) <SortIcon column="shipDeltaV" />
+              ΔV <SortIcon column="shipDeltaV" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("tripTime")}
               title="Time to travel 5 AU (days)"
             >
-              5AU Time (d) <SortIcon column="tripTime" />
+              5AU d <SortIcon column="tripTime" />
             </TableHead>
-            <TableHead className="text-right" title="Remaining Delta-V after 5 AU trip">
-              Remaining ΔV
+            <TableHead className="text-right" title="Final Delta-V after 5 AU trip (km/s)">
+              F dV
             </TableHead>
-            <TableHead title="Add/Remove Technology Goal">Goal</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -293,12 +287,39 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
 
             return (
               <TableRow key={drive.dataName} className={rowClassName}>
+                <TableCell className="text-center">
+                  {!isComplete && isInGoals && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeGoal(goalForThisDrive.id)}
+                      className="h-8 w-8 p-0 bg-white"
+                      title="Remove from goals"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {!isComplete && !isInGoals && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addGoal("project", drive.requiredProjectName)}
+                      className="h-8 w-8 p-0 bg-white"
+                      title="Add to goals"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </TableCell>
                 <TableCell className="font-medium">
                   <ResearchLink name={drive.requiredProjectName} displayName={drive.friendlyName} />
                 </TableCell>
-                <TableCell>{drive.driveClassificationDisplayName}</TableCell>
-                <TableCell className="text-right">{(drive.thrust_N / 1000).toFixed(1)}</TableCell>
-                <TableCell className="text-right">{drive.EV_kps.toFixed(1)}</TableCell>
+                <TableCell className="text-right" title={`${(drive.thrust_N / 1000).toFixed(1)} kN`}>
+                  {Math.round(drive.thrust_N / 1000)}
+                </TableCell>
+                <TableCell className="text-right" title={`${drive.EV_kps.toFixed(1)} km/s`}>
+                  {Math.round(drive.EV_kps)}
+                </TableCell>
                 <TableCell className="text-right">{(drive.efficiency * 100).toFixed(1)}%</TableCell>
                 <TableCell>{drive.cooling || "None"}</TableCell>
                 <TableCell className="text-xs">
@@ -330,30 +351,6 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 </TableCell>
                 <TableCell className="text-right">
                   {drive.remainingDeltaV > 0 ? smartRound(drive.remainingDeltaV / 1000) : "-"}
-                </TableCell>
-                <TableCell className="text-center">
-                  {!isComplete && isInGoals && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeGoal(goalForThisDrive.id)}
-                      className="h-8 w-8 p-0 bg-white"
-                      title="Remove from goals"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {!isComplete && !isInGoals && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addGoal("project", drive.requiredProjectName)}
-                      className="h-8 w-8 p-0 bg-white"
-                      title="Add to goals"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  )}
                 </TableCell>
               </TableRow>
             );
