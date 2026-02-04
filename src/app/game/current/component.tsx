@@ -1,6 +1,7 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SmartTabs } from "@/components/ui/smart-tabs";
 import { Analysis } from "@/lib/analysis";
 import { getCouncilorsUi } from "./councilors";
 import { getFleetsUi } from "./fleets";
@@ -68,7 +69,7 @@ function RenderGameComponent({ analysis }: { analysis: Analysis }) {
       </h2>
       <h3>Faction: {analysis.playerFaction.displayName}</h3>
 
-      <Tabs defaultValue={tabs[0].key}>
+      <SmartTabs storageKey="mainTabs" defaultValue={tabs[0].key}>
         <TabsList>
           {tabs.map((tab) => (
             <TabsTrigger key={tab.key} value={tab.key}>
@@ -81,7 +82,7 @@ function RenderGameComponent({ analysis }: { analysis: Analysis }) {
             {tab.content}
           </TabsContent>
         ))}
-      </Tabs>
+      </SmartTabs>
     </div>
   );
 }

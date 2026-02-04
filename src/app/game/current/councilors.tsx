@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { ShowEffects, ShowEffectsProps } from "@/components/showEffects";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,6 +14,7 @@ import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 import { defaultScoringWeights, loadWeightsFromStorage, ScoringWeights, ScoringWeightsDialog } from "./scoringWeights";
 import { Administration, MissionIcons, TraitIcons, UnknownIcon } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SmartTabs } from "@/components/ui/smart-tabs";
 import { twMerge } from "tailwind-merge";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
@@ -539,7 +541,7 @@ function CouncilorsComponent({
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <div className="space-y-2">
-      <Accordion type="single" collapsible defaultValue="existing">
+      <SmartAccordion type="single" collapsible storageKey="councilorsSections" defaultValue="existing">
         <AccordionItem value="existing">
           <AccordionTrigger>
             <span>
@@ -637,7 +639,7 @@ function CouncilorsComponent({
         <AccordionItem value="takeover">
           <AccordionTrigger>Hostile Takeover</AccordionTrigger>
           <AccordionContent>
-            <Tabs defaultValue={`faction-${Array.from(stealableOrgsByFaction.keys())[0]}`}>
+            <SmartTabs storageKey="councilorsTakeoverTabs" defaultValue={`faction-${Array.from(stealableOrgsByFaction.keys())[0]}`}>
               <TabsList>
                 {Array.from(stealableOrgsByFaction.entries()).map(([factionId, orgs]) => (
                   <TabsTrigger key={factionId} value={`faction-${factionId}`}>
@@ -664,13 +666,13 @@ function CouncilorsComponent({
                   </Table>
                 </TabsContent>
               ))}
-            </Tabs>
+            </SmartTabs>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="missions">
           <AccordionTrigger>Missions</AccordionTrigger>
           <AccordionContent>
-            <Tabs defaultValue={`faction-${factions[0].id}`}>
+            <SmartTabs storageKey="councilorsMissionsTabs" defaultValue={`faction-${factions[0].id}`}>
               <TabsList>
                 {factions.map((faction) => (
                   <TabsTrigger key={faction.id} value={`faction-${faction.id}`}>
@@ -696,7 +698,7 @@ function CouncilorsComponent({
               </TabsList>
               {factions.map((faction) => (
                 <TabsContent key={faction.id} value={`faction-${faction.id}`}>
-                  <Accordion type="single" collapsible>
+                  <SmartAccordion type="single" collapsible storageKey={`councilorsMissions-${faction.id}`}>
                     {Array.from(
                       new Set([
                         ...importantMissions,
@@ -741,10 +743,10 @@ function CouncilorsComponent({
                         </AccordionItem>
                       );
                     })}
-                  </Accordion>
+                  </SmartAccordion>
                 </TabsContent>
               ))}
-            </Tabs>
+            </SmartTabs>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="other-councilors">
@@ -753,7 +755,7 @@ function CouncilorsComponent({
             <OtherCouncilorsByFaction {...{ analysis, weights }} />
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
+      </SmartAccordion>
 
       <div className="my-4">
         <ScoringWeightsDialog weights={weights} onWeightsChange={setWeights} />
