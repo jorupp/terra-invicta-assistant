@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Analysis } from "@/lib/analysis";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { ResearchLink } from "./researchLink";
 
@@ -20,36 +21,8 @@ interface TechnologyGoal {
   displayName: string;
 }
 
-function loadGoalsFromStorage(): TechnologyGoal[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Failed to load technology goals:", e);
-  }
-  return [];
-}
-
-function saveGoalsToStorage(goals: TechnologyGoal[]) {
-  if (typeof window === "undefined") return;
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(goals));
-  } catch (e) {
-    console.error("Failed to save technology goals:", e);
-  }
-}
-
 export function useTechnologyGoals(analysis: Analysis) {
-  const [goals, setGoals] = useState<TechnologyGoal[]>([]);
-
-  useEffect(() => {
-    setGoals(loadGoalsFromStorage());
-  }, []);
+  const [goals, setGoals] = useLocalStorage<TechnologyGoal[]>(STORAGE_KEY, []);
 
   const addGoal = (type: "tech" | "project", name: string) => {
     const isProject = type === "project";
@@ -64,15 +37,11 @@ export function useTechnologyGoals(analysis: Analysis) {
       displayName: item.displayName || item.friendlyName || name,
     };
 
-    const updatedGoals = [...goals, newGoal];
-    setGoals(updatedGoals);
-    saveGoalsToStorage(updatedGoals);
+    setGoals([...goals, newGoal]);
   };
 
   const removeGoal = (id: string) => {
-    const updatedGoals = goals.filter((g) => g.id !== id);
-    setGoals(updatedGoals);
-    saveGoalsToStorage(updatedGoals);
+    setGoals(goals.filter((g) => g.id !== id));
   };
 
   return { goals, addGoal, removeGoal };
