@@ -26,7 +26,7 @@ export function getResourcesUi(analysis: Analysis) {
   const spoils = analysis.playerFaction.monthlyTransactionSummary
     .filter((i) => i.resource === "Money" && i.source === "Spoils")
     .reduce((sum, i) => sum + i.amount, 0);
-  const { mcUsage, mcCurrentLimit, mcAlienWarLimit } = analysis.playerFaction;
+  const { mcUsage, mcCurrentLimit, mcAlienWarLimit, mcHateFloor } = analysis.playerFaction;
   const nationBg = getNationBg(
     analysis.nations
       .filter((i) => i.controlPoints.some((cp) => cp.factionId === analysis.playerFaction.id))
@@ -55,6 +55,9 @@ export function getResourcesUi(analysis: Analysis) {
         (<PrioritySpoils /> ${spoils.toFixed(0)}, <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
         <span title="If more MC is used than this, alien hate will never fall below 50">
           Lim {mcAlienWarLimit.toFixed(0)}
+        </span>
+        <span title="Current hate floor (alien hate cannot go below this due to your MC usage)">
+          Flr {mcHateFloor.toFixed(0)}
         </span>
         )
       </>
