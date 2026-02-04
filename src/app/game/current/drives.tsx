@@ -23,7 +23,9 @@ type SortColumn =
   | "unlockChance"
   | "tanksAffordable"
   | "techResearchRemaining"
-  | "projectResearchRemaining";
+  | "projectResearchRemaining"
+  | "shipDeltaV"
+  | "tripTime";
 type SortDirection = "asc" | "desc";
 
 function DrivesTable({ analysis }: { analysis: Analysis }) {
@@ -102,6 +104,12 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
       case "projectResearchRemaining":
         compareValue = a.projectResearchRemaining - b.projectResearchRemaining;
         break;
+      case "shipDeltaV":
+        compareValue = a.shipDeltaV - b.shipDeltaV;
+        break;
+      case "tripTime":
+        compareValue = a.tripTime - b.tripTime;
+        break;
     }
 
     return sortDirection === "asc" ? compareValue : -compareValue;
@@ -130,6 +138,13 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
       </div>
       <Table>
         <TableHeader>
+          <TableRow>
+            <TableHead colSpan={17}></TableHead>
+            <TableHead colSpan={3} className="text-center border-l-2 whitespace-normal">
+              Hypothetical Ship (10k tons dry + radiator + 100 fuel tanks)
+            </TableHead>
+            <TableHead></TableHead>
+          </TableRow>
           <TableRow>
             <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("friendlyName")}>
               Drive Name <SortIcon column="friendlyName" />
@@ -222,6 +237,21 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             >
               Proj. Res. <SortIcon column="projectResearchRemaining" />
             </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50 border-l-2"
+              onClick={() => handleSort("shipDeltaV")}
+              title="Ship Delta-V (10k tons + radiator + 100 fuel tanks)"
+            >
+              ΔV (km/s) <SortIcon column="shipDeltaV" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("tripTime")}
+              title="Time to travel 5 AU (days)"
+            >
+              5AU Time (d) <SortIcon column="tripTime" />
+            </TableHead>
+            <TableHead className="text-right" title="Remaining Delta-V after 5 AU trip">Remaining ΔV</TableHead>
             <TableHead title="Add/Remove Technology Goal">Goal</TableHead>
           </TableRow>
         </TableHeader>
@@ -287,6 +317,13 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 </TableCell>
                 <TableCell className="text-right">
                   {drive.projectResearchRemaining > 0 ? smartRound(drive.projectResearchRemaining / 1000) : "-"}
+                </TableCell>
+                <TableCell className="text-right">{smartRound(drive.shipDeltaV / 1000)}</TableCell>
+                <TableCell className="text-right" title={drive.tripType}>
+                  {smartRound(drive.tripTime / 86400)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {drive.remainingDeltaV > 0 ? smartRound(drive.remainingDeltaV / 1000) : "-"}
                 </TableCell>
                 <TableCell className="text-center">
                   {!isComplete && isInGoals && (

@@ -1267,6 +1267,67 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       }
     }
     
+    // Calculate hypothetical ship performance
+    // Ship: 10,000 tons dry + radiator + 10,000 tons fuel (100 tanks)
+    const dryMass = 10000 + (radiatorTons || 0); // tons
+    const fuelMass = 10000; // 100 tanks @ 100 tons each
+    const wetMass = dryMass + fuelMass;
+    
+    // Delta-V calculation using Tsiolkovsky rocket equation
+    const exhaustVelocity = drive.EV_kps * 1000; // Convert km/s to m/s
+    const shipDeltaV = exhaustVelocity * Math.log(wetMass / dryMass); // m/s
+    
+    // Trip calculation: 5 AU with constant thrust
+    const tripDistance = 5 * 149597870700; // 5 AU in meters
+    const midpointDistance = tripDistance / 2;
+    
+    // Use average mass for acceleration calculation
+    const avgMass = ((wetMass + dryMass) / 2) * 1000; // Convert tons to kg
+    const thrust = drive.thrust_N;
+    const avgAcceleration = thrust / avgMass; // m/s²
+    
+    // For symmetric brachistochrone trajectory (accel to midpoint, then decel)
+    // Time to midpoint: t = sqrt(2 * d / a)
+    // Velocity at midpoint: v = sqrt(2 * a * d)
+    const timeToMidpoint = Math.sqrt(2 * midpointDistance / avgAcceleration); // seconds
+    const velocityAtMidpoint = avgAcceleration * timeToMidpoint; // m/s
+    const deltaVNeeded = 2 * velocityAtMidpoint; // m/s (accel + decel)
+    
+    // Determine if thrust-limited or deltaV-limited
+    let tripTime: number;
+    let remainingDeltaV: number;
+    let tripType: "thrust-limited" | "deltaV-limited";
+    
+    if (deltaVNeeded <= shipDeltaV) {
+      // Thrust-limited: have enough fuel, time limited by acceleration
+      tripTime = timeToMidpoint * 2; // seconds
+      remainingDeltaV = shipDeltaV - deltaVNeeded;
+      tripType = "thrust-limited";
+    } else {
+      // DeltaV-limited: run out of fuel before reaching full speed
+      tripType = "deltaV-limited";
+      remainingDeltaV = 0;
+      
+      // Max velocity we can reach with available deltaV
+      const maxVelocity = shipDeltaV / 2; // m/s (half for accel, half for decel)
+      
+      // Distance covered during acceleration: d = v²/(2a)
+      const accelDistance = (maxVelocity * maxVelocity) / (2 * avgAcceleration);
+      const coastDistance = tripDistance - 2 * accelDistance;
+      
+      // Time for acceleration phase
+      const accelTime = maxVelocity / avgAcceleration;
+      
+      if (coastDistance > 0) {
+        // Coast phase exists
+        const coastTime = coastDistance / maxVelocity;
+        tripTime = 2 * accelTime + coastTime;
+      } else {
+        // No coast phase, pure accel/decel
+        tripTime = 2 * accelTime;
+      }
+    }
+    
     return {
       dataName: drive.dataName,
       friendlyName: displayName,
@@ -1290,6 +1351,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       radiatorTons,
       techResearchRemaining,
       projectResearchRemaining,
+      shipDeltaV,
+      tripTime,
+      tripType,
+      remainingDeltaV,
     };
   });
 
