@@ -2,9 +2,11 @@ import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ShowEffects } from "@/components/showEffects";
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { smartRound } from "@/lib/utils";
 import { ResearchLink } from "./researchLink";
+import { useTechnologyGoals } from "./technologyGoals";
+import { Button } from "@/components/ui/button";
 
 type SortColumn =
   | "friendlyName"
@@ -27,6 +29,7 @@ type SortDirection = "asc" | "desc";
 function DrivesTable({ analysis }: { analysis: Analysis }) {
   const [sortColumn, setSortColumn] = useState<SortColumn>("driveClassification");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const { goals, addGoal, removeGoal } = useTechnologyGoals(analysis);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -209,6 +212,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             >
               Proj. Res. <SortIcon column="projectResearchRemaining" />
             </TableHead>
+            <TableHead title="Add/Remove Technology Goal">Goal</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -225,15 +229,21 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
               antimatter: drive.propellantMaterials.antimatter,
             };
 
-            // Determine row background based on tanks affordable
-            const rowClassName =
-              drive.tanksAffordable < 10
-                ? "bg-gray-100"
-                : drive.tanksAffordable < 100
-                ? "bg-red-100"
-                : drive.tanksAffordable < 500
-                ? "bg-yellow-100"
-                : "";
+            // Check if this project is in the goals list
+            const isComplete = isUnlocked;
+            const goalForThisDrive = goals.find((g) => g.name === drive.requiredProjectName);
+            const isInGoals = !!goalForThisDrive;
+
+            // Determine row background based on goal status or tanks affordable
+            const rowClassName = isInGoals
+              ? "bg-green-50"
+              : drive.tanksAffordable < 10
+              ? "bg-red-50"
+              : drive.tanksAffordable < 100
+              ? "bg-orange-50"
+              : drive.tanksAffordable < 500
+              ? "bg-yellow-50"
+              : "";
 
             return (
               <TableRow key={drive.dataName} className={rowClassName}>
@@ -267,6 +277,30 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 </TableCell>
                 <TableCell className="text-right">
                   {drive.projectResearchRemaining > 0 ? smartRound(drive.projectResearchRemaining / 1000) : "-"}
+                </TableCell>
+                <TableCell className="text-center">
+                  {!isComplete && isInGoals && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeGoal(goalForThisDrive.id)}
+                      className="h-8 w-8 p-0 bg-white"
+                      title="Remove from goals"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {!isComplete && !isInGoals && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addGoal("project", drive.requiredProjectName)}
+                      className="h-8 w-8 p-0 bg-white"
+                      title="Add to goals"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             );
