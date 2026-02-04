@@ -46,12 +46,12 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
     // First, check if drives are in goals
     const aInGoals = goals.some((g) => g.name === a.requiredProjectName);
     const bInGoals = goals.some((g) => g.name === b.requiredProjectName);
-    
+
     // Goals always come first
     if (aInGoals !== bInGoals) {
       return aInGoals ? -1 : 1;
     }
-    
+
     // Within same goal status, apply normal sort
     let compareValue = 0;
 
@@ -140,8 +140,12 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
         <TableHeader>
           <TableRow>
             <TableHead colSpan={17}></TableHead>
-            <TableHead colSpan={3} className="text-center border-l-2 whitespace-normal">
-              Hypothetical Ship (10k tons dry + radiator + 100 fuel tanks)
+            <TableHead
+              colSpan={3}
+              className="text-center border-l-2 whitespace-normal"
+              title="10k tons dry + radiator + 100 fuel tanks"
+            >
+              Hypothetical Ship
             </TableHead>
             <TableHead></TableHead>
           </TableRow>
@@ -251,7 +255,9 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             >
               5AU Time (d) <SortIcon column="tripTime" />
             </TableHead>
-            <TableHead className="text-right" title="Remaining Delta-V after 5 AU trip">Remaining ΔV</TableHead>
+            <TableHead className="text-right" title="Remaining Delta-V after 5 AU trip">
+              Remaining ΔV
+            </TableHead>
             <TableHead title="Add/Remove Technology Goal">Goal</TableHead>
           </TableRow>
         </TableHeader>
