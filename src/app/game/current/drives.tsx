@@ -350,10 +350,22 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   {drive.unlockChance !== undefined ? `${drive.unlockChance}%` : ""}
                 </TableCell>
                 <TableCell className="text-right">{drive.tanksAffordable}</TableCell>
-                <TableCell className="text-right">
+                <TableCell 
+                  className="text-right"
+                  title={drive.requiredTechs.length > 0 
+                    ? drive.requiredTechs.map((name: string) => analysis.techs.get(name)?.displayName || name).join('\n')
+                    : undefined
+                  }
+                >
                   {drive.techResearchRemaining > 0 ? smartRound(drive.techResearchRemaining / 1000) : "-"}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell 
+                  className="text-right"
+                  title={drive.requiredProjects.length > 0 
+                    ? drive.requiredProjects.map((name: string) => analysis.projects.get(name)?.displayName || name).join('\n')
+                    : undefined
+                  }
+                >
                   {drive.projectResearchRemaining > 0 ? smartRound(drive.projectResearchRemaining / 1000) : "-"}
                 </TableCell>
                 <TableCell className="text-right">{smartRound(drive.shipDeltaV / 1000)}</TableCell>

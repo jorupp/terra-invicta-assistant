@@ -1136,7 +1136,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     }
   }
   
-  function calculateRemainingResearch(targetName: string): { techResearchRemaining: number; projectResearchRemaining: number } {
+  function calculateRemainingResearch(targetName: string): { 
+    techResearchRemaining: number; 
+    projectResearchRemaining: number;
+    requiredTechs: string[];
+    requiredProjects: string[];
+  } {
     const complete = new Set([
       ...globalTechState.finishedTechsNames,
       ...playerFaction!.finishedProjectNames,
@@ -1169,6 +1174,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     
     let techResearchRemaining = 0;
     let projectResearchRemaining = 0;
+    const requiredTechs: string[] = [];
+    const requiredProjects: string[] = [];
     
     for (const name of required) {
       const tech = techs.get(name);
@@ -1181,12 +1188,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       
       if (tech) {
         techResearchRemaining += remainingCost;
+        requiredTechs.push(name);
       } else {
         projectResearchRemaining += remainingCost;
+        requiredProjects.push(name);
       }
     }
     
-    return { techResearchRemaining, projectResearchRemaining };
+    return { techResearchRemaining, projectResearchRemaining, requiredTechs, requiredProjects };
   }
   
   // Load radiators and calculate cooling efficiency (GW per ton)
@@ -1214,7 +1223,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     : undefined;
   
   const drives = Array.from(drivesByBaseName.values()).map((drive) => {
-    const { techResearchRemaining, projectResearchRemaining } = calculateRemainingResearch(drive.requiredProjectName);
+    const { techResearchRemaining, projectResearchRemaining, requiredTechs, requiredProjects } = calculateRemainingResearch(drive.requiredProjectName);
     
     const thrustRating = Math.log(drive.thrust_N) / Math.log(4);  // log4
     const exhaustRating = Math.log2(drive.EV_kps);
@@ -1352,6 +1361,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       radiatorTons,
       techResearchRemaining,
       projectResearchRemaining,
+      requiredTechs,
+      requiredProjects,
       shipDeltaV,
       accelerationMilliGs,
       tripTime,
