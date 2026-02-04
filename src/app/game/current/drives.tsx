@@ -142,7 +142,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead
               colSpan={4}
               className="text-center border-l-2 whitespace-normal"
-              title="10k tons dry + radiator + 100 fuel tanks"
+              title="10k tons dry + radiator + 50 fuel tanks"
             >
               Hypothetical Ship
             </TableHead>
@@ -244,14 +244,14 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50 border-l-2"
               onClick={() => handleSort("shipDeltaV")}
-              title="Ship Delta-V (km/s, 10k tons + radiator + 100 fuel tanks)"
+              title="Ship Delta-V (km/s, 10k tons + radiator + 50 fuel tanks)"
             >
               ΔV <SortIcon column="shipDeltaV" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("accelerationMilliGs")}
-              title="Ship acceleration (milli-gs, average mass during burn)"
+              title="Ship acceleration (milli-gs, at full fuel)"
             >
               Accel <SortIcon column="accelerationMilliGs" />
             </TableHead>

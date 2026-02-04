@@ -1281,9 +1281,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     }
     
     // Calculate hypothetical ship performance
-    // Ship: 10,000 tons dry + radiator + 10,000 tons fuel (100 tanks)
+    // Ship: 10,000 tons dry + radiator + 5,000 tons fuel (50 tanks)
     const dryMass = 10000 + (radiatorTons || 0); // tons
-    const fuelMass = 10000; // 100 tanks @ 100 tons each
+    const fuelMass = 5000; // 50 tanks @ 100 tons each
     const wetMass = dryMass + fuelMass;
     
     // Delta-V calculation using Tsiolkovsky rocket equation
@@ -1294,11 +1294,15 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const tripDistance = 5 * 149597870700; // 5 AU in meters
     const midpointDistance = tripDistance / 2;
     
-    // Use average mass for acceleration calculation
-    const avgMass = ((wetMass + dryMass) / 2) * 1000; // Convert tons to kg
+    // Calculate initial acceleration (at full fuel)
     const thrust = drive.thrust_N;
+    const initialMass = wetMass * 1000; // Convert tons to kg
+    const initialAcceleration = thrust / initialMass; // m/s²
+    const accelerationMilliGs = (initialAcceleration / 9.81) * 1000; // Convert to milli-gs
+    
+    // Use average mass for trip time calculation
+    const avgMass = ((wetMass + dryMass) / 2) * 1000; // Convert tons to kg
     const avgAcceleration = thrust / avgMass; // m/s²
-    const accelerationMilliGs = (avgAcceleration / 9.81) * 1000; // Convert to milli-gs
     
     // For symmetric brachistochrone trajectory (accel to midpoint, then decel)
     // Time to midpoint: t = sqrt(2 * d / a)
