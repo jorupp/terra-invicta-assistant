@@ -1285,6 +1285,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const avgMass = ((wetMass + dryMass) / 2) * 1000; // Convert tons to kg
     const thrust = drive.thrust_N;
     const avgAcceleration = thrust / avgMass; // m/s²
+    const accelerationMilliGs = (avgAcceleration / 9.81) * 1000; // Convert to milli-gs
     
     // For symmetric brachistochrone trajectory (accel to midpoint, then decel)
     // Time to midpoint: t = sqrt(2 * d / a)
@@ -1352,6 +1353,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       techResearchRemaining,
       projectResearchRemaining,
       shipDeltaV,
+      accelerationMilliGs,
       tripTime,
       tripType,
       remainingDeltaV,

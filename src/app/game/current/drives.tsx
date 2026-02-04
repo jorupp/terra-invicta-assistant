@@ -24,6 +24,7 @@ type SortColumn =
   | "techResearchRemaining"
   | "projectResearchRemaining"
   | "shipDeltaV"
+  | "accelerationMilliGs"
   | "tripTime";
 type SortDirection = "asc" | "desc";
 
@@ -100,6 +101,9 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
       case "shipDeltaV":
         compareValue = a.shipDeltaV - b.shipDeltaV;
         break;
+      case "accelerationMilliGs":
+        compareValue = a.accelerationMilliGs - b.accelerationMilliGs;
+        break;
       case "tripTime":
         compareValue = a.tripTime - b.tripTime;
         break;
@@ -135,7 +139,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             <TableHead></TableHead>
             <TableHead colSpan={16}></TableHead>
             <TableHead
-              colSpan={3}
+              colSpan={4}
               className="text-center border-l-2 whitespace-normal"
               title="10k tons dry + radiator + 100 fuel tanks"
             >
@@ -245,6 +249,13 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("accelerationMilliGs")}
+              title="Ship acceleration (milli-gs, average mass during burn)"
+            >
+              Accel <SortIcon column="accelerationMilliGs" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
               onClick={() => handleSort("tripTime")}
               title="Time to travel 5 AU (days)"
             >
@@ -346,6 +357,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   {drive.projectResearchRemaining > 0 ? smartRound(drive.projectResearchRemaining / 1000) : "-"}
                 </TableCell>
                 <TableCell className="text-right">{smartRound(drive.shipDeltaV / 1000)}</TableCell>
+                <TableCell className="text-right">{smartRound(drive.accelerationMilliGs)}</TableCell>
                 <TableCell className="text-right" title={drive.tripType}>
                   {smartRound(drive.tripTime / 86400)}
                 </TableCell>
