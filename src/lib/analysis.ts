@@ -1244,14 +1244,18 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     };
     
     // Calculate how many tanks the player can afford with current resources
-    const tanksAffordable = Math.floor(Math.min(
-      propellantMaterials.water > 0 ? playerFaction!.resources.Water / propellantMaterials.water : Infinity,
-      propellantMaterials.volatiles > 0 ? playerFaction!.resources.Volatiles / propellantMaterials.volatiles : Infinity,
-      propellantMaterials.metals > 0 ? playerFaction!.resources.Metals / propellantMaterials.metals : Infinity,
-      propellantMaterials.nobleMetals > 0 ? playerFaction!.resources.NobleMetals / propellantMaterials.nobleMetals : Infinity,
-      propellantMaterials.fissiles > 0 ? playerFaction!.resources.Fissiles / propellantMaterials.fissiles : Infinity,
-      propellantMaterials.antimatter > 0 ? playerFaction!.resources.Antimatter / propellantMaterials.antimatter : Infinity,
-    ));
+    const resourceAmounts = [
+      { name: 'Water', tanks: propellantMaterials.water > 0 ? playerFaction!.resources.Water / propellantMaterials.water : Infinity },
+      { name: 'Volatiles', tanks: propellantMaterials.volatiles > 0 ? playerFaction!.resources.Volatiles / propellantMaterials.volatiles : Infinity },
+      { name: 'Metals', tanks: propellantMaterials.metals > 0 ? playerFaction!.resources.Metals / propellantMaterials.metals : Infinity },
+      { name: 'NobleMetals', tanks: propellantMaterials.nobleMetals > 0 ? playerFaction!.resources.NobleMetals / propellantMaterials.nobleMetals : Infinity },
+      { name: 'Fissiles', tanks: propellantMaterials.fissiles > 0 ? playerFaction!.resources.Fissiles / propellantMaterials.fissiles : Infinity },
+      { name: 'Antimatter', tanks: propellantMaterials.antimatter > 0 ? playerFaction!.resources.Antimatter / propellantMaterials.antimatter : Infinity },
+    ];
+    
+    const limitingResource = resourceAmounts.reduce((min, curr) => curr.tanks < min.tanks ? curr : min);
+    const tanksAffordable = Math.floor(limitingResource.tanks);
+    const limitingResourceName = limitingResource.tanks !== Infinity ? limitingResource.name : undefined;
     
     // Clean up friendly name by removing thruster count suffix
     const displayName = drive.friendlyName
@@ -1358,6 +1362,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       overallRating,
       unlockChance: unlockChance === 100 || isProjectComplete ? undefined : unlockChance,
       tanksAffordable,
+      limitingResourceName,
       radiatorTons,
       techResearchRemaining,
       projectResearchRemaining,

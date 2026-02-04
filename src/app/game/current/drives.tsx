@@ -7,6 +7,7 @@ import { smartRound } from "@/lib/utils";
 import { ResearchLink } from "./researchLink";
 import { useTechnologyGoals } from "./technologyGoals";
 import { Button } from "@/components/ui/button";
+import { Water, Volatiles, Metals, Nobles, Fissiles, Antimatter } from "@/components/icons";
 
 type SortColumn =
   | "friendlyName"
@@ -349,7 +350,19 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 <TableCell className="text-right">
                   {drive.unlockChance !== undefined ? `${drive.unlockChance}%` : ""}
                 </TableCell>
-                <TableCell className="text-right">{drive.tanksAffordable}</TableCell>
+                <TableCell className="text-right">
+                  {drive.tanksAffordable} {drive.limitingResourceName && (() => {
+                    const ResourceIcon = {
+                      Water,
+                      Volatiles,
+                      Metals,
+                      NobleMetals: Nobles,
+                      Fissiles,
+                      Antimatter,
+                    }[drive.limitingResourceName];
+                    return ResourceIcon ? <ResourceIcon /> : null;
+                  })()}
+                </TableCell>
                 <TableCell 
                   className="text-right"
                   title={drive.requiredTechs.length > 0 
