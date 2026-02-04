@@ -41,6 +41,16 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
   };
 
   const drives = analysis.drives.toSorted((a, b) => {
+    // First, check if drives are in goals
+    const aInGoals = goals.some((g) => g.name === a.requiredProjectName);
+    const bInGoals = goals.some((g) => g.name === b.requiredProjectName);
+    
+    // Goals always come first
+    if (aInGoals !== bInGoals) {
+      return aInGoals ? -1 : 1;
+    }
+    
+    // Within same goal status, apply normal sort
     let compareValue = 0;
 
     switch (sortColumn) {
