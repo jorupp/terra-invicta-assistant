@@ -5,10 +5,15 @@ This is a Next.js companion app for the game Terra Invicta, designed to run on a
 ## Build, Test, and Lint
 
 ```bash
-npm run dev    # Start development server on http://localhost:3000 - this is the only command usually used.
+npm run dev         # Start development server on http://localhost:3002 - This is already running in the background.
+npm run type-check  # Check TypeScript types without building - USE THIS to verify types, NOT npm run build
 ```
 
-No test suite is currently configured.
+**Important**:
+
+- Always assume `npm run dev` is running in the background on port 3002
+- Use `npm run type-check` to verify TypeScript types, NOT `npm run build`
+- No test suite is currently configured
 
 ## Architecture Overview
 
