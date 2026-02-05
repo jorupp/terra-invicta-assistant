@@ -556,6 +556,7 @@ export interface HabModule {
   destroyed: boolean;
   tier: number;
   requiredProjectName: string;
+  upgradesFromName?: string;
   crew: number;
   power: number;
   baseMass_tons: number;

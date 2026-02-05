@@ -81,6 +81,20 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const driveLocalization = await localizations.drive();
   const powerPlantLocalization = await localizations.powerPlant();
 
+  // Load hab module templates early so we can use them in faction processing
+  const habModuleTemplates = (await templates.habModules()).reduce((acc, mod) => {
+    acc.set(mod.dataName, mod);
+    return acc;
+  }, new Map<string, Awaited<ReturnType<typeof templates.habModules>>[0]>());
+
+  // Phase 1: Create upgrade map (old module -> new module)
+  const moduleUpgradeMap = new Map<string, string>();
+  for (const module of habModuleTemplates.values()) {
+    if (module.upgradesFromName) {
+      moduleUpgradeMap.set(module.upgradesFromName, module.dataName);
+    }
+  }
+
   const factions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].map(({ Value: faction }) => {
     const mcMultiplier =
       (difficulty === "Cinematic"
@@ -190,6 +204,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       missedProjects: faction.missedProjects || [],
       potentialProjects: (faction.activeProjectTriggers || []).map((i) => i.projectTemplateName),
       resources: faction.resources,
+      // Phase 2: Track unlocked hab modules for this faction
+      unlockedHabModules: new Set(
+        [...habModuleTemplates.values()]
+          .filter((module) => !module.requiredProjectName || faction.finishedProjectNames.includes(module.requiredProjectName))
+          .map((module) => module.dataName)
+      ),
     };
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
@@ -336,10 +356,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     };
   });
   const fleetsById = new Map<number, (typeof fleets)[0]>(fleets.map((fleet) => [fleet.id, fleet]));
-  const habModuleTemplates = (await templates.habModules()).reduce((acc, mod) => {
-    acc.set(mod.dataName, mod);
-    return acc;
-  }, new Map<string, Awaited<ReturnType<typeof templates.habModules>>[0]>());
   const habModules = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabModuleState"].map(({ Value: mod }) => ({
     id: mod.ID.value,
     sectorId: mod.sector?.value,
@@ -572,6 +588,39 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const futurePower = Math.round(power.reduce((a, b) => a + b.power, 0));
       const hasSolar = power.some((p) => p.isSolar);
 
+      // Phase 3: Calculate if any power modules can be safely upgraded
+      const habFaction = factionsById.get(hab.faction.value);
+      let canUpgradePower = false;
+      
+      if (habFaction) {
+        // Get all active power-producing modules that can be upgraded
+        const activePowerModules = moduleTemplates
+          .map(({ active, template: t }, index) => ({ 
+            active, 
+            template: t, 
+            actualPower: power[index].power 
+          }))
+          .filter(({ active, template, actualPower }) => 
+            active && 
+            actualPower > 0 && 
+            template.dataName &&
+            moduleUpgradeMap.has(template.dataName)
+          );
+
+        // Check if any module can be safely upgraded
+        for (const { template, actualPower } of activePowerModules) {
+          const upgradeName = moduleUpgradeMap.get(template.dataName);
+          if (upgradeName && habFaction.unlockedHabModules.has(upgradeName)) {
+            // Check if base still has enough power with this module offline
+            const powerAfterUpgrade = activePower - actualPower;
+            if (powerAfterUpgrade >= 0) {
+              canUpgradePower = true;
+              break;
+            }
+          }
+        }
+      }
+
       return {
         id: hab.ID.value,
         faction: hab.faction.value,
@@ -598,6 +647,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         activePower,
         futurePower,
         hasSolar,
+        canUpgradePower,
       };
     })
     .toSorted((a, b) =>
