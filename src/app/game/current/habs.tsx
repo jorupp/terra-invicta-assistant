@@ -25,7 +25,10 @@ function HabScienceHeader() {
         <TableHead>Most important upcoming completion</TableHead>
         <TableHead title="Days to complete">D2C</TableHead>
         <TableHead>Alerts</TableHead>
-        <TableHead>
+        <TableHead title="Current Power">
+          <HabPower />
+        </TableHead>
+        <TableHead title="Future Power">
           <HabPower />
         </TableHead>
         <TableHead>Current bonuses</TableHead>
@@ -93,11 +96,9 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
       </TableCell>
+      <TableCell>{hab.activePower?.toFixed(0)}</TableCell>
       <TableCell>
-        <span
-          title={`Current power: ${hab.activePower?.toFixed(0)}`}
-          className={twMerge(hab.futurePower < 0 ? "bg-red-100 p-1 rounded" : "")}
-        >
+        <span className={twMerge(hab.futurePower < 0 ? "bg-red-100 p-1 rounded" : "")}>
           {hab.futurePower?.toFixed(0)}
         </span>
       </TableCell>
