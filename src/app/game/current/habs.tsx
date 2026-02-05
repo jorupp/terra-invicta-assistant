@@ -95,11 +95,7 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
-        {hab.canUpgradePower && (
-          <span className="bg-green-100 text-black p-1 rounded" title="Power module can be upgraded">
-            <HabPower className="inline h-4 w-4" /> ⬆
-          </span>
-        )}
+        {hab.canUpgradePower && <HabPower title="Power module can be upgraded" />}
       </TableCell>
       <TableCell>{hab.activePower?.toFixed(0)}</TableCell>
       <TableCell>
