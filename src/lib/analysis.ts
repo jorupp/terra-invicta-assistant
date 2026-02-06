@@ -207,7 +207,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       // Phase 2: Track unlocked hab modules for this faction
       unlockedHabModules: new Set(
         [...habModuleTemplates.values()]
-          .filter((module) => !module.requiredProjectName || faction.finishedProjectNames.includes(module.requiredProjectName))
+          .filter(
+            (module) => !module.requiredProjectName || faction.finishedProjectNames.includes(module.requiredProjectName)
+          )
           .map((module) => module.dataName)
       ),
     };
@@ -591,20 +593,18 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       // Phase 3: Calculate if any power modules can be safely upgraded
       const habFaction = factionsById.get(hab.faction.value);
       let canUpgradePower = false;
-      
+
       if (habFaction) {
         // Get all active power-producing modules that can be upgraded
         const activePowerModules = moduleTemplates
-          .map(({ active, template: t }, index) => ({ 
-            active, 
-            template: t, 
-            actualPower: power[index].power 
+          .map(({ active, template: t }, index) => ({
+            active,
+            template: t,
+            actualPower: power[index].power,
           }))
-          .filter(({ active, template, actualPower }) => 
-            active && 
-            actualPower > 0 && 
-            template.dataName &&
-            moduleUpgradeMap.has(template.dataName)
+          .filter(
+            ({ active, template, actualPower }) =>
+              active && actualPower > 0 && template.dataName && moduleUpgradeMap.has(template.dataName)
           );
 
         // Check if any module can be safely upgraded
@@ -623,23 +623,20 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // Calculate if any combat modules can be upgraded
       let canUpgradeCombat = false;
-      
+
       if (habFaction) {
         // Check if any space combat modules are under construction or unpowered
-        const combatModulesNotReady = moduleTemplates.some(({ active, template }) => 
-          template.spaceCombatModule && !active
+        const combatModulesNotReady = moduleTemplates.some(
+          ({ active, template }) => template.spaceCombatModule && !active
         );
 
         // Only check for upgrades if all combat modules are active
         if (!combatModulesNotReady) {
           // Get all active combat modules that can be upgraded
-          const activeCombatModules = moduleTemplates
-            .filter(({ active, template }) => 
-              active && 
-              template.spaceCombatModule && 
-              template.dataName &&
-              moduleUpgradeMap.has(template.dataName)
-            );
+          const activeCombatModules = moduleTemplates.filter(
+            ({ active, template }) =>
+              active && template.spaceCombatModule && template.dataName && moduleUpgradeMap.has(template.dataName)
+          );
 
           // Check if any combat module has an unlocked upgrade
           for (const { template } of activeCombatModules) {
@@ -654,25 +651,23 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // Calculate if any farms can be upgraded due to crew needs
       let canUpgradeFarm = false;
-      
+
       if (habFaction) {
         // Calculate total crew needed by all modules (including unpowered and under construction)
         const totalCrewNeeded = moduleTemplates.reduce((sum, { template }) => sum + (template.crew || 0), 0);
-        
+
         // Calculate total crew supported by existing farms (including unpowered and under construction)
         const totalCrewSupported = moduleTemplates
           .filter(({ template }) => template.specialRules?.includes("Farm"))
           .reduce((sum, { template }) => sum + (template.specialRulesValue || 0), 0);
-        
+
         // Only check for farm upgrades if crew needed exceeds crew supported
         if (totalCrewNeeded > totalCrewSupported) {
           // Get all farms that can be upgraded
-          const upgradableFarms = moduleTemplates
-            .filter(({ template }) => 
-              template.specialRules?.includes("Farm") &&
-              template.dataName &&
-              moduleUpgradeMap.has(template.dataName)
-            );
+          const upgradableFarms = moduleTemplates.filter(
+            ({ template }) =>
+              template.specialRules?.includes("Farm") && template.dataName && moduleUpgradeMap.has(template.dataName)
+          );
 
           // Check if any farm has an unlocked upgrade
           for (const { template } of upgradableFarms) {
@@ -838,6 +833,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const regions = regionsByNationId.get(nation.ID.value) || [];
       const mc = regions.reduce((acc, r) => acc + r.missionControl, 0);
       const boostPerMonth = regions.reduce((acc, r) => acc + r.boostPerYear, 0) / 12;
+      const ipPerCpCost = totalCpCost > 0 ? investmentPoints / totalCpCost : 0;
+      const possibleBoostPerCpCost = boostPerMonth > 0 ? ipPerCpCost : 0;
       const mcPerCpCost = totalCpCost > 0 ? mc / totalCpCost : 0;
       const boostPerMonthPerCpCost = totalCpCost > 0 ? boostPerMonth / totalCpCost : 0;
       const populationInMillions = regions.reduce((acc, r) => acc + r.populationInMillions, 0);
@@ -890,6 +887,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         tooHighUnrest,
         spoilsWithoutAllCPs,
         couldBuildBoost,
+        ipPerCpCost,
+        possibleBoostPerCpCost,
       };
     })
     .filter((i) => i.populationInMillions > 0);

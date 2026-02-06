@@ -280,6 +280,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                 <TableRow>
                   <TableHead>Nation</TableHead>
                   <TableHead>Control Points</TableHead>
+                  <TableHead>Possible Boost IP Per CP Cost</TableHead>
                   <TableHead>Current MC / Boost</TableHead>
                   <TableHead>Boost/mo Per CP Cost</TableHead>
                   <TableHead>MC Per CP Cost</TableHead>
@@ -287,13 +288,19 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
               </TableHeader>
               <TableBody>
                 {nations
-                  .toSorted((a, b) => (a.boostPerMonthPerCpCost < b.boostPerMonthPerCpCost ? 1 : -1))
+                  .toSorted((a, b) => {
+                    if (a.boostPerMonthPerCpCost !== b.boostPerMonthPerCpCost) {
+                      return b.possibleBoostPerCpCost - a.possibleBoostPerCpCost;
+                    }
+                    return a.boostPerMonthPerCpCost < b.boostPerMonthPerCpCost ? 1 : -1;
+                  })
                   .map((nation) => (
                     <TableRow key={nation.id}>
                       <TableCell>{nation.displayName}</TableCell>
                       <TableCell>
                         <NationCPDetails {...{ analysis, nation }} />
                       </TableCell>
+                      <TableCell>{nation.possibleBoostPerCpCost.toFixed(2)}</TableCell>
                       <TableCell>
                         {nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost />
                       </TableCell>
@@ -345,7 +352,7 @@ const NationCPDetails = ({ analysis, nation }: { nation: Analysis["nations"][0];
             );
           })
         : null}{" "}
-      ({nation.totalCpCost.toFixed(0)} cost, {nation.investmentPoints.toFixed(0)} IP)
+      ({smartRound(nation.totalCpCost)} cost, {smartRound(nation.investmentPoints)} IP)
       {(() => {
         const earliestCrackdown = sortByDateTime(
           nation.controlPoints.filter((cp) => cp.crackdownExpiration),
