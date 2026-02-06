@@ -186,6 +186,8 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
 export function getHabsUi(analysis: Analysis) {
   const { playerHabs } = analysis;
   const missingMines = playerHabs.filter((h) => h.missingMine);
+  const upgradablePowerHabs = playerHabs.filter((h) => h.canUpgradePower);
+  const upgradableCombatHabs = playerHabs.filter((h) => h.canUpgradeCombat);
   const nextCompletion = playerHabs
     .flatMap((i) => i.highlightedCompletions)
     .filter((i) => i)
@@ -196,6 +198,10 @@ export function getHabsUi(analysis: Analysis) {
   // can't use a tooltip for this because it's in the button that is the tab label, which would be nested buttons and cause hydration issues
   const missingMinesTitle =
     missingMines.length > 0 ? `Missing mines: ${missingMines.map((h) => h.displayName).join(", ")}` : "";
+  const upgradablePowerTitle = 
+    upgradablePowerHabs.length > 0 ? `${upgradablePowerHabs.length} hab${upgradablePowerHabs.length > 1 ? 's' : ''} can upgrade power modules` : "";
+  const upgradableCombatTitle = 
+    upgradableCombatHabs.length > 0 ? `${upgradableCombatHabs.length} hab${upgradableCombatHabs.length > 1 ? 's' : ''} can upgrade combat modules` : "";
 
   return {
     key: "habs",
@@ -208,6 +214,18 @@ export function getHabsUi(analysis: Analysis) {
             <span className="bg-yellow-300 text-black p-1 rounded" title={missingMinesTitle}>
               M
             </span>
+          </>
+        )}
+        {upgradablePowerHabs.length > 0 && (
+          <>
+            {" "}
+            <HabPower title={upgradablePowerTitle} />
+          </>
+        )}
+        {upgradableCombatHabs.length > 0 && (
+          <>
+            {" "}
+            <CombatScore title={upgradableCombatTitle} />
           </>
         )}
       </>
