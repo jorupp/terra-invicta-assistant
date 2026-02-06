@@ -621,6 +621,37 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
       }
 
+      // Calculate if any combat modules can be upgraded
+      let canUpgradeCombat = false;
+      
+      if (habFaction) {
+        // Check if any space combat modules are under construction or unpowered
+        const combatModulesNotReady = moduleTemplates.some(({ active, template }) => 
+          template.spaceCombatModule && !active
+        );
+
+        // Only check for upgrades if all combat modules are active
+        if (!combatModulesNotReady) {
+          // Get all active combat modules that can be upgraded
+          const activeCombatModules = moduleTemplates
+            .filter(({ active, template }) => 
+              active && 
+              template.spaceCombatModule && 
+              template.dataName &&
+              moduleUpgradeMap.has(template.dataName)
+            );
+
+          // Check if any combat module has an unlocked upgrade
+          for (const { template } of activeCombatModules) {
+            const upgradeName = moduleUpgradeMap.get(template.dataName);
+            if (upgradeName && habFaction.unlockedHabModules.has(upgradeName)) {
+              canUpgradeCombat = true;
+              break;
+            }
+          }
+        }
+      }
+
       return {
         id: hab.ID.value,
         faction: hab.faction.value,
@@ -648,6 +679,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         futurePower,
         hasSolar,
         canUpgradePower,
+        canUpgradeCombat,
       };
     })
     .toSorted((a, b) =>
