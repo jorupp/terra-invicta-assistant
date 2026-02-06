@@ -1427,17 +1427,37 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
     if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
       // Step 2 & 3: Find eligible reactors and select the one with highest efficiency
-      const eligibleReactors = availablePowerPlants.filter((reactor) => {
+      let eligibleReactors = availablePowerPlants.filter((reactor) => {
         const powerPlantMatches =
           reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General";
         const powerSufficient = reactor.maxOutput_GW >= powerRequiredGW;
         return powerPlantMatches && powerSufficient;
       });
 
+      // If no unlocked reactors found, fall back to all reactors (for future drives)
+      let useFallback = false;
+      if (eligibleReactors.length === 0) {
+        useFallback = true;
+        eligibleReactors = allPowerPlants.filter((reactor) => {
+          const powerPlantMatches =
+            reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General";
+          const powerSufficient = reactor.maxOutput_GW >= powerRequiredGW;
+          return powerPlantMatches && powerSufficient;
+        });
+      }
+
       const bestReactor =
         eligibleReactors.length > 0
           ? eligibleReactors.reduce((best, current) => {
-              return current.efficiency > best.efficiency ? current : best;
+              // For unlocked reactors, use highest efficiency (best case)
+              // For future drives, use lowest efficiency (worst case)
+              return useFallback
+                ? current.efficiency < best.efficiency
+                  ? current
+                  : best
+                : current.efficiency > best.efficiency
+                  ? current
+                  : best;
             })
           : undefined;
 
