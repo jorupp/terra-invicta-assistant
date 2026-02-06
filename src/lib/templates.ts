@@ -975,6 +975,7 @@ export interface PowerPlant {
   powerPlantClass: string;
   efficiency: number;
   crew: number;
+  requiredProjectName?: string;
   weightedBuildMaterials: {
     water: number;
     volatiles: number;

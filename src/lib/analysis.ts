@@ -1335,6 +1335,13 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         })
       : undefined;
 
+  // Load power plants and filter to those unlocked by the player
+  const allPowerPlants = await templates.powerPlants();
+  const availablePowerPlants = allPowerPlants.filter((powerPlant) => {
+    if (!powerPlant.requiredProjectName) return true;
+    return playerFaction!.finishedProjectNames.includes(powerPlant.requiredProjectName);
+  });
+
   const drives = Array.from(drivesByBaseName.values()).map((drive) => {
     const { techResearchRemaining, projectResearchRemaining, requiredTechs, requiredProjects } =
       calculateRemainingResearch(drive.requiredProjectName);
@@ -1415,15 +1422,28 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
     // Calculate radiator mass for Calc/Closed cooling drives
     let radiatorTons: number | undefined = undefined;
-    const powerRequiredGW = parseFloat(drive.thrustRating_GW);
+    // Step 1: Calculate total reactor power required
+    const powerRequiredGW = parseFloat(drive.thrustRating_GW) / drive.efficiency;
 
     if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
-      // Parse the thrust rating (in GW) from string
-      if (!isNaN(powerRequiredGW) && powerRequiredGW > 0) {
-        // Waste heat = input power * (1 - efficiency)
-        // For a drive, waste heat ≈ thrustGW / efficiency * (1 - efficiency)
-        const wasteHeatGW = (powerRequiredGW / drive.efficiency) * (1 - drive.efficiency);
-        // Radiator tons needed = waste heat GW / (GW per ton)
+      // Step 2 & 3: Find eligible reactors and select the one with highest efficiency
+      const eligibleReactors = availablePowerPlants.filter((reactor) => {
+        const powerPlantMatches =
+          reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General";
+        const powerSufficient = reactor.maxOutput_GW >= powerRequiredGW;
+        return powerPlantMatches && powerSufficient;
+      });
+
+      const bestReactor =
+        eligibleReactors.length > 0
+          ? eligibleReactors.reduce((best, current) => {
+              return current.efficiency > best.efficiency ? current : best;
+            })
+          : undefined;
+
+      if (bestReactor) {
+        // Step 4: Calculate waste heat using reactor efficiency
+        const wasteHeatGW = powerRequiredGW * (1 - bestReactor.efficiency);
         radiatorTons = wasteHeatGW / bestRadiator.gwPerTon;
       }
     }
