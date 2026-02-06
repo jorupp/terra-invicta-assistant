@@ -8,7 +8,7 @@ if (!currentGamePath) {
 
 export default async function DebugGame() {
   const data = await loadSaveFile(currentGamePath);
-  const analysis = await analyzeData(data);
+  const analysis = await analyzeData(data, currentGamePath, new Date());
   return (
     <div>
       <h1>Debug Game</h1>
