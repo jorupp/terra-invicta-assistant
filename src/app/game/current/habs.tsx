@@ -13,6 +13,7 @@ import { Fragment } from "react/jsx-runtime";
 import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "./technologyGoals";
 import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
+import { User } from "lucide-react";
 
 function HabScienceHeader() {
   return (
@@ -97,6 +98,11 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
         {hab.canUpgradePower && <HabPower title="Power module can be upgraded" />}
         {hab.canUpgradeCombat && <CombatScore title="Combat module can be upgraded" />}
+        {hab.canUpgradeFarm && (
+          <span title="Farm can be upgraded to support more crew" className="p-1">
+            <User className="inline h-4 w-4" />
+          </span>
+        )}
       </TableCell>
       <TableCell>{hab.activePower?.toFixed(0)}</TableCell>
       <TableCell>
@@ -188,6 +194,7 @@ export function getHabsUi(analysis: Analysis) {
   const missingMines = playerHabs.filter((h) => h.missingMine);
   const upgradablePowerHabs = playerHabs.filter((h) => h.canUpgradePower);
   const upgradableCombatHabs = playerHabs.filter((h) => h.canUpgradeCombat);
+  const upgradableFarmHabs = playerHabs.filter((h) => h.canUpgradeFarm);
   const nextCompletion = playerHabs
     .flatMap((i) => i.highlightedCompletions)
     .filter((i) => i)
@@ -198,10 +205,18 @@ export function getHabsUi(analysis: Analysis) {
   // can't use a tooltip for this because it's in the button that is the tab label, which would be nested buttons and cause hydration issues
   const missingMinesTitle =
     missingMines.length > 0 ? `Missing mines: ${missingMines.map((h) => h.displayName).join(", ")}` : "";
-  const upgradablePowerTitle = 
-    upgradablePowerHabs.length > 0 ? `${upgradablePowerHabs.length} hab${upgradablePowerHabs.length > 1 ? 's' : ''} can upgrade power modules` : "";
-  const upgradableCombatTitle = 
-    upgradableCombatHabs.length > 0 ? `${upgradableCombatHabs.length} hab${upgradableCombatHabs.length > 1 ? 's' : ''} can upgrade combat modules` : "";
+  const upgradablePowerTitle =
+    upgradablePowerHabs.length > 0
+      ? `${upgradablePowerHabs.length} hab${upgradablePowerHabs.length > 1 ? "s" : ""} can upgrade power modules`
+      : "";
+  const upgradableCombatTitle =
+    upgradableCombatHabs.length > 0
+      ? `${upgradableCombatHabs.length} hab${upgradableCombatHabs.length > 1 ? "s" : ""} can upgrade combat modules`
+      : "";
+  const upgradableFarmTitle =
+    upgradableFarmHabs.length > 0
+      ? `${upgradableFarmHabs.length} hab${upgradableFarmHabs.length > 1 ? "s" : ""} can upgrade farms for more crew`
+      : "";
 
   return {
     key: "habs",
@@ -226,6 +241,14 @@ export function getHabsUi(analysis: Analysis) {
           <>
             {" "}
             <CombatScore title={upgradableCombatTitle} />
+          </>
+        )}
+        {upgradableFarmHabs.length > 0 && (
+          <>
+            {" "}
+            <span title={upgradableFarmTitle}>
+              <User className="inline h-4 w-4" />
+            </span>
           </>
         )}
       </>

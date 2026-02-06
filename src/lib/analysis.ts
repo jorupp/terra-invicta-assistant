@@ -652,6 +652,39 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
       }
 
+      // Calculate if any farms can be upgraded due to crew needs
+      let canUpgradeFarm = false;
+      
+      if (habFaction) {
+        // Calculate total crew needed by all modules (including unpowered and under construction)
+        const totalCrewNeeded = moduleTemplates.reduce((sum, { template }) => sum + (template.crew || 0), 0);
+        
+        // Calculate total crew supported by existing farms (including unpowered and under construction)
+        const totalCrewSupported = moduleTemplates
+          .filter(({ template }) => template.specialRules?.includes("Farm"))
+          .reduce((sum, { template }) => sum + (template.specialRulesValue || 0), 0);
+        
+        // Only check for farm upgrades if crew needed exceeds crew supported
+        if (totalCrewNeeded > totalCrewSupported) {
+          // Get all farms that can be upgraded
+          const upgradableFarms = moduleTemplates
+            .filter(({ template }) => 
+              template.specialRules?.includes("Farm") &&
+              template.dataName &&
+              moduleUpgradeMap.has(template.dataName)
+            );
+
+          // Check if any farm has an unlocked upgrade
+          for (const { template } of upgradableFarms) {
+            const upgradeName = moduleUpgradeMap.get(template.dataName);
+            if (upgradeName && habFaction.unlockedHabModules.has(upgradeName)) {
+              canUpgradeFarm = true;
+              break;
+            }
+          }
+        }
+      }
+
       return {
         id: hab.ID.value,
         faction: hab.faction.value,
@@ -680,6 +713,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         hasSolar,
         canUpgradePower,
         canUpgradeCombat,
+        canUpgradeFarm,
       };
     })
     .toSorted((a, b) =>
