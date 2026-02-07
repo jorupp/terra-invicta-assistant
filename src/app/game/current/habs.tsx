@@ -85,7 +85,7 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
       <TableCell>
         <ShowHabCombatEffects effects={activeEffects} />
       </TableCell>
-      <TableCell>
+      <TableCell className="whitespace-normal">
         {highlightedCompletions.map((highlightedCompletion, ix) => (
           <Fragment key={ix}>
             {ix > 0 && ", "}
