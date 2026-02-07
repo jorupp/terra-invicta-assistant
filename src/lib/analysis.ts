@@ -783,6 +783,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         incomeOps_month,
         projectCapacityGranted: incomeProjects,
         incomeResearch_month,
+        volatiles: -(supportMaterials_month?.volatiles || 0),
+        metals: -(supportMaterials_month?.metals || 0),
+        nobles: -(supportMaterials_month?.nobleMetals || 0),
       };
 
       if (originalHab.inEarthLEO) {
