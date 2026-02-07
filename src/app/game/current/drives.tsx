@@ -16,7 +16,7 @@ type SortColumn =
   | "efficiency"
   | "cooling"
   | "powerRequiredGW"
-  | "radiatorTons"
+  | "reactorAndRadiatorTons"
   | "thrustRating"
   | "exhaustRating"
   | "overallRating"
@@ -75,8 +75,8 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
       case "powerRequiredGW":
         compareValue = a.powerRequiredGW - b.powerRequiredGW;
         break;
-      case "radiatorTons":
-        compareValue = (a.radiatorTons ?? Infinity) - (b.radiatorTons ?? Infinity);
+      case "reactorAndRadiatorTons":
+        compareValue = (a.reactorAndRadiatorTons ?? Infinity) - (b.reactorAndRadiatorTons ?? Infinity);
         break;
       case "thrustRating":
         compareValue = a.thrustRating - b.thrustRating;
@@ -187,10 +187,10 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
-              onClick={() => handleSort("radiatorTons")}
-              title="Radiator Mass (tons)"
+              onClick={() => handleSort("reactorAndRadiatorTons")}
+              title="Reactor + Radiator Mass (tons)"
             >
-              Radiator <SortIcon column="radiatorTons" />
+              Reactor+Rad <SortIcon column="reactorAndRadiatorTons" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
@@ -342,7 +342,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   {!isNaN(drive.powerRequiredGW) ? smartRound(drive.powerRequiredGW) : "-"}
                 </TableCell>
                 <TableCell className="text-right">
-                  {drive.radiatorTons !== undefined ? smartRound(drive.radiatorTons) : "-"}
+                  {drive.reactorAndRadiatorTons !== undefined ? smartRound(drive.reactorAndRadiatorTons) : "-"}
                 </TableCell>
                 <TableCell className="text-right">{drive.thrustRating.toFixed(2)}</TableCell>
                 <TableCell className="text-right">{drive.exhaustRating.toFixed(2)}</TableCell>

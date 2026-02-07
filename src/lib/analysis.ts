@@ -1420,57 +1420,64 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         drive.requiredPowerPlant
       : "";
 
-    // Calculate radiator mass for Calc/Closed cooling drives
-    let radiatorTons: number | undefined = undefined;
     // Step 1: Calculate total reactor power required
     const powerRequiredGW = parseFloat(drive.thrustRating_GW) / drive.efficiency;
 
-    if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
-      // Step 2 & 3: Find eligible reactors and select the one with highest efficiency
-      let eligibleReactors = availablePowerPlants.filter((reactor) => {
+    // Step 2 & 3: Find eligible reactors and select the appropriate one
+    let eligibleReactors = availablePowerPlants.filter((reactor) => {
+      const powerPlantMatches =
+        reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General";
+      const powerSufficient = reactor.maxOutput_GW >= powerRequiredGW;
+      return powerPlantMatches && powerSufficient;
+    });
+
+    // If no unlocked reactors found, fall back to all reactors (for future drives)
+    let useFallback = false;
+    if (eligibleReactors.length === 0) {
+      useFallback = true;
+      eligibleReactors = allPowerPlants.filter((reactor) => {
         const powerPlantMatches =
           reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General";
         const powerSufficient = reactor.maxOutput_GW >= powerRequiredGW;
         return powerPlantMatches && powerSufficient;
       });
+    }
 
-      // If no unlocked reactors found, fall back to all reactors (for future drives)
-      let useFallback = false;
-      if (eligibleReactors.length === 0) {
-        useFallback = true;
-        eligibleReactors = allPowerPlants.filter((reactor) => {
-          const powerPlantMatches =
-            reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General";
-          const powerSufficient = reactor.maxOutput_GW >= powerRequiredGW;
-          return powerPlantMatches && powerSufficient;
-        });
-      }
+    const bestReactor =
+      eligibleReactors.length > 0
+        ? eligibleReactors.reduce((best, current) => {
+            // For unlocked reactors, use highest efficiency (best case)
+            // For future drives, use lowest efficiency (worst case)
+            return useFallback
+              ? current.efficiency < best.efficiency
+                ? current
+                : best
+              : current.efficiency > best.efficiency
+              ? current
+              : best;
+          })
+        : undefined;
 
-      const bestReactor =
-        eligibleReactors.length > 0
-          ? eligibleReactors.reduce((best, current) => {
-              // For unlocked reactors, use highest efficiency (best case)
-              // For future drives, use lowest efficiency (worst case)
-              return useFallback
-                ? current.efficiency < best.efficiency
-                  ? current
-                  : best
-                : current.efficiency > best.efficiency
-                  ? current
-                  : best;
-            })
-          : undefined;
+    // Calculate reactor and radiator weight
+    let reactorAndRadiatorTons: number | undefined = 0;
+    if (bestReactor) {
+      // Reactor weight = power required / specific power (tons per GW)
+      const reactorTons = powerRequiredGW / bestReactor.specificPower_tGW;
 
-      if (bestReactor) {
+      // For Calc/Closed cooling drives, add radiator weight
+      let radiatorTons = 0;
+      if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
         // Step 4: Calculate waste heat using reactor efficiency
         const wasteHeatGW = powerRequiredGW * (1 - bestReactor.efficiency);
         radiatorTons = wasteHeatGW / bestRadiator.gwPerTon;
       }
+
+      reactorAndRadiatorTons = reactorTons + radiatorTons;
     }
 
     // Calculate hypothetical ship performance
-    // Ship: 10,000 tons dry + radiator + 5,000 tons fuel (50 tanks)
-    const dryMass = 10000 + (radiatorTons || 0); // tons
+    // Ship: 10,000 tons dry + reactor/radiator + 5,000 tons fuel (50 tanks)
+    const dryMass = 10000 + (reactorAndRadiatorTons || 0); // tons
     const fuelMass = 5000; // 50 tanks @ 100 tons each
     const wetMass = dryMass + fuelMass;
 
@@ -1555,7 +1562,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       unlockChance: unlockChance === 100 || isProjectComplete ? undefined : unlockChance,
       tanksAffordable,
       limitingResourceName,
-      radiatorTons,
+      reactorAndRadiatorTons,
       techResearchRemaining,
       projectResearchRemaining,
       requiredTechs,
