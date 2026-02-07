@@ -1,6 +1,6 @@
 "use client";
 
-import { CombatScore, FactionIcons, HabPower, TechIcons, UnknownIcon } from "@/components/icons";
+import { Boost, CombatScore, FactionIcons, HabPower, MissionControl, TechIcons, UnknownIcon } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -361,6 +361,45 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           </AccordionTrigger>
           <AccordionContent>
             <ShowHabScienceEffects effects={potentialEffects} />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="boost-mc-summary">
+          <AccordionTrigger>
+            <span>MC/Boost Income Summary</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="flex space-x-4 pb-4">
+              <span>
+                <Boost />
+                {analysis.playerFaction.nationHistory.currentBoost.toFixed(2)}
+                {analysis.playerFaction.nationHistory.boostMonthlyChange !== 0 && (
+                  <span
+                    className={
+                      analysis.playerFaction.nationHistory.boostMonthlyChange > 0 ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    {" "}
+                    ({analysis.playerFaction.nationHistory.boostMonthlyChange > 0 ? "+" : ""}
+                    {analysis.playerFaction.nationHistory.boostMonthlyChange.toFixed(2)})
+                  </span>
+                )}
+              </span>
+              <span>
+                <MissionControl />
+                {analysis.playerFaction.nationHistory.currentMC.toFixed(0)}
+                {analysis.playerFaction.nationHistory.mcMonthlyChange !== 0 && (
+                  <span
+                    className={
+                      analysis.playerFaction.nationHistory.mcMonthlyChange > 0 ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    {" "}
+                    ({analysis.playerFaction.nationHistory.mcMonthlyChange > 0 ? "+" : ""}
+                    {analysis.playerFaction.nationHistory.mcMonthlyChange.toFixed(0)})
+                  </span>
+                )}
+              </span>
+            </div>
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="building-details">

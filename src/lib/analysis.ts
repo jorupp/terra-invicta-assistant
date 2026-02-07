@@ -215,6 +215,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       nationHistory: {
         historyMissionControl: [] as number[],
         historyBoost: [] as number[],
+        currentBoost: 0,
+        currentMC: 0,
+        boostMonthlyChange: 0,
+        mcMonthlyChange: 0,
       },
     };
   });
@@ -1066,6 +1070,18 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           return sum + (value / totalCPs) * factionCPs;
         }, 0);
       });
+
+      // Calculate summary statistics
+      const historyBoost = faction.nationHistory.historyBoost;
+      const historyMC = faction.nationHistory.historyMissionControl;
+
+      faction.nationHistory.currentBoost = historyBoost.length > 0 ? historyBoost[0] : 0;
+      faction.nationHistory.currentMC = historyMC.length > 0 ? historyMC[0] : 0;
+
+      faction.nationHistory.boostMonthlyChange =
+        historyBoost.length > 0 ? historyBoost[0] - (historyBoost[historyBoost.length - 1] || 0) : 0;
+      faction.nationHistory.mcMonthlyChange =
+        historyMC.length > 0 ? historyMC[0] - (historyMC[historyMC.length - 1] || 0) : 0;
     }
   }
 
