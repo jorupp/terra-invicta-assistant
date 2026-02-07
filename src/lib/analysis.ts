@@ -212,6 +212,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           )
           .map((module) => module.dataName)
       ),
+      nationHistory: {
+        historyMissionControl: [] as number[],
+        historyBoost: [] as number[],
+      },
     };
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
@@ -1006,6 +1010,50 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     })
     .filter((i) => i.populationInMillions > 0);
   const nationsById = new Map<number, (typeof nations)[0]>(nations.map((nation) => [nation.id, nation]));
+
+  // Add nation history to factions - aggregate all nations where faction has CPs
+  const allNationStates = saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"]
+    .filter((i) => i.Value.exists && !!i.Value.capital)
+    .map((i) => i.Value);
+
+  for (const faction of factions) {
+    // Find all nations where this faction has at least one control point
+    const controlledNations: typeof allNationStates = [];
+    
+    for (const nationState of allNationStates) {
+      const nationId = nationState.ID.value;
+      const controlPoints = controlPointsByNationId.get(nationId) || [];
+      
+      // Check if this faction has at least one control point in this nation
+      const hasCPInNation = controlPoints.some((cp) => cp.factionId === faction.id);
+      
+      if (hasCPInNation) {
+        controlledNations.push(nationState);
+      }
+    }
+
+    // Aggregate histories across all controlled nations
+    if (controlledNations.length > 0) {
+      // Find the maximum history length
+      const maxMCLength = Math.max(...controlledNations.map((n) => (n.historyMissionControl || []).length));
+      const maxBoostLength = Math.max(...controlledNations.map((n) => (n.historyBoost || []).length));
+
+      // Sum up histories across all nations
+      faction.nationHistory.historyMissionControl = Array.from({ length: maxMCLength }, (_, index) => {
+        return controlledNations.reduce((sum, nation) => {
+          const history = nation.historyMissionControl || [];
+          return sum + (history[index] || 0);
+        }, 0);
+      });
+
+      faction.nationHistory.historyBoost = Array.from({ length: maxBoostLength }, (_, index) => {
+        return controlledNations.reduce((sum, nation) => {
+          const history = nation.historyBoost || [];
+          return sum + (history[index] || 0);
+        }, 0);
+      });
+    }
+  }
 
   const orgTemplates = new Map(
     (await templates.orgs()).map((org) => [

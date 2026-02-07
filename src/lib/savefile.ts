@@ -251,6 +251,27 @@ export interface TINationState extends BaseState {
   GDP: number;
   missionControl: number;
   boostPerYear_dekatons: number;
+  historyCohesion: number[];
+  historyCohesionRestState: number[];
+  historyDemocracy: number[];
+  historyUnrest: number[];
+  historyUnrestRestState: number[];
+  historyInequality: number[];
+  historyGDP: number[];
+  historySpaceFunding: number[];
+  historyEducation: number[];
+  historyPopulation: number[];
+  historySustainability: number[];
+  historyBoost: number[];
+  historyMissionControl: number[];
+  historyMiltech: number[];
+  historyNukes: number[];
+  historyResearch: number[];
+  historyInvestmentPoints: number[];
+  historyPublicOpinion: number[];
+  historyWarStatus: number[];
+  historyNumRegions: number[];
+
   // [key: string]: unknown;
 }
 
