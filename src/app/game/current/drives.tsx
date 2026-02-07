@@ -341,7 +341,18 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 <TableCell className="text-right">
                   {!isNaN(drive.powerRequiredGW) ? smartRound(drive.powerRequiredGW) : "-"}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell 
+                  className="text-right"
+                  title={
+                    drive.reactorTons !== undefined
+                      ? `Reactor: ${smartRound(drive.reactorTons)} tons${
+                          drive.radiatorTons !== undefined 
+                            ? `\nRadiator: ${smartRound(drive.radiatorTons)} tons` 
+                            : ""
+                        }`
+                      : undefined
+                  }
+                >
                   {drive.reactorAndRadiatorTons !== undefined ? smartRound(drive.reactorAndRadiatorTons) : "-"}
                 </TableCell>
                 <TableCell className="text-right">{drive.thrustRating.toFixed(2)}</TableCell>

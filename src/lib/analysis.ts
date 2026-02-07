@@ -1459,20 +1459,22 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         : undefined;
 
     // Calculate reactor and radiator weight
-    let reactorAndRadiatorTons: number | undefined = 0;
+    let reactorTons: number | undefined = undefined;
+    let radiatorTons: number | undefined = undefined;
+    let reactorAndRadiatorTons: number | undefined = undefined;
+    
     if (bestReactor) {
       // Reactor weight = power required / specific power (tons per GW)
-      const reactorTons = powerRequiredGW / bestReactor.specificPower_tGW;
+      reactorTons = powerRequiredGW / bestReactor.specificPower_tGW;
 
       // For Calc/Closed cooling drives, add radiator weight
-      let radiatorTons = 0;
       if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
         // Step 4: Calculate waste heat using reactor efficiency
         const wasteHeatGW = powerRequiredGW * (1 - bestReactor.efficiency);
         radiatorTons = wasteHeatGW / bestRadiator.gwPerTon;
       }
 
-      reactorAndRadiatorTons = reactorTons + radiatorTons;
+      reactorAndRadiatorTons = reactorTons + (radiatorTons || 0);
     }
 
     // Calculate hypothetical ship performance
@@ -1562,6 +1564,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       unlockChance: unlockChance === 100 || isProjectComplete ? undefined : unlockChance,
       tanksAffordable,
       limitingResourceName,
+      reactorTons,
+      radiatorTons,
       reactorAndRadiatorTons,
       techResearchRemaining,
       projectResearchRemaining,
