@@ -357,6 +357,41 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <ShowHabScienceEffects effects={potentialEffects} />
         </CardContent>
       </Card>
+      <Accordion type="single" collapsible>
+        <AccordionItem value="building-details">
+          <AccordionTrigger>
+            <span>Building Details</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Building</TableHead>
+                  <TableHead className="text-right">Current Count</TableHead>
+                  <TableHead className="text-right">Future Count</TableHead>
+                  <TableHead>Current Bonuses</TableHead>
+                  <TableHead>Future Bonuses</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {analysis.buildingSummary.map((building) => (
+                  <TableRow key={building.templateName}>
+                    <TableCell>{building.friendlyName}</TableCell>
+                    <TableCell className="text-right">{building.currentCount}</TableCell>
+                    <TableCell className="text-right">{building.futureCount}</TableCell>
+                    <TableCell>
+                      <ShowHabScienceEffects effects={building.currentEffects} />
+                    </TableCell>
+                    <TableCell>
+                      <ShowHabScienceEffects effects={building.futureEffects} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
       {availableBoostProjects.length > 0 && (
         <Card>
           <CardHeader>
