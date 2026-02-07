@@ -2,7 +2,7 @@
 
 import { CombatScore, FactionIcons, HabPower, TechIcons, UnknownIcon } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -14,6 +14,7 @@ import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "
 import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
 import { User } from "lucide-react";
+import { SmartAccordion } from "@/components/ui/smart-accordion";
 
 function HabScienceHeader() {
   return (
@@ -341,23 +342,27 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="space-y-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Hab bonuses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ShowHabScienceEffects effects={activeEffects} />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Future Hab bonuses (including unpowered/under-construction)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ShowHabScienceEffects effects={potentialEffects} />
-        </CardContent>
-      </Card>
-      <Accordion type="single" collapsible>
+      <SmartAccordion
+        type="multiple"
+        defaultValue={["current-bonuses", "future-bonuses", "available-cp-projects"]}
+        storageKey="habs"
+      >
+        <AccordionItem value="current-bonuses">
+          <AccordionTrigger>
+            <span>Current Hab bonuses</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <ShowHabScienceEffects effects={activeEffects} />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="future-bonuses">
+          <AccordionTrigger>
+            <span>Future Hab bonuses (including unpowered/under-construction)</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <ShowHabScienceEffects effects={potentialEffects} />
+          </AccordionContent>
+        </AccordionItem>
         <AccordionItem value="building-details">
           <AccordionTrigger>
             <span>Building Details</span>
@@ -391,101 +396,99 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             </Table>
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
-      {availableBoostProjects.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Boost Projects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul>
-              {availableBoostProjects
-                .toSorted((a, b) => a.researchCost - b.researchCost)
-                .map((project, ix) => {
+        {availableBoostProjects.length > 0 && (
+          <AccordionItem value="available-boost-projects">
+            <AccordionTrigger>
+              <span>Available Boost Projects</span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul>
+                {availableBoostProjects
+                  .toSorted((a, b) => a.researchCost - b.researchCost)
+                  .map((project, ix) => {
+                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                    return (
+                      <li key={ix}>
+                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                        {project.researchCost})
+                      </li>
+                    );
+                  })}
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+        {availableCPProjects.length > 0 && (
+          <AccordionItem value="available-cp-projects">
+            <AccordionTrigger>
+              <span>Available Control Point Projects</span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul>
+                {availableCPProjects
+                  .toSorted((a, b) => a.researchCost - b.researchCost)
+                  .map((project, ix) => {
+                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                    return (
+                      <li key={ix}>
+                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                        {project.researchCost})
+                      </li>
+                    );
+                  })}
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+        {availableMaxOrgProjects.length > 0 && (
+          <AccordionItem value="available-max-org-projects">
+            <AccordionTrigger>
+              <span>Available Max Org Projects</span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul>
+                {availableMaxOrgProjects
+                  .toSorted((a, b) => a.researchCost - b.researchCost)
+                  .map((project, ix) => {
+                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                    return (
+                      <li key={ix}>
+                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                        {project.researchCost})
+                      </li>
+                    );
+                  })}
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+        {playerStealableProjects.length > 0 && (
+          <AccordionItem value="available-stealable-projects">
+            <AccordionTrigger>
+              <span>Available Stealable Projects</span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul>
+                {playerStealableProjects.map(({ projectName, factionId }, ix) => {
+                  const faction = analysis.factionsById.get(factionId);
+                  if (!faction) return null;
+                  const FactionIcon = faction.templateName
+                    ? FactionIcons[faction.templateName]
+                    : UnknownIcon || UnknownIcon;
+                  const project = analysis.projects.get(projectName);
+                  if (!project) return null;
                   const Icon = TechIcons[project.techCategory] || UnknownIcon;
                   return (
                     <li key={ix}>
-                      <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
-                      {project.researchCost})
+                      <FactionIcon /> {faction.displayName} <Icon />{" "}
+                      <ResearchLink name={projectName} displayName={project.displayName!} /> ({project.researchCost})
                     </li>
                   );
                 })}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-      {availableCPProjects.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Control Point Projects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul>
-              {availableCPProjects
-                .toSorted((a, b) => a.researchCost - b.researchCost)
-                .map((project, ix) => {
-                  const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                  return (
-                    <li key={ix}>
-                      <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
-                      {project.researchCost})
-                    </li>
-                  );
-                })}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-      {availableMaxOrgProjects.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Max Org Projects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul>
-              {availableMaxOrgProjects
-                .toSorted((a, b) => a.researchCost - b.researchCost)
-                .map((project, ix) => {
-                  const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                  return (
-                    <li key={ix}>
-                      <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
-                      {project.researchCost})
-                    </li>
-                  );
-                })}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-      {playerStealableProjects.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Stealable Projects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul>
-              {playerStealableProjects.map(({ projectName, factionId }, ix) => {
-                const faction = analysis.factionsById.get(factionId);
-                if (!faction) return null;
-                const FactionIcon = faction.templateName
-                  ? FactionIcons[faction.templateName]
-                  : UnknownIcon || UnknownIcon;
-                const project = analysis.projects.get(projectName);
-                if (!project) return null;
-                const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                return (
-                  <li key={ix}>
-                    <FactionIcon /> {faction.displayName} <Icon />{" "}
-                    <ResearchLink name={projectName} displayName={project.displayName!} /> ({project.researchCost})
-                  </li>
-                );
-              })}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-      <Accordion type="multiple" defaultValue={["technology-goals"]}>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        )}
         <AccordionItem value="technology-goals">
           <AccordionTrigger>
             <span>Technology goals</span>
@@ -503,8 +506,6 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             <TechnologyGoalsList analysis={analysis} goals={techGoals.goals} onRemove={techGoals.removeGoal} />
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
-      <Accordion type="single" collapsible defaultValue="habs">
         <AccordionItem value="habs">
           <AccordionTrigger>
             <span>Manage Habs</span>
@@ -565,7 +566,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             </Table>
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
+      </SmartAccordion>
 
       <Collapsible>
         <CollapsibleTrigger asChild>
