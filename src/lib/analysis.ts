@@ -1018,38 +1018,52 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
   for (const faction of factions) {
     // Find all nations where this faction has at least one control point
-    const controlledNations: typeof allNationStates = [];
-    
+    const controlledNationsWithCPs: Array<{
+      nation: (typeof allNationStates)[0];
+      factionCPs: number;
+      totalCPs: number;
+    }> = [];
+
     for (const nationState of allNationStates) {
       const nationId = nationState.ID.value;
       const controlPoints = controlPointsByNationId.get(nationId) || [];
-      
-      // Check if this faction has at least one control point in this nation
-      const hasCPInNation = controlPoints.some((cp) => cp.factionId === faction.id);
-      
-      if (hasCPInNation) {
-        controlledNations.push(nationState);
+
+      // Count how many CPs this faction has in this nation
+      const factionCPCount = controlPoints.filter((cp) => cp.factionId === faction.id).length;
+
+      if (factionCPCount > 0) {
+        controlledNationsWithCPs.push({
+          nation: nationState,
+          factionCPs: factionCPCount,
+          totalCPs: controlPoints.length,
+        });
       }
     }
 
     // Aggregate histories across all controlled nations
-    if (controlledNations.length > 0) {
+    if (controlledNationsWithCPs.length > 0) {
       // Find the maximum history length
-      const maxMCLength = Math.max(...controlledNations.map((n) => (n.historyMissionControl || []).length));
-      const maxBoostLength = Math.max(...controlledNations.map((n) => (n.historyBoost || []).length));
+      const maxMCLength = Math.max(
+        ...controlledNationsWithCPs.map((n) => (n.nation.historyMissionControl || []).length)
+      );
+      const maxBoostLength = Math.max(...controlledNationsWithCPs.map((n) => (n.nation.historyBoost || []).length));
 
-      // Sum up histories across all nations
+      // Sum up histories across all nations, weighted by faction's share of CPs
       faction.nationHistory.historyMissionControl = Array.from({ length: maxMCLength }, (_, index) => {
-        return controlledNations.reduce((sum, nation) => {
+        return controlledNationsWithCPs.reduce((sum, { nation, factionCPs, totalCPs }) => {
           const history = nation.historyMissionControl || [];
-          return sum + (history[index] || 0);
+          const value = history[index] || 0;
+          // Divide by total CPs and multiply by faction's CPs to get this faction's share
+          return sum + (value / totalCPs) * factionCPs;
         }, 0);
       });
 
       faction.nationHistory.historyBoost = Array.from({ length: maxBoostLength }, (_, index) => {
-        return controlledNations.reduce((sum, nation) => {
+        return controlledNationsWithCPs.reduce((sum, { nation, factionCPs, totalCPs }) => {
           const history = nation.historyBoost || [];
-          return sum + (history[index] || 0);
+          const value = history[index] || 0;
+          // Divide by total CPs and multiply by faction's CPs to get this faction's share
+          return sum + (value / totalCPs) * factionCPs;
         }, 0);
       });
     }
