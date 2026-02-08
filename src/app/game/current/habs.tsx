@@ -402,6 +402,29 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             </div>
           </AccordionContent>
         </AccordionItem>
+        <AccordionItem value="alien-hate">
+          <AccordionTrigger>
+            <span>Alien Hate</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-1">
+              <div>
+                <strong>Current Alien Hate:</strong>{" "}
+                {analysis.playerFaction.factionHate.get(analysis.alienFaction.ID.value)?.toFixed(1) ?? "Unknown"}
+              </div>
+              <div>
+                <strong>Assessed Alien Hate of Me:</strong>{" "}
+                {analysis.playerFaction.assessedAlienHateOfMe?.toFixed(1) ?? "Unknown"}
+              </div>
+              <div>
+                <strong>Last Fixed Hate Date:</strong>{" "}
+                {analysis.playerFaction.lastDateOfFixedAlienHate
+                  ? formatDateTime(analysis.playerFaction.lastDateOfFixedAlienHate)
+                  : "Never"}
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
         <AccordionItem value="building-details">
           <AccordionTrigger>
             <span>Building Details</span>
