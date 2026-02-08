@@ -409,15 +409,11 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <AccordionContent>
             <div className="space-y-1">
               <div>
-                <strong>Player Hate of Aliens (Player→Alien):</strong>{" "}
-                {analysis.playerFaction.factionHate.get(analysis.alienFaction.id)?.toFixed(1) ?? "Unknown"}
-              </div>
-              <div>
-                <strong>Alien Hate of Player (Alien→Player):</strong>{" "}
+                <strong>Alien Hate of Player:</strong>{" "}
                 {analysis.alienFaction.factionHate?.get(analysis.playerFaction.id)?.toFixed(1) ?? "Unknown"}
               </div>
               <div>
-                <strong>Assessed Alien Hate of Me:</strong>{" "}
+                <strong>Assessed Alien Hate of Player:</strong>{" "}
                 {analysis.playerFaction.assessedAlienHateOfMe?.toFixed(1) ?? "Unknown"}
               </div>
               <div>
