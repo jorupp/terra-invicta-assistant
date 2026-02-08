@@ -413,17 +413,18 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 {analysis.alienFaction.defaultPriorityPresetTemplateName || "Unknown"}
               </div>
               <div>
-                <strong>Active Goals (Top 20 by Importance):</strong>
+                <strong>Active Goals (Top 20 of {analysis.expandedAlienGoals.length} by Importance):</strong>
                 <ul className="ml-4 mt-1 text-sm space-y-0.5">
                   {analysis.expandedAlienGoals.slice(0, 20).map((goal) => (
                     <li key={goal.id}>
-                      <strong>{goal.type}</strong> ({goal.importance})
-                      {goal.nation && `: ${goal.nation.displayName}`}
+                      <strong>{goal.type}</strong> ({goal.importance}){goal.nation && `: ${goal.nation.displayName}`}
                       {goal.hab && `: ${goal.hab.displayName}${goal.hab.bodyName ? ` (${goal.hab.bodyName})` : ""}`}
                       {goal.attackTarget && `: ${goal.attackTarget.displayName}`}
                       {goal.attackTargetFleet && `: Target Fleet: ${goal.attackTargetFleet.displayName}`}
                       {goal.assignedFleet && `, Assigned: ${goal.assignedFleet.displayName}`}
-                      {goal.pendingFleets && goal.pendingFleets.length > 0 && `, Pending: ${goal.pendingFleets.map((f) => f.displayName).join(", ")}`}
+                      {goal.pendingFleets &&
+                        goal.pendingFleets.length > 0 &&
+                        `, Pending: ${goal.pendingFleets.map((f) => f.displayName).join(", ")}`}
                       {goal.enemyFaction && `: vs ${goal.enemyFaction.displayName}`}
                     </li>
                   ))}
