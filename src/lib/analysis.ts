@@ -1036,7 +1036,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     type: string;
     nation?: { id: number; displayName: string };
     hab?: { id: number; displayName: string; bodyName?: string };
-    fleet?: { id: number; displayName: string };
+    attackTargetFleet?: { id: number; displayName: string };
+    assignedFleet?: { id: number; displayName: string };
+    pendingFleets?: { id: number; displayName: string }[];
     enemyFaction?: { id: number; displayName: string };
     attackTarget?: { id: number; displayName: string; type: string };
   };
@@ -1142,14 +1144,42 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         };
 
         if (goal.attackTarget) {
-          const targetHab = habs.find((h) => h.id === goal.attackTarget.value);
-          if (targetHab) {
-            expanded.attackTarget = {
-              id: targetHab.id,
-              displayName: targetHab.displayName || "Unknown",
-              type: "Hab",
+          // Check if it's a fleet or hab
+          const targetFleet = fleets.find((f) => f.id === goal.attackTarget.value);
+          if (targetFleet) {
+            expanded.attackTargetFleet = {
+              id: targetFleet.id,
+              displayName: targetFleet.displayName || "Unknown",
+            };
+          } else {
+            const targetHab = habs.find((h) => h.id === goal.attackTarget.value);
+            if (targetHab) {
+              expanded.attackTarget = {
+                id: targetHab.id,
+                displayName: targetHab.displayName || "Unknown",
+                type: "Hab",
+              };
+            }
+          }
+        }
+
+        if (goal.assignedFleet) {
+          const assignedFleet = fleets.find((f) => f.id === goal.assignedFleet!.value);
+          if (assignedFleet) {
+            expanded.assignedFleet = {
+              id: assignedFleet.id,
+              displayName: assignedFleet.displayName || "Unknown",
             };
           }
+        }
+
+        if (goal.pendingFleets && goal.pendingFleets.length > 0) {
+          expanded.pendingFleets = goal.pendingFleets
+            .map((fleetRef) => {
+              const fleet = fleets.find((f) => f.id === fleetRef.value);
+              return fleet ? { id: fleet.id, displayName: fleet.displayName || "Unknown" } : null;
+            })
+            .filter((f): f is { id: number; displayName: string } => f !== null);
         }
 
         if (goal.enemyFaction) {
@@ -1178,6 +1208,25 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           if (hab) {
             expanded.hab = { id: hab.id, displayName: hab.displayName || "Unknown" };
           }
+        }
+
+        if (goal.assignedFleet) {
+          const assignedFleet = fleets.find((f) => f.id === goal.assignedFleet!.value);
+          if (assignedFleet) {
+            expanded.assignedFleet = {
+              id: assignedFleet.id,
+              displayName: assignedFleet.displayName || "Unknown",
+            };
+          }
+        }
+
+        if (goal.pendingFleets && goal.pendingFleets.length > 0) {
+          expanded.pendingFleets = goal.pendingFleets
+            .map((fleetRef) => {
+              const fleet = fleets.find((f) => f.id === fleetRef.value);
+              return fleet ? { id: fleet.id, displayName: fleet.displayName || "Unknown" } : null;
+            })
+            .filter((f): f is { id: number; displayName: string } => f !== null);
         }
 
         expandedAlienGoals.push(expanded);
@@ -1209,11 +1258,32 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     alienFaction.factionGoals.InvadeEarth?.forEach((goalRef) => {
       const goal = getInvadeEarth(goalRef.value);
       if (goal) {
-        expandedAlienGoals.push({
+        const expanded: ExpandedGoal = {
           id: goalRef.value,
           importance: goal.importance,
           type: "Invade Earth",
-        });
+        };
+
+        if (goal.assignedFleet) {
+          const assignedFleet = fleets.find((f) => f.id === goal.assignedFleet!.value);
+          if (assignedFleet) {
+            expanded.assignedFleet = {
+              id: assignedFleet.id,
+              displayName: assignedFleet.displayName || "Unknown",
+            };
+          }
+        }
+
+        if (goal.pendingFleets && goal.pendingFleets.length > 0) {
+          expanded.pendingFleets = goal.pendingFleets
+            .map((fleetRef) => {
+              const fleet = fleets.find((f) => f.id === fleetRef.value);
+              return fleet ? { id: fleet.id, displayName: fleet.displayName || "Unknown" } : null;
+            })
+            .filter((f): f is { id: number; displayName: string } => f !== null);
+        }
+
+        expandedAlienGoals.push(expanded);
       }
     });
 

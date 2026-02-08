@@ -421,6 +421,9 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                       {goal.nation && `: ${goal.nation.displayName}`}
                       {goal.hab && `: ${goal.hab.displayName}${goal.hab.bodyName ? ` (${goal.hab.bodyName})` : ""}`}
                       {goal.attackTarget && `: ${goal.attackTarget.displayName}`}
+                      {goal.attackTargetFleet && `: Target Fleet: ${goal.attackTargetFleet.displayName}`}
+                      {goal.assignedFleet && `, Assigned: ${goal.assignedFleet.displayName}`}
+                      {goal.pendingFleets && goal.pendingFleets.length > 0 && `, Pending: ${goal.pendingFleets.map((f) => f.displayName).join(", ")}`}
                       {goal.enemyFaction && `: vs ${goal.enemyFaction.displayName}`}
                     </li>
                   ))}

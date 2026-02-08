@@ -641,6 +641,8 @@ export interface FactionGoal_AttackWithFleet extends BaseState {
   assignedDate: DateTime;
   attackTarget: IDValue;
   enemyFaction: IDValue;
+  assignedFleet: IDValue | null;
+  pendingFleets: IDValue[];
 }
 
 export interface FactionGoal_DefendWithFleet extends BaseState {
@@ -649,6 +651,8 @@ export interface FactionGoal_DefendWithFleet extends BaseState {
   assignedDate: DateTime;
   hab: IDValue;
   defendLocation: IDValue;
+  assignedFleet: IDValue | null;
+  pendingFleets: IDValue[];
 }
 
 export interface FactionGoal_WarOnFaction extends BaseState {
@@ -662,6 +666,8 @@ export interface FactionGoal_InvadeEarth extends BaseState {
   faction: IDValue;
   importance: number;
   assignedDate: DateTime;
+  assignedFleet: IDValue | null;
+  pendingFleets: IDValue[];
 }
 
 export interface FactionGoal_BuildFullStation extends BaseState {
