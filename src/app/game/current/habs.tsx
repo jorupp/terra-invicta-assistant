@@ -16,6 +16,29 @@ import { twMerge } from "tailwind-merge";
 import { User } from "lucide-react";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
 
+type AlienGoal = Analysis["expandedAlienGoals"][0];
+
+function AlienGoalList({ goals }: { goals: AlienGoal[] }) {
+  return (
+    <ul className="ml-4 mt-1 text-sm space-y-0.5">
+      {goals.map((goal) => (
+        <li key={goal.id}>
+          <strong>{goal.type}</strong> ({goal.importance})
+          {goal.nation && `: ${goal.nation.displayName}`}
+          {goal.hab && `: ${goal.hab.displayName}${goal.hab.bodyName ? ` (${goal.hab.bodyName})` : ""}`}
+          {goal.attackTarget && `: ${goal.attackTarget.displayName}`}
+          {goal.attackTargetFleet && `: Target Fleet: ${goal.attackTargetFleet.displayName}`}
+          {goal.assignedFleet && `, Assigned: ${goal.assignedFleet.displayName}`}
+          {goal.pendingFleets &&
+            goal.pendingFleets.length > 0 &&
+            `, Pending: ${goal.pendingFleets.map((f) => f.displayName).join(", ")}`}
+          {goal.enemyFaction && `: vs ${goal.enemyFaction.displayName}`}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function HabScienceHeader() {
   return (
     <TableHeader>
@@ -413,22 +436,18 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 {analysis.alienFaction.defaultPriorityPresetTemplateName || "Unknown"}
               </div>
               <div>
-                <strong>Active Goals (Top 20 of {analysis.expandedAlienGoals.length} by Importance):</strong>
-                <ul className="ml-4 mt-1 text-sm space-y-0.5">
-                  {analysis.expandedAlienGoals.slice(0, 20).map((goal) => (
-                    <li key={goal.id}>
-                      <strong>{goal.type}</strong> ({goal.importance}){goal.nation && `: ${goal.nation.displayName}`}
-                      {goal.hab && `: ${goal.hab.displayName}${goal.hab.bodyName ? ` (${goal.hab.bodyName})` : ""}`}
-                      {goal.attackTarget && `: ${goal.attackTarget.displayName}`}
-                      {goal.attackTargetFleet && `: Target Fleet: ${goal.attackTargetFleet.displayName}`}
-                      {goal.assignedFleet && `, Assigned: ${goal.assignedFleet.displayName}`}
-                      {goal.pendingFleets &&
-                        goal.pendingFleets.length > 0 &&
-                        `, Pending: ${goal.pendingFleets.map((f) => f.displayName).join(", ")}`}
-                      {goal.enemyFaction && `: vs ${goal.enemyFaction.displayName}`}
-                    </li>
-                  ))}
-                </ul>
+                <strong>Active Goals (Top 10 of {analysis.expandedAlienGoals.length} by Importance):</strong>
+                <AlienGoalList goals={analysis.expandedAlienGoals.slice(0, 10)} />
+                {analysis.expandedAlienGoals.length > 10 && (
+                  <Collapsible className="mt-2">
+                    <CollapsibleTrigger className="text-sm text-blue-500 hover:underline ml-4">
+                      Show {analysis.expandedAlienGoals.length - 10} more goals...
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <AlienGoalList goals={analysis.expandedAlienGoals.slice(10)} />
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
               </div>
               <div>
                 <strong>Alien Hate of Player:</strong>{" "}
