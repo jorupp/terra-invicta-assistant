@@ -413,34 +413,17 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 {analysis.alienFaction.defaultPriorityPresetTemplateName || "Unknown"}
               </div>
               <div>
-                <strong>Active Goals:</strong>
-                <ul className="ml-4 mt-1 text-sm">
-                  {(() => {
-                    const goals = analysis.alienFaction.factionGoals;
-                    if (!goals) return <li>Unknown</li>;
-
-                    const goalCounts: [string, number][] = [];
-                    Object.keys(goals).forEach((goalType) => {
-                      const goalArray = goals[goalType as keyof typeof goals];
-                      if (goalArray && Array.isArray(goalArray) && goalArray.length > 0) {
-                        goalCounts.push([goalType, goalArray.length]);
-                      }
-                    });
-
-                    // Sort by count descending
-                    goalCounts.sort((a, b) => b[1] - a[1]);
-
-                    // Format goal names (e.g., "CaptureNationClean" -> "Capture Nation Clean")
-                    const formatGoalName = (name: string) => {
-                      return name.replace(/([A-Z])/g, " $1").trim();
-                    };
-
-                    return goalCounts.slice(0, 10).map(([type, count]) => (
-                      <li key={type}>
-                        {formatGoalName(type)}: {count}
-                      </li>
-                    ));
-                  })()}
+                <strong>Active Goals (Top 20 by Importance):</strong>
+                <ul className="ml-4 mt-1 text-sm space-y-0.5">
+                  {analysis.expandedAlienGoals.slice(0, 20).map((goal) => (
+                    <li key={goal.id}>
+                      <strong>{goal.type}</strong> ({goal.importance})
+                      {goal.nation && `: ${goal.nation.displayName}`}
+                      {goal.hab && `: ${goal.hab.displayName}${goal.hab.bodyName ? ` (${goal.hab.bodyName})` : ""}`}
+                      {goal.attackTarget && `: ${goal.attackTarget.displayName}`}
+                      {goal.enemyFaction && `: vs ${goal.enemyFaction.displayName}`}
+                    </li>
+                  ))}
                 </ul>
               </div>
               <div>

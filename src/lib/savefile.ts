@@ -613,6 +613,71 @@ export interface TIFactionState extends BaseState {
   ignoreInterstateDiplomacy: boolean;
 }
 
+// Faction Goal Types
+export interface FactionGoal_CaptureNation_Clean extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+  nation: IDValue;
+}
+
+export interface FactionGoal_CaptureNation_Dirty extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+  nation: IDValue;
+}
+
+export interface FactionGoal_NeutralizeNation extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+  nation: IDValue;
+}
+
+export interface FactionGoal_AttackWithFleet extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+  attackTarget: IDValue;
+  enemyFaction: IDValue;
+}
+
+export interface FactionGoal_DefendWithFleet extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+  hab: IDValue;
+  defendLocation: IDValue;
+}
+
+export interface FactionGoal_WarOnFaction extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+  targetFaction: IDValue;
+}
+
+export interface FactionGoal_InvadeEarth extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+}
+
+export interface FactionGoal_BuildFullStation extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+  hab: IDValue;
+}
+
+export interface FactionGoal_BuildFullBase extends BaseState {
+  faction: IDValue;
+  importance: number;
+  assignedDate: DateTime;
+  hab: IDValue;
+}
+
 // Player State
 export interface TIPlayerState extends BaseState {
   isAI: boolean;
