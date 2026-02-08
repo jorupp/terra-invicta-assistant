@@ -799,13 +799,13 @@ function OtherCouncilorsByFaction({ analysis, weights }: { analysis: Analysis; w
 
   const factions = Array.from(councilorsByFactionId.keys())
     .map((i) => factionsById.get(i!)!)
-    .filter((i) => i.id !== analysis.alienFaction.ID.value);
+    .filter((i) => i.id !== analysis.alienFaction.id);
 
   return (
     <Tabs defaultValue={`faction-${factions[0].id}`}>
       <TabsList>
         {factions
-          .filter((i) => i.id !== analysis.alienFaction.ID.value)
+          .filter((i) => i.id !== analysis.alienFaction.id)
           .map((faction) => (
             <TabsTrigger key={faction.id} value={`faction-${faction.id}`}>
               {faction.displayName || "Unknown Faction"} ({councilorsByFactionId.get(faction.id)?.length || 0})
