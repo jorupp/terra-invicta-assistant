@@ -889,16 +889,13 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     .filter((planet) => playerInterestedBodyIds.has(planet.Key.value))
     .map((p) => p.Value);
 
-  const alienFaction = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].find(
-    (faction) => faction.Value.templateName === "AlienCouncil"
-  )?.Value;
+  const alienFaction = factions.find((faction) => faction.templateName === "AlienCouncil");
   if (!alienFaction) {
     throw new Error("Alien faction data not found in save file.");
   }
-
   const alienFleetsToPlayerOrbits = sortByDateTime(
     fleets
-      .filter((fleet) => fleet.faction === alienFaction.ID.value)
+      .filter((fleet) => fleet.faction === alienFaction.id)
       .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId)),
     (i) => i.arrivalTime
   );
@@ -1396,7 +1393,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     .filter((o) => o.template?.allowedOnMarket);
 
   const playerStealableProjects = factions
-    .filter((i) => i.id !== alienFaction.ID.value)
+    .filter((i) => i.id !== alienFaction.id)
     .filter((i) => playerVisibleFactionIds.has(i.id))
     .flatMap((faction) => {
       return faction.finishedProjectNames.map((projectName) => ({ projectName, factionId: faction.id }));
