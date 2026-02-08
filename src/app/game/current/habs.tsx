@@ -409,6 +409,36 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <AccordionContent>
             <div className="space-y-1">
               <div>
+                <strong>Current Alien Strategy:</strong>{" "}
+                {analysis.alienFaction.defaultPriorityPresetTemplateName || "Unknown"}
+              </div>
+              <div>
+                <strong>Active Goals:</strong>
+                <ul className="ml-4 mt-1">
+                  {(() => {
+                    const goals = analysis.alienFaction.factionGoals;
+                    if (!goals) return <li>Unknown</li>;
+                    
+                    const goalCounts: [string, number][] = [];
+                    Object.keys(goals).forEach((goalType) => {
+                      const goalArray = (goals as any)[goalType];
+                      if (goalArray && Array.isArray(goalArray) && goalArray.length > 0) {
+                        goalCounts.push([goalType, goalArray.length]);
+                      }
+                    });
+                    
+                    // Sort by count descending
+                    goalCounts.sort((a, b) => b[1] - a[1]);
+                    
+                    return goalCounts.slice(0, 10).map(([type, count]) => (
+                      <li key={type}>
+                        {type}: {count}
+                      </li>
+                    ));
+                  })()}
+                </ul>
+              </div>
+              <div>
                 <strong>Alien Hate of Player:</strong>{" "}
                 {analysis.alienFaction.factionHate?.get(analysis.playerFaction.id)?.toFixed(1) ?? "Unknown"}
               </div>

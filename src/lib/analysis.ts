@@ -215,6 +215,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       factionHate: new Map((faction.factionHate || []).map((i) => [i.Key.value, i.Value])),
       assessedAlienHateOfMe: faction.assessedAlienHateOfMe,
       lastDateOfFixedAlienHate: faction.lastDateOfFixedAlienHate,
+      defaultPriorityPresetTemplateName: faction.defaultPriorityPresetTemplateName,
+      alienInvestigations: faction.alienInvestigations,
+      factionGoals: faction.factionGoals,
       nationHistory: {
         historyMissionControl: [] as number[],
         historyBoost: [] as number[],
