@@ -414,25 +414,30 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
               </div>
               <div>
                 <strong>Active Goals:</strong>
-                <ul className="ml-4 mt-1">
+                <ul className="ml-4 mt-1 text-sm">
                   {(() => {
                     const goals = analysis.alienFaction.factionGoals;
                     if (!goals) return <li>Unknown</li>;
-                    
+
                     const goalCounts: [string, number][] = [];
                     Object.keys(goals).forEach((goalType) => {
-                      const goalArray = (goals as any)[goalType];
+                      const goalArray = goals[goalType as keyof typeof goals];
                       if (goalArray && Array.isArray(goalArray) && goalArray.length > 0) {
                         goalCounts.push([goalType, goalArray.length]);
                       }
                     });
-                    
+
                     // Sort by count descending
                     goalCounts.sort((a, b) => b[1] - a[1]);
-                    
+
+                    // Format goal names (e.g., "CaptureNationClean" -> "Capture Nation Clean")
+                    const formatGoalName = (name: string) => {
+                      return name.replace(/([A-Z])/g, " $1").trim();
+                    };
+
                     return goalCounts.slice(0, 10).map(([type, count]) => (
                       <li key={type}>
-                        {type}: {count}
+                        {formatGoalName(type)}: {count}
                       </li>
                     ));
                   })()}
