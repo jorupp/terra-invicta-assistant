@@ -136,7 +136,12 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="p-1 cursor-help">
+                <span
+                  className={twMerge(
+                    "p-1 cursor-help",
+                    hab.miningUpgradeInfo.factoryTier === 3 ? "bg-green-200 rounded" : ""
+                  )}
+                >
                   <Pickaxe className="inline h-4 w-4" />
                 </span>
               </TooltipTrigger>
@@ -286,7 +291,9 @@ export function getHabsUi(analysis: Analysis) {
       : "";
   const upgradableOtherTitle =
     upgradableOtherHabs.length > 0
-      ? `${upgradableOtherHabs.length} hab${upgradableOtherHabs.length > 1 ? "s have" : " has"} other upgradeable modules`
+      ? `${upgradableOtherHabs.length} hab${
+          upgradableOtherHabs.length > 1 ? "s have" : " has"
+        } other upgradeable modules`
       : "";
 
   return {

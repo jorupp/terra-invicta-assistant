@@ -761,7 +761,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // Calculate if any mining modules can be upgraded
       let canUpgradeMining = false;
-      let miningUpgradeInfo: { upgradeName: string; factoryName: string } | null = null;
+      let miningUpgradeInfo: { upgradeName: string; factoryName: string; factoryTier: number } | null = null;
       
       if (habFaction) {
         // Find the highest tier factory that the faction has unlocked
@@ -806,6 +806,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
                   miningUpgradeInfo = {
                     upgradeName: upgradeTemplate.friendlyName,
                     factoryName: bestActiveFactory.friendlyName,
+                    factoryTier: bestActiveFactory.tier,
                   };
                   break;
                 }
@@ -815,6 +816,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
                 miningUpgradeInfo = {
                   upgradeName: upgradeTemplate.friendlyName,
                   factoryName: bestActiveFactory?.friendlyName || "No factory",
+                  factoryTier: bestActiveFactory?.tier || 0,
                 };
                 break;
               }
