@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Analysis } from "@/lib/analysis";
 import { formatDateTime, noDate } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
@@ -131,13 +132,27 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
             <Factory className="inline h-4 w-4" />
           </span>
         )}
-        {hab.canUpgradeMining && hab.miningUpgradeInfo && (
-          <span 
-            title={`Can upgrade to: ${hab.miningUpgradeInfo.upgradeName}\nBest factory: ${hab.miningUpgradeInfo.factoryName}`} 
-            className="p-1"
-          >
-            <Pickaxe className="inline h-4 w-4" />
-          </span>
+        {hab.canUpgradeMining && hab.miningUpgradeInfo && hab.site && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="p-1 cursor-help">
+                  <Pickaxe className="inline h-4 w-4" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="space-y-1">
+                  <div className="font-bold">Mining Upgrade Available</div>
+                  <div>Upgrade to: {hab.miningUpgradeInfo.upgradeName}</div>
+                  <div>Best factory: {hab.miningUpgradeInfo.factoryName}</div>
+                  <div className="mt-2 text-sm">
+                    <div className="font-semibold">Mining effects:</div>
+                    <ShowHabMineEffects effects={{ ...hab.site, miningModifier: 1 }} />
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         {hab.upgradeableModuleNames.length > 0 && (
           <span title={`Can upgrade to:\n${hab.upgradeableModuleNames.join("\n")}`} className="p-1">
