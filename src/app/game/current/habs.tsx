@@ -546,7 +546,14 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             <AccordionContent>
               <ul>
                 {availableCPProjects
-                  .toSorted((a, b) => a.researchCost - b.researchCost)
+                  .toSorted((a, b) => {
+                    // Sort by efficiency: CP gained per research remaining (highest first)
+                    const aRemaining = a.researchCost - a.currentProgress;
+                    const bRemaining = b.researchCost - b.currentProgress;
+                    const aEfficiency = aRemaining > 0 ? a.cpBonus / aRemaining : 0;
+                    const bEfficiency = bRemaining > 0 ? b.cpBonus / bRemaining : 0;
+                    return bEfficiency - aEfficiency;
+                  })
                   .map((project, ix) => {
                     const Icon = TechIcons[project.techCategory] || UnknownIcon;
                     return (
