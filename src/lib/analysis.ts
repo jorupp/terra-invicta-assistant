@@ -707,10 +707,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // Calculate if any factories can be upgraded
       let canUpgradeFactory = false;
-      
+
       if (habFaction) {
         // Get all factory modules at this hab
-        const factoryModules = moduleTemplates.filter(({ template }) => 
+        const factoryModules = moduleTemplates.filter(({ template }) =>
           template.specialRules?.includes("CanFoundTier1Habs")
         );
 
@@ -1091,40 +1091,49 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
   // Helper functions to safely get typed goal states
   const getCaptureNationClean = (goalId: number): FactionGoal_CaptureNation_Clean | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_CaptureNation_Clean"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_CaptureNation_Clean | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_CaptureNation_Clean"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_CaptureNation_Clean | undefined;
   };
   const getCaptureNationDirty = (goalId: number): FactionGoal_CaptureNation_Dirty | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_CaptureNation_Dirty"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_CaptureNation_Dirty | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_CaptureNation_Dirty"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_CaptureNation_Dirty | undefined;
   };
   const getNeutralizeNation = (goalId: number): FactionGoal_NeutralizeNation | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_NeutralizeNation"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_NeutralizeNation | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_NeutralizeNation"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_NeutralizeNation | undefined;
   };
   const getAttackWithFleet = (goalId: number): FactionGoal_AttackWithFleet | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_AttackWithFleet"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_AttackWithFleet | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_AttackWithFleet"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_AttackWithFleet | undefined;
   };
   const getDefendWithFleet = (goalId: number): FactionGoal_DefendWithFleet | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_DefendWithFleet"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_DefendWithFleet | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_DefendWithFleet"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_DefendWithFleet | undefined;
   };
   const getWarOnFaction = (goalId: number): FactionGoal_WarOnFaction | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_WarOnFaction"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_WarOnFaction | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_WarOnFaction"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_WarOnFaction | undefined;
   };
   const getInvadeEarth = (goalId: number): FactionGoal_InvadeEarth | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_InvadeEarth"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_InvadeEarth | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_InvadeEarth"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_InvadeEarth | undefined;
   };
   const getBuildFullStation = (goalId: number): FactionGoal_BuildFullStation | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_BuildFullStation"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_BuildFullStation | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_BuildFullStation"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_BuildFullStation | undefined;
   };
   const getBuildFullBase = (goalId: number): FactionGoal_BuildFullBase | undefined => {
-    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_BuildFullBase"]
-      ?.find((g: any) => g.Value?.ID?.value === goalId)?.Value as FactionGoal_BuildFullBase | undefined;
+    return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_BuildFullBase"]?.find(
+      (g: any) => g.Value?.ID?.value === goalId
+    )?.Value as FactionGoal_BuildFullBase | undefined;
   };
 
   // Process each goal type
@@ -2205,6 +2214,10 @@ function getSolarMultiplier(id: number | undefined): number | undefined {
     case 4855:
       return 0.781;
     case 4885:
+    case 4886:
+    case 4889:
+    case 4891:
+    case 4896:
     case 4875:
     case 4884:
     case 4877:
