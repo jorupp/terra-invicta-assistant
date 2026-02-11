@@ -705,6 +705,49 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
       }
 
+      // Calculate if any factories can be upgraded
+      let canUpgradeFactory = false;
+      
+      if (habFaction) {
+        // Get all factory modules at this hab
+        const factoryModules = moduleTemplates.filter(({ template }) => 
+          template.specialRules?.includes("CanFoundTier1Habs")
+        );
+
+        // Count how many modules are currently under construction
+        const modulesUnderConstruction = underConstruction.length;
+
+        // Determine if it's safe to upgrade a factory
+        // Option A: At least one OTHER factory that is not currently being constructed/upgraded
+        const completeFactories = factoryModules.filter(({ active }) => active);
+        const safeToUpgradeWithOtherFactory = completeFactories.length >= 2;
+
+        // Option B: No other modules currently being constructed/upgraded
+        const safeToUpgradeNoConstruction = modulesUnderConstruction === 0;
+
+        const safeToUpgrade = safeToUpgradeWithOtherFactory || safeToUpgradeNoConstruction;
+
+        if (safeToUpgrade) {
+          // Get all factories that can be upgraded
+          const upgradableFactories = factoryModules.filter(
+            ({ template }) => template.dataName && moduleUpgradeMap.has(template.dataName)
+          );
+
+          // Check if any factory has an unlocked upgrade with appropriate tier
+          for (const { template } of upgradableFactories) {
+            const upgradeName = moduleUpgradeMap.get(template.dataName);
+            if (upgradeName && habFaction.unlockedHabModules.has(upgradeName)) {
+              const upgradeTemplate = habModuleTemplates.get(upgradeName);
+              // Check if the upgrade tier is not higher than the hab tier
+              if (upgradeTemplate && upgradeTemplate.tier <= hab.tier) {
+                canUpgradeFactory = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
       return {
         id: hab.ID.value,
         faction: hab.faction.value,
@@ -735,6 +778,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         canUpgradePower,
         canUpgradeCombat,
         canUpgradeFarm,
+        canUpgradeFactory,
       };
     })
     .toSorted((a, b) =>
