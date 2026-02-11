@@ -23,8 +23,7 @@ function AlienGoalList({ goals }: { goals: AlienGoal[] }) {
     <ul className="ml-4 mt-1 text-sm space-y-0.5">
       {goals.map((goal) => (
         <li key={goal.id}>
-          <strong>{goal.type}</strong> ({goal.importance})
-          {goal.nation && `: ${goal.nation.displayName}`}
+          <strong>{goal.type}</strong> ({goal.importance}){goal.nation && `: ${goal.nation.displayName}`}
           {goal.hab && `: ${goal.hab.displayName}${goal.hab.bodyName ? ` (${goal.hab.bodyName})` : ""}`}
           {goal.attackTarget && `: ${goal.attackTarget.displayName}`}
           {goal.attackTargetFleet && `: Target Fleet: ${goal.attackTargetFleet.displayName}`}
@@ -103,7 +102,7 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
   return (
     <TableRow key={hab.id}>
       <TableCell>
-        <span title={`site: ${hab.habSiteId}, body: ${hab.site?.parentBodyId}`}>{hab.displayName}</span>
+        <span title={`site: ${hab.habSiteId}, body: ${hab.orbitStateId}`}>{hab.displayName}</span>
       </TableCell>
       <TableCell>
         <ShowHabCombatEffects effects={activeEffects} />

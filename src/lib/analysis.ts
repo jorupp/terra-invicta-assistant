@@ -2231,6 +2231,8 @@ function getSolarMultiplier(id: number | undefined): number | undefined {
       return 0.162; // all the mars surface ones
     case 4830:
       return 6.04; // Low Mercury
+    case 4855:
+      return 0.781; // Low Luna
   }
 
   return undefined;
