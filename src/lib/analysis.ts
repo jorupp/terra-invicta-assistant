@@ -759,6 +759,60 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
       }
 
+      // Calculate if any mining modules can be upgraded
+      let canUpgradeMining = false;
+      
+      if (habFaction) {
+        // Find the highest tier factory that the faction has unlocked
+        const maxFactoryTier = Math.max(
+          0,
+          ...[...habModuleTemplates.values()]
+            .filter((t) => 
+              t.specialRules?.includes("CanFoundTier1Habs") && 
+              habFaction.unlockedHabModules.has(t.dataName)
+            )
+            .map((t) => t.tier)
+        );
+
+        // Check if that tier factory is active at this hab
+        const hasMaxTierFactory = moduleTemplates.some(
+          ({ active, template }) => 
+            active && 
+            template.specialRules?.includes("CanFoundTier1Habs") && 
+            template.tier === maxFactoryTier
+        );
+
+        // Get all mining modules that can be upgraded
+        const miningModules = moduleTemplates.filter(
+          ({ template }) => 
+            template.miningModifier && 
+            template.miningModifier > 0 &&
+            template.dataName &&
+            moduleUpgradeMap.has(template.dataName)
+        );
+
+        // Check if any mining module can be upgraded
+        for (const { template } of miningModules) {
+          const upgradeName = moduleUpgradeMap.get(template.dataName);
+          if (upgradeName && habFaction.unlockedHabModules.has(upgradeName)) {
+            const upgradeTemplate = habModuleTemplates.get(upgradeName);
+            if (upgradeTemplate && upgradeTemplate.tier <= hab.tier) {
+              // For tier 3 upgrades, require max tier factory to be active
+              if (upgradeTemplate.tier === 3) {
+                if (hasMaxTierFactory) {
+                  canUpgradeMining = true;
+                  break;
+                }
+              } else {
+                // For other tiers, always allow
+                canUpgradeMining = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
       // Collect all other upgradeable modules (generic case)
       const upgradeableModuleNames: string[] = [];
       
@@ -780,8 +834,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
               const isCombat = template.spaceCombatModule;
               const isFarm = template.specialRules?.includes("Farm");
               const isFactory = template.specialRules?.includes("CanFoundTier1Habs");
+              const isMining = template.miningModifier && template.miningModifier > 0;
               
-              if (!isPower && !isCombat && !isFarm && !isFactory) {
+              if (!isPower && !isCombat && !isFarm && !isFactory && !isMining) {
                 // Add the upgrade target name if not already in the list
                 if (!upgradeableModuleNames.includes(upgradeTemplate.friendlyName)) {
                   upgradeableModuleNames.push(upgradeTemplate.friendlyName);
@@ -823,6 +878,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         canUpgradeCombat,
         canUpgradeFarm,
         canUpgradeFactory,
+        canUpgradeMining,
         upgradeableModuleNames,
       };
     })

@@ -13,7 +13,7 @@ import { Fragment } from "react/jsx-runtime";
 import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "./technologyGoals";
 import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
-import { User, Factory, ArrowUp } from "lucide-react";
+import { User, Factory, ArrowUp, Pickaxe } from "lucide-react";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
 
 type AlienGoal = Analysis["expandedAlienGoals"][0];
@@ -131,6 +131,11 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
             <Factory className="inline h-4 w-4" />
           </span>
         )}
+        {hab.canUpgradeMining && (
+          <span title="Mining module can be upgraded" className="p-1">
+            <Pickaxe className="inline h-4 w-4" />
+          </span>
+        )}
         {hab.upgradeableModuleNames.length > 0 && (
           <span title={`Can upgrade to:\n${hab.upgradeableModuleNames.join("\n")}`} className="p-1">
             <ArrowUp className="inline h-4 w-4" />
@@ -229,6 +234,7 @@ export function getHabsUi(analysis: Analysis) {
   const upgradableCombatHabs = playerHabs.filter((h) => h.canUpgradeCombat);
   const upgradableFarmHabs = playerHabs.filter((h) => h.canUpgradeFarm);
   const upgradableFactoryHabs = playerHabs.filter((h) => h.canUpgradeFactory);
+  const upgradableMiningHabs = playerHabs.filter((h) => h.canUpgradeMining);
   const upgradableOtherHabs = playerHabs.filter((h) => h.upgradeableModuleNames.length > 0);
   const nextCompletion = playerHabs
     .flatMap((i) => i.highlightedCompletions)
@@ -255,6 +261,10 @@ export function getHabsUi(analysis: Analysis) {
   const upgradableFactoryTitle =
     upgradableFactoryHabs.length > 0
       ? `${upgradableFactoryHabs.length} hab${upgradableFactoryHabs.length > 1 ? "s" : ""} can upgrade factories`
+      : "";
+  const upgradableMiningTitle =
+    upgradableMiningHabs.length > 0
+      ? `${upgradableMiningHabs.length} hab${upgradableMiningHabs.length > 1 ? "s" : ""} can upgrade mining modules`
       : "";
   const upgradableOtherTitle =
     upgradableOtherHabs.length > 0
@@ -299,6 +309,14 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span title={upgradableFactoryTitle}>
               <Factory className="inline h-4 w-4" />
+            </span>
+          </>
+        )}
+        {upgradableMiningHabs.length > 0 && (
+          <>
+            {" "}
+            <span title={upgradableMiningTitle}>
+              <Pickaxe className="inline h-4 w-4" />
             </span>
           </>
         )}
