@@ -13,7 +13,7 @@ import { Fragment } from "react/jsx-runtime";
 import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "./technologyGoals";
 import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
-import { User, Factory } from "lucide-react";
+import { User, Factory, ArrowUp } from "lucide-react";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
 
 type AlienGoal = Analysis["expandedAlienGoals"][0];
@@ -131,6 +131,11 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
             <Factory className="inline h-4 w-4" />
           </span>
         )}
+        {hab.upgradeableModuleNames.length > 0 && (
+          <span title={`Can upgrade to:\n${hab.upgradeableModuleNames.join("\n")}`} className="p-1">
+            <ArrowUp className="inline h-4 w-4" />
+          </span>
+        )}
       </TableCell>
       <TableCell>{hab.activePower?.toFixed(0)}</TableCell>
       <TableCell>
@@ -224,6 +229,7 @@ export function getHabsUi(analysis: Analysis) {
   const upgradableCombatHabs = playerHabs.filter((h) => h.canUpgradeCombat);
   const upgradableFarmHabs = playerHabs.filter((h) => h.canUpgradeFarm);
   const upgradableFactoryHabs = playerHabs.filter((h) => h.canUpgradeFactory);
+  const upgradableOtherHabs = playerHabs.filter((h) => h.upgradeableModuleNames.length > 0);
   const nextCompletion = playerHabs
     .flatMap((i) => i.highlightedCompletions)
     .filter((i) => i)
@@ -249,6 +255,10 @@ export function getHabsUi(analysis: Analysis) {
   const upgradableFactoryTitle =
     upgradableFactoryHabs.length > 0
       ? `${upgradableFactoryHabs.length} hab${upgradableFactoryHabs.length > 1 ? "s" : ""} can upgrade factories`
+      : "";
+  const upgradableOtherTitle =
+    upgradableOtherHabs.length > 0
+      ? `${upgradableOtherHabs.length} hab${upgradableOtherHabs.length > 1 ? "s have" : " has"} other upgradeable modules`
       : "";
 
   return {
@@ -289,6 +299,14 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span title={upgradableFactoryTitle}>
               <Factory className="inline h-4 w-4" />
+            </span>
+          </>
+        )}
+        {upgradableOtherHabs.length > 0 && (
+          <>
+            {" "}
+            <span title={upgradableOtherTitle}>
+              <ArrowUp className="inline h-4 w-4" />
             </span>
           </>
         )}

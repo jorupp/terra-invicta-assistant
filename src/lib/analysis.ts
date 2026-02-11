@@ -759,6 +759,39 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
       }
 
+      // Collect all other upgradeable modules (generic case)
+      const upgradeableModuleNames: string[] = [];
+      
+      if (habFaction) {
+        // Get all modules that can be upgraded
+        const allUpgradableModules = moduleTemplates.filter(
+          ({ template }) => template.dataName && moduleUpgradeMap.has(template.dataName)
+        );
+
+        // Check each module for valid upgrades
+        for (const { template } of allUpgradableModules) {
+          const upgradeName = moduleUpgradeMap.get(template.dataName);
+          if (upgradeName && habFaction.unlockedHabModules.has(upgradeName)) {
+            const upgradeTemplate = habModuleTemplates.get(upgradeName);
+            // Check if the upgrade tier is not higher than the hab tier
+            if (upgradeTemplate && upgradeTemplate.tier <= hab.tier) {
+              // Only add if we haven't already flagged this via specific upgrade types
+              const isPower = template.power && template.power > 0;
+              const isCombat = template.spaceCombatModule;
+              const isFarm = template.specialRules?.includes("Farm");
+              const isFactory = template.specialRules?.includes("CanFoundTier1Habs");
+              
+              if (!isPower && !isCombat && !isFarm && !isFactory) {
+                // Add the upgrade target name if not already in the list
+                if (!upgradeableModuleNames.includes(upgradeTemplate.friendlyName)) {
+                  upgradeableModuleNames.push(upgradeTemplate.friendlyName);
+                }
+              }
+            }
+          }
+        }
+      }
+
       return {
         id: hab.ID.value,
         faction: hab.faction.value,
@@ -790,6 +823,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         canUpgradeCombat,
         canUpgradeFarm,
         canUpgradeFactory,
+        upgradeableModuleNames,
       };
     })
     .toSorted((a, b) =>
