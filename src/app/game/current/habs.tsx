@@ -552,7 +552,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                     return (
                       <li key={ix}>
                         <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
-                        {project.researchCost})
+                        {project.currentProgress.toFixed(0)}/{project.researchCost}, +{project.cpBonus} CP)
                       </li>
                     );
                   })}

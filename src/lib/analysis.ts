@@ -136,12 +136,23 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       }));
     const availableCPProjects = availableProjects
       .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_ControlPointMaintenanceBonus")) && !i.repeatable)
-      .map(({ friendlyName, techCategory, researchCost, dataName }) => ({
-        friendlyName,
-        techCategory,
-        researchCost,
-        dataName,
-      }));
+      .map(({ friendlyName, techCategory, researchCost, dataName, effects }) => {
+        // Extract the CP bonus from the effect string (e.g., "Effect_ControlPointMaintenanceBonus10" -> 10)
+        const cpEffect = effects?.find((e) => e.startsWith("Effect_ControlPointMaintenanceBonus"));
+        const cpBonus = cpEffect ? parseInt(cpEffect.replace("Effect_ControlPointMaintenanceBonus", "") || "0") : 0;
+        
+        // Find current progress for this project
+        const progress = faction.currentProjectProgress.find((p) => p.projectTemplateName === dataName);
+        
+        return {
+          friendlyName,
+          techCategory,
+          researchCost,
+          dataName,
+          cpBonus,
+          currentProgress: progress?.accumulatedResearch || 0,
+        };
+      });
     const availableMaxOrgProjects = availableProjects
       .filter((i) => i.effects?.some((ii) => ii.startsWith("Effect_IncreaseMaxAvailableOrgs")) && !i.repeatable)
       .map(({ friendlyName, techCategory, researchCost, dataName }) => ({
