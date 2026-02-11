@@ -761,6 +761,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // Calculate if any mining modules can be upgraded
       let canUpgradeMining = false;
+      let miningUpgradeInfo: { upgradeName: string; factoryName: string } | null = null;
       
       if (habFaction) {
         // Find the highest tier factory that the faction has unlocked
@@ -774,13 +775,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             .map((t) => t.tier)
         );
 
-        // Check if that tier factory is active at this hab
-        const hasMaxTierFactory = moduleTemplates.some(
-          ({ active, template }) => 
+        // Find the best active factory at this hab
+        const bestActiveFactory = moduleTemplates
+          .filter(({ active, template }) => 
             active && 
             template.specialRules?.includes("CanFoundTier1Habs") && 
             template.tier === maxFactoryTier
-        );
+          )
+          .map(({ template }) => template)[0];
 
         // Get all mining modules that can be upgraded
         const miningModules = moduleTemplates.filter(
@@ -799,13 +801,21 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             if (upgradeTemplate && upgradeTemplate.tier <= hab.tier) {
               // For tier 3 upgrades, require max tier factory to be active
               if (upgradeTemplate.tier === 3) {
-                if (hasMaxTierFactory) {
+                if (bestActiveFactory) {
                   canUpgradeMining = true;
+                  miningUpgradeInfo = {
+                    upgradeName: upgradeTemplate.friendlyName,
+                    factoryName: bestActiveFactory.friendlyName,
+                  };
                   break;
                 }
               } else {
                 // For other tiers, always allow
                 canUpgradeMining = true;
+                miningUpgradeInfo = {
+                  upgradeName: upgradeTemplate.friendlyName,
+                  factoryName: bestActiveFactory?.friendlyName || "No factory",
+                };
                 break;
               }
             }
@@ -879,6 +889,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         canUpgradeFarm,
         canUpgradeFactory,
         canUpgradeMining,
+        miningUpgradeInfo,
         upgradeableModuleNames,
       };
     })

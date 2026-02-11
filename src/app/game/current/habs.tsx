@@ -131,8 +131,11 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
             <Factory className="inline h-4 w-4" />
           </span>
         )}
-        {hab.canUpgradeMining && (
-          <span title="Mining module can be upgraded" className="p-1">
+        {hab.canUpgradeMining && hab.miningUpgradeInfo && (
+          <span 
+            title={`Can upgrade to: ${hab.miningUpgradeInfo.upgradeName}\nBest factory: ${hab.miningUpgradeInfo.factoryName}`} 
+            className="p-1"
+          >
             <Pickaxe className="inline h-4 w-4" />
           </span>
         )}
