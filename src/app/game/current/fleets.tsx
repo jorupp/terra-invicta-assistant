@@ -18,7 +18,7 @@ export function getFleetsUi(analysis: Analysis) {
   }, new Map<string, typeof analysis.alienFleetsToPlayerOrbits>());
   const label = [
     ...byTarget.entries().map(([target, rawFleets]) => {
-      const fleets = rawFleets.filter((f) => f.deltaV > 0);
+      const fleets = rawFleets.filter((f) => f.deltaV > 0 && (f.daysToTarget || 0) > 0);
       if (fleets.length === 0) {
         return null;
       }
