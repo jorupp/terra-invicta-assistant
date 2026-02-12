@@ -2,9 +2,10 @@
 
 import { Boost, ControlPoint, FactionIcons, MissionControl, PrioritySpoils, ResourceIcons } from "@/components/icons";
 import { pct } from "@/components/showEffects";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Analysis } from "@/lib/analysis";
 import { diffDateTime, smartRound, sortByDateTime, toDays } from "@/lib/utils";
@@ -124,7 +125,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="space-y-2">
-      <Accordion type="single" collapsible defaultValue="transactions">
+      <SmartAccordion type="single" collapsible defaultValue="transactions" storageKey="resources-accordion">
         <AccordionItem value="transactions">
           <AccordionTrigger>
             <span>Transactions</span>
@@ -319,7 +320,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
             </Table>
           </AccordionContent>
         </AccordionItem>
-      </Accordion>
+      </SmartAccordion>
 
       <Collapsible>
         <CollapsibleTrigger asChild>
