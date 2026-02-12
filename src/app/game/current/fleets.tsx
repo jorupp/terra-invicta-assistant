@@ -51,8 +51,10 @@ export function getFleetsUi(analysis: Analysis) {
       );
       return (
         <>
-          {target}: x{fleets.length}, 1st {(firstFleet.daysToTarget || 0).toFixed(0)}d w/ {firstMc.toFixed(0)}{" "}
-          <MissionControl />
+          {target}
+          {fleets.length > 1 ? `(${fleets.length})` : ""}: {(firstFleet.daysToTarget || 0).toFixed(0)}d{" "}
+          <MissionControl className="-mr-2 -ml-1" />
+          {firstMc.toFixed(0)}
           {survInfo}
         </>
       );
@@ -66,11 +68,13 @@ export function getFleetsUi(analysis: Analysis) {
         Alien Fleets
         {label.length > 0 ? (
           <>
-            (
+            {" - "}
             {label.map((i, ix) => (
-              <Fragment key={ix}>{i}</Fragment>
+              <Fragment key={ix}>
+                {i}
+                {ix < label.length - 1 ? " | " : ""}
+              </Fragment>
             ))}
-            )
           </>
         ) : (
           ""
