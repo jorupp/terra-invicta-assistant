@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShowEffects, ShowEffectsProps } from "@/components/showEffects";
+import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Button } from "@/components/ui/button";
@@ -538,6 +538,10 @@ function CouncilorsComponent({
 
   const importantMissions = ["Assassinate"];
 
+  const councilEffects = scoredModifiedCouncilors.reduce((acc, councilor) => {
+    return combineEffects(acc, councilor.effectsWithOrgsAndAugments);
+  }, {} as ShowEffectsProps);
+
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <div className="space-y-2">
@@ -549,6 +553,36 @@ function CouncilorsComponent({
             </span>
           </AccordionTrigger>
           <AccordionContent>
+            <div className="py-1">
+              <ShowEffects
+                incomeBoost_month={councilEffects.incomeBoost_month}
+                incomeMoney_month={councilEffects.incomeMoney_month}
+                incomeInfluence_month={councilEffects.incomeInfluence_month}
+                incomeOps_month={councilEffects.incomeOps_month}
+                incomeMissionControl={councilEffects.incomeMissionControl}
+                incomeResearch_month={councilEffects.incomeResearch_month}
+                projectCapacityGranted={councilEffects.projectCapacityGranted}
+              />
+              <ShowEffects
+                economyBonus={councilEffects.economyBonus}
+                welfareBonus={councilEffects.welfareBonus}
+                environmentBonus={councilEffects.environmentBonus}
+                knowledgeBonus={councilEffects.knowledgeBonus}
+                governmentBonus={councilEffects.governmentBonus}
+                unityBonus={councilEffects.unityBonus}
+                militaryBonus={councilEffects.militaryBonus}
+                oppressionBonus={councilEffects.oppressionBonus}
+                spoilsBonus={councilEffects.spoilsBonus}
+                spaceDevBonus={councilEffects.spaceDevBonus}
+                spaceflightBonus={councilEffects.spaceflightBonus}
+                MCBonus={councilEffects.MCBonus}
+                miningBonus={councilEffects.miningBonus}
+              />
+              <ShowEffects
+                councilorTechBonus={councilEffects.councilorTechBonus}
+                techBonuses={councilEffects.techBonuses}
+              />
+            </div>
             <Table>
               <CouncilorTableHeader hasOrgs />
               <TableBody>
@@ -639,7 +673,10 @@ function CouncilorsComponent({
         <AccordionItem value="takeover">
           <AccordionTrigger>Hostile Takeover</AccordionTrigger>
           <AccordionContent>
-            <SmartTabs storageKey="councilorsTakeoverTabs" defaultValue={`faction-${Array.from(stealableOrgsByFaction.keys())[0]}`}>
+            <SmartTabs
+              storageKey="councilorsTakeoverTabs"
+              defaultValue={`faction-${Array.from(stealableOrgsByFaction.keys())[0]}`}
+            >
               <TabsList>
                 {Array.from(stealableOrgsByFaction.entries()).map(([factionId, orgs]) => (
                   <TabsTrigger key={factionId} value={`faction-${factionId}`}>
