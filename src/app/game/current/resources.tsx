@@ -47,18 +47,25 @@ export function getResourcesUi(analysis: Analysis) {
       )
   );
 
+  // once you're using over 300mc, you're not worried about your MC hate floor anymore.
+  const showMcInfo = mcUsage < 300;
   return {
     key: "resources",
     tab: (
       <>
         <span className={twMerge(nationBg, "px-1 py-0.5 -mx-1 -my-0.5 rounded")}>Resources</span>
-        (<PrioritySpoils /> ${spoils.toFixed(0)}, <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
-        <span title="If more MC is used than this, alien hate will never fall below 50">
-          Lim {mcAlienWarLimit.toFixed(0)}
-        </span>
-        <span title="Current hate floor (alien hate cannot go below this due to your MC usage)">
-          Flr {mcHateFloor.toFixed(0)}
-        </span>
+        (<PrioritySpoils /> ${spoils.toFixed(0)}
+        {showMcInfo ? (
+          <>
+            , <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
+            <span title="If more MC is used than this, alien hate will never fall below 50">
+              Lim {mcAlienWarLimit.toFixed(0)}
+            </span>
+            <span title="Current hate floor (alien hate cannot go below this due to your MC usage)">
+              Flr {mcHateFloor.toFixed(0)}
+            </span>
+          </>
+        ) : null}
         )
       </>
     ),
