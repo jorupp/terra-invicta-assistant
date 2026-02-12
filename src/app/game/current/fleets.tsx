@@ -49,16 +49,37 @@ export function getFleetsUi(analysis: Analysis) {
       ) : (
         ""
       );
-      const farFuture = (firstFleet.daysToTarget || 0) > 200;
+
+      // tier 2 hab (60d), fusion power, and defense module (90d) take a total of 150 days
+      // tier 3 hab (90d), fusion power, and defense module (180d) take a total of 270 days.
+      // T2 hab should be able to stop a bombard from a 10MC fleet, and T3 is the best we can do anyway, plus the turn time of 30 days should make for enough warning
+      // before that, we'll still have the nameplate warning and can look at details in the fleets tab
+      const warningNeeded = (firstMc > 10 ? 270 : 150) + 30;
+      const daysToTarget = firstFleet.daysToTarget || 0;
+      const farFuture = daysToTarget > warningNeeded;
+      const className = twMerge(
+        farFuture && "px-1 -mx-1 py-0.5 -my-0.5 rounded bg-green-500",
+        farFuture &&
+          (daysToTarget < warningNeeded + 50
+            ? "bg-red-200"
+            : daysToTarget < warningNeeded + 100
+            ? "bg-yellow-200"
+            : "bg-green-200")
+      );
       return (
-        <span>
+        <span
+          className={className}
+          title={`${fleets.length} fleet(s) targeting ${target}, arriving in ${daysToTarget.toFixed(
+            0
+          )} days, using ${firstMc.toFixed(0)} MC`}
+        >
           {target}
           {fleets.length > 1 ? `(${fleets.length})` : ""}
           {farFuture ? (
             ""
           ) : (
             <>
-              : {(firstFleet.daysToTarget || 0).toFixed(0)}d <MissionControl />
+              : {daysToTarget.toFixed(0)}d <MissionControl />
               {firstMc.toFixed(0)}
             </>
           )}
