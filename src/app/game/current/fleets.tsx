@@ -49,14 +49,21 @@ export function getFleetsUi(analysis: Analysis) {
       ) : (
         ""
       );
+      const farFuture = (firstFleet.daysToTarget || 0) > 200;
       return (
-        <>
+        <span>
           {target}
-          {fleets.length > 1 ? `(${fleets.length})` : ""}: {(firstFleet.daysToTarget || 0).toFixed(0)}d{" "}
-          <MissionControl className="-mr-2 -ml-1" />
-          {firstMc.toFixed(0)}
+          {fleets.length > 1 ? `(${fleets.length})` : ""}
+          {farFuture ? (
+            ""
+          ) : (
+            <>
+              : {(firstFleet.daysToTarget || 0).toFixed(0)}d <MissionControl />
+              {firstMc.toFixed(0)}
+            </>
+          )}
           {survInfo}
-        </>
+        </span>
       );
     }),
   ].filter((i) => !!i);
