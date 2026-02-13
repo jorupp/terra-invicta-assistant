@@ -725,6 +725,35 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <AccordionContent>
             <Card>
               <CardHeader>
+                <CardTitle>Mining Bonuses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-5 gap-2 text-sm">
+                  <div>
+                    <div className="font-semibold">Water</div>
+                    <div>{((analysis.playerFaction.miningBonuses.water - 1) * 100).toFixed(0)}%</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Volatiles</div>
+                    <div>{((analysis.playerFaction.miningBonuses.volatiles - 1) * 100).toFixed(0)}%</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Metals</div>
+                    <div>{((analysis.playerFaction.miningBonuses.metals - 1) * 100).toFixed(0)}%</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Nobles</div>
+                    <div>{((analysis.playerFaction.miningBonuses.nobles - 1) * 100).toFixed(0)}%</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Fissiles</div>
+                    <div>{((analysis.playerFaction.miningBonuses.fissiles - 1) * 100).toFixed(0)}%</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
                 <CardTitle>Base income from active mines</CardTitle>
               </CardHeader>
               <CardContent>

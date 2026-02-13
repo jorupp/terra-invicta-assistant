@@ -248,6 +248,13 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         boostMonthlyChange: 0,
         mcMonthlyChange: 0,
       },
+      miningBonuses: {
+        water: 1,
+        volatiles: 1,
+        metals: 1,
+        nobles: 1,
+        fissiles: 1,
+      },
     };
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
@@ -876,23 +883,32 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const isMineComplete = currentMine && 
         (currentMine.completionDate === noDate || currentMine.completionDate <= gameCurrentDateTimeFormatted);
 
+      // Get faction mining bonuses
+      const miningBonuses = habFaction?.miningBonuses || {
+        water: 1,
+        volatiles: 1,
+        metals: 1,
+        nobles: 1,
+        fissiles: 1,
+      };
+
       // 1. Current mine effects (0 if unpowered or under construction)
       const currentMineEffects: MineEffects = {
-        water_month: isMineActive && site ? (site.water_day * currentMineModifier * 30) : 0,
-        volatiles_month: isMineActive && site ? (site.volatiles_day * currentMineModifier * 30) : 0,
-        metals_month: isMineActive && site ? (site.metals_day * currentMineModifier * 30) : 0,
-        nobles_month: isMineActive && site ? (site.nobles_day * currentMineModifier * 30) : 0,
-        fissiles_month: isMineActive && site ? (site.fissiles_day * currentMineModifier * 30) : 0,
+        water_month: isMineActive && site ? (site.water_day * currentMineModifier * 30 * miningBonuses.water) : 0,
+        volatiles_month: isMineActive && site ? (site.volatiles_day * currentMineModifier * 30 * miningBonuses.volatiles) : 0,
+        metals_month: isMineActive && site ? (site.metals_day * currentMineModifier * 30 * miningBonuses.metals) : 0,
+        nobles_month: isMineActive && site ? (site.nobles_day * currentMineModifier * 30 * miningBonuses.nobles) : 0,
+        fissiles_month: isMineActive && site ? (site.fissiles_day * currentMineModifier * 30 * miningBonuses.fissiles) : 0,
         miningModifier: currentMineModifier,
       };
 
       // 2. Current mine effects if powered (0 if under construction)
       const currentMinePoweredEffects: MineEffects = {
-        water_month: isMineComplete && site ? (site.water_day * currentMineModifier * 30) : 0,
-        volatiles_month: isMineComplete && site ? (site.volatiles_day * currentMineModifier * 30) : 0,
-        metals_month: isMineComplete && site ? (site.metals_day * currentMineModifier * 30) : 0,
-        nobles_month: isMineComplete && site ? (site.nobles_day * currentMineModifier * 30) : 0,
-        fissiles_month: isMineComplete && site ? (site.fissiles_day * currentMineModifier * 30) : 0,
+        water_month: isMineComplete && site ? (site.water_day * currentMineModifier * 30 * miningBonuses.water) : 0,
+        volatiles_month: isMineComplete && site ? (site.volatiles_day * currentMineModifier * 30 * miningBonuses.volatiles) : 0,
+        metals_month: isMineComplete && site ? (site.metals_day * currentMineModifier * 30 * miningBonuses.metals) : 0,
+        nobles_month: isMineComplete && site ? (site.nobles_day * currentMineModifier * 30 * miningBonuses.nobles) : 0,
+        fissiles_month: isMineComplete && site ? (site.fissiles_day * currentMineModifier * 30 * miningBonuses.fissiles) : 0,
         miningModifier: currentMineModifier,
       };
 
@@ -920,11 +936,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       const bestMineModifier = bestUnlockedMine?.miningModifier || 1;
       const bestMineEffects: MineEffects = {
-        water_month: site ? (site.water_day * bestMineModifier * 30) : 0,
-        volatiles_month: site ? (site.volatiles_day * bestMineModifier * 30) : 0,
-        metals_month: site ? (site.metals_day * bestMineModifier * 30) : 0,
-        nobles_month: site ? (site.nobles_day * bestMineModifier * 30) : 0,
-        fissiles_month: site ? (site.fissiles_day * bestMineModifier * 30) : 0,
+        water_month: site ? (site.water_day * bestMineModifier * 30 * miningBonuses.water) : 0,
+        volatiles_month: site ? (site.volatiles_day * bestMineModifier * 30 * miningBonuses.volatiles) : 0,
+        metals_month: site ? (site.metals_day * bestMineModifier * 30 * miningBonuses.metals) : 0,
+        nobles_month: site ? (site.nobles_day * bestMineModifier * 30 * miningBonuses.nobles) : 0,
+        fissiles_month: site ? (site.fissiles_day * bestMineModifier * 30 * miningBonuses.fissiles) : 0,
         miningModifier: bestMineModifier,
       };
 
@@ -1879,6 +1895,80 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     }
   );
   const playerCouncilors = councilors.filter((councilor) => playerFaction?.councilorIds.includes(councilor.id));
+
+  // Calculate mining bonuses for each faction
+  const effectsState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIEffectsState"][0]?.Value;
+
+  factions.forEach((faction) => {
+    // Start with base 0% bonus for each resource
+    let waterBonus = 0;
+    let volatilesBonus = 0;
+    let metalsBonus = 0;
+    let noblesBonus = 0;
+    let fissilesBonus = 0;
+
+    // 1. Add councilor mining bonuses (applies to all resources)
+    const factionCouncilors = councilors.filter((c) => c.factionId === faction.id);
+    const councilorMiningBonus = factionCouncilors.reduce(
+      (sum, c) => sum + (c.effectsWithOrgsAndAugments.miningBonus || 0),
+      0
+    );
+    
+    waterBonus += councilorMiningBonus;
+    volatilesBonus += councilorMiningBonus;
+    metalsBonus += councilorMiningBonus;
+    noblesBonus += councilorMiningBonus;
+    fissilesBonus += councilorMiningBonus;
+
+    // 2. Add faction effects from TIEffectsState
+    if (effectsState?.factionEffectsNames) {
+      const factionEffects = effectsState.factionEffectsNames.find((kv) => kv.Key.value === faction.id)?.Value;
+      
+      if (factionEffects) {
+        // SpaceMiningBonus (applies to all resources)
+        const spaceMiningEffects = factionEffects.SpaceMiningBonus || [];
+        spaceMiningEffects.forEach((effect) => {
+          // Extract percentage from effect name like "Effect_SpaceMiningBonus5" = 5%
+          const match = effect.match(/Effect_SpaceMiningBonus(\d+)/);
+          if (match) {
+            const bonus = parseInt(match[1], 10);
+            waterBonus += bonus;
+            volatilesBonus += bonus;
+            metalsBonus += bonus;
+            noblesBonus += bonus;
+            fissilesBonus += bonus;
+          }
+        });
+
+        // Resource-specific bonuses (15% each)
+        if (factionEffects.MiningWaterBonus?.includes("Effect_MiningWaterBonus")) {
+          waterBonus += 15;
+        }
+        if (factionEffects.MiningVolatilesBonus?.includes("Effect_MiningVolatilesBonus")) {
+          volatilesBonus += 15;
+        }
+        if (factionEffects.MiningMetalsBonus?.includes("Effect_MiningMetalsBonus")) {
+          metalsBonus += 15;
+        }
+        if (factionEffects.MiningNoblesBonus?.includes("Effect_MiningNoblesBonus")) {
+          noblesBonus += 15;
+        }
+        if (factionEffects.MiningFissilesBonus?.includes("Effect_MiningFissilesBonus")) {
+          fissilesBonus += 15;
+        }
+      }
+    }
+
+    // Store bonuses as multipliers (e.g., 15% = 1.15)
+    faction.miningBonuses = {
+      water: 1 + waterBonus / 100,
+      volatiles: 1 + volatilesBonus / 100,
+      metals: 1 + metalsBonus / 100,
+      nobles: 1 + noblesBonus / 100,
+      fissiles: 1 + fissilesBonus / 100,
+    };
+  });
+
   const playerNationIds = new Set<number>(
     controlPoints
       .filter((cp) => cp.factionId === playerFaction.id && cp.nationId)
