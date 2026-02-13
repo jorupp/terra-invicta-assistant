@@ -1,6 +1,6 @@
 "use client";
 
-import { Boost, CombatScore, FactionIcons, HabPower, MissionControl, TechIcons, UnknownIcon } from "@/components/icons";
+import { Boost, CombatScore, FactionIcons, HabPower, MissionControl, TechIcons, UnknownIcon, Water, Volatiles, Metals, Nobles, Fissiles } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -728,26 +728,26 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 <CardTitle>Mining Bonuses</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-5 gap-2 text-sm">
-                  <div>
-                    <div className="font-semibold">Water</div>
-                    <div>{((analysis.playerFaction.miningMultipliers.water - 1) * 100).toFixed(0)}%</div>
+                <div className="flex gap-4 text-sm">
+                  <div className="flex items-center gap-1">
+                    <Water />
+                    {((analysis.playerFaction.miningMultipliers.water - 1) * 100).toFixed(0)}%
                   </div>
-                  <div>
-                    <div className="font-semibold">Volatiles</div>
-                    <div>{((analysis.playerFaction.miningMultipliers.volatiles - 1) * 100).toFixed(0)}%</div>
+                  <div className="flex items-center gap-1">
+                    <Volatiles />
+                    {((analysis.playerFaction.miningMultipliers.volatiles - 1) * 100).toFixed(0)}%
                   </div>
-                  <div>
-                    <div className="font-semibold">Metals</div>
-                    <div>{((analysis.playerFaction.miningMultipliers.metals - 1) * 100).toFixed(0)}%</div>
+                  <div className="flex items-center gap-1">
+                    <Metals />
+                    {((analysis.playerFaction.miningMultipliers.metals - 1) * 100).toFixed(0)}%
                   </div>
-                  <div>
-                    <div className="font-semibold">Nobles</div>
-                    <div>{((analysis.playerFaction.miningMultipliers.nobles - 1) * 100).toFixed(0)}%</div>
+                  <div className="flex items-center gap-1">
+                    <Nobles />
+                    {((analysis.playerFaction.miningMultipliers.nobles - 1) * 100).toFixed(0)}%
                   </div>
-                  <div>
-                    <div className="font-semibold">Fissiles</div>
-                    <div>{((analysis.playerFaction.miningMultipliers.fissiles - 1) * 100).toFixed(0)}%</div>
+                  <div className="flex items-center gap-1">
+                    <Fissiles />
+                    {((analysis.playerFaction.miningMultipliers.fissiles - 1) * 100).toFixed(0)}%
                   </div>
                 </div>
               </CardContent>
