@@ -151,8 +151,8 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
                   <div>Upgrade to: {hab.miningUpgradeInfo.upgradeName}</div>
                   <div>Best factory: {hab.miningUpgradeInfo.factoryName}</div>
                   <div className="mt-2 text-sm">
-                    <div className="font-semibold">Mining effects:</div>
-                    <ShowHabMineEffects effects={{ ...hab.site, miningModifier: 1 }} />
+                    <div className="font-semibold">Mining effects with best mine:</div>
+                    <ShowHabMineEffects effects={hab.bestMineEffects} />
                   </div>
                 </div>
               </TooltipContent>
@@ -191,38 +191,28 @@ function HabMineHeader() {
         </TableHead>
         <TableHead>Most important upcoming completion</TableHead>
         <TableHead>Alerts</TableHead>
-        <TableHead>Current base income</TableHead>
-        <TableHead>Future/potential base income</TableHead>
+        <TableHead>Current income</TableHead>
+        <TableHead>Current if powered</TableHead>
+        <TableHead>Best unlocked mine</TableHead>
       </TableRow>
     </TableHeader>
   );
 }
 
-function ShowHabMineEffects({
-  effects,
-}: {
-  effects: Partial<
-    Pick<
-      NonNullable<Analysis["playerHabs"][0]["site"]>,
-      "water_day" | "volatiles_day" | "metals_day" | "nobles_day" | "fissiles_day"
-    > &
-      Pick<NonNullable<Analysis["playerHabs"][0]["mine"]["template"]>, "miningModifier">
-  >;
-}) {
+function ShowHabMineEffects({ effects }: { effects: Analysis["playerHabs"][0]["currentMineEffects"] }) {
   return (
     <ShowEffects
-      water={(effects.water_day || 0) * (effects.miningModifier || 1) * 30}
-      volatiles={(effects.volatiles_day || 0) * (effects.miningModifier || 1) * 30}
-      metals={(effects.metals_day || 0) * (effects.miningModifier || 1) * 30}
-      nobles={(effects.nobles_day || 0) * (effects.miningModifier || 1) * 30}
-      fissiles={(effects.fissiles_day || 0) * (effects.miningModifier || 1) * 30}
+      water={effects.water_month}
+      volatiles={effects.volatiles_month}
+      metals={effects.metals_month}
+      nobles={effects.nobles_month}
+      fissiles={effects.fissiles_month}
     />
   );
 }
 
 function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: string }) {
   const { highlightedCompletions, emptyModuleCount, missingMine } = hab;
-  const effects = { ...hab.site, ...hab.mine?.template };
 
   return (
     <TableRow key={hab.id}>
@@ -242,9 +232,14 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
       </TableCell>
-      <TableCell>{hab.mine?.powered ? <ShowHabMineEffects effects={effects} /> : null}</TableCell>
       <TableCell>
-        <ShowHabMineEffects effects={effects} />
+        <ShowHabMineEffects effects={hab.currentMineEffects} />
+      </TableCell>
+      <TableCell>
+        <ShowHabMineEffects effects={hab.currentMinePoweredEffects} />
+      </TableCell>
+      <TableCell>
+        <ShowHabMineEffects effects={hab.bestMineEffects} />
       </TableCell>
     </TableRow>
   );
@@ -379,62 +374,55 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
     {}
   );
 
-  const mineable = playerHabs
+  const activeMineSummary = playerHabs
     .filter((h) => h.site)
-    .map((hab) => {
-      const mine = hab.mine;
-      const miningModifier = mine?.template?.miningModifier || 1;
-      const active = mine?.powered || false;
-      return {
-        active,
-        miningModifier,
-        water_day: (hab.site?.water_day || 0) * miningModifier,
-        volatiles_day: (hab.site?.volatiles_day || 0) * miningModifier,
-        metals_day: (hab.site?.metals_day || 0) * miningModifier,
-        nobles_day: (hab.site?.nobles_day || 0) * miningModifier,
-        fissiles_day: (hab.site?.fissiles_day || 0) * miningModifier,
-      };
-    });
-  const activeMineSummary = mineable.reduce(
-    (acc, cur) => {
-      if (cur.active) {
-        acc.count++;
-        acc.water_day += cur.water_day;
-        acc.volatiles_day += cur.volatiles_day;
-        acc.metals_day += cur.metals_day;
-        acc.nobles_day += cur.nobles_day;
-        acc.fissiles_day += cur.fissiles_day;
+    .reduce(
+      (acc, hab) => {
+        const effects = hab.currentMineEffects;
+        if (effects.water_month > 0 || effects.volatiles_month > 0 || effects.metals_month > 0 || 
+            effects.nobles_month > 0 || effects.fissiles_month > 0) {
+          acc.count++;
+          acc.water_month += effects.water_month;
+          acc.volatiles_month += effects.volatiles_month;
+          acc.metals_month += effects.metals_month;
+          acc.nobles_month += effects.nobles_month;
+          acc.fissiles_month += effects.fissiles_month;
+        }
+        return acc;
+      },
+      {
+        count: 0,
+        water_month: 0,
+        volatiles_month: 0,
+        metals_month: 0,
+        nobles_month: 0,
+        fissiles_month: 0,
+        miningModifier: 0,
       }
-      return acc;
-    },
-    {
-      count: 0,
-      water_day: 0,
-      volatiles_day: 0,
-      metals_day: 0,
-      nobles_day: 0,
-      fissiles_day: 0,
-    }
-  );
-  const mineSummary = mineable.reduce(
-    (acc, cur) => {
-      acc.count++;
-      acc.water_day += cur.water_day;
-      acc.volatiles_day += cur.volatiles_day;
-      acc.metals_day += cur.metals_day;
-      acc.nobles_day += cur.nobles_day;
-      acc.fissiles_day += cur.fissiles_day;
-      return acc;
-    },
-    {
-      count: 0,
-      water_day: 0,
-      volatiles_day: 0,
-      metals_day: 0,
-      nobles_day: 0,
-      fissiles_day: 0,
-    }
-  );
+    );
+  const mineSummary = playerHabs
+    .filter((h) => h.site)
+    .reduce(
+      (acc, hab) => {
+        const effects = hab.bestMineEffects;
+        acc.count++;
+        acc.water_month += effects.water_month;
+        acc.volatiles_month += effects.volatiles_month;
+        acc.metals_month += effects.metals_month;
+        acc.nobles_month += effects.nobles_month;
+        acc.fissiles_month += effects.fissiles_month;
+        return acc;
+      },
+      {
+        count: 0,
+        water_month: 0,
+        volatiles_month: 0,
+        metals_month: 0,
+        nobles_month: 0,
+        fissiles_month: 0,
+        miningModifier: 0,
+      }
+    );
 
   const techGoals = useTechnologyGoals(analysis);
   const habsWithoutSolarPowerMultipler = playerHabs

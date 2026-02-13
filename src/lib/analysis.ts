@@ -859,6 +859,75 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
       }
 
+      // Calculate mine effects
+      type MineEffects = {
+        water_month: number;
+        volatiles_month: number;
+        metals_month: number;
+        nobles_month: number;
+        fissiles_month: number;
+        miningModifier: number;
+      };
+
+      const currentMine = mine[0];
+      const currentMineModifier = currentMine?.template?.miningModifier || 1;
+      const isMineActive = currentMine?.powered && 
+        (currentMine.completionDate === noDate || currentMine.completionDate <= gameCurrentDateTimeFormatted);
+      const isMineComplete = currentMine && 
+        (currentMine.completionDate === noDate || currentMine.completionDate <= gameCurrentDateTimeFormatted);
+
+      // 1. Current mine effects (0 if unpowered or under construction)
+      const currentMineEffects: MineEffects = {
+        water_month: isMineActive && site ? (site.water_day * currentMineModifier * 30) : 0,
+        volatiles_month: isMineActive && site ? (site.volatiles_day * currentMineModifier * 30) : 0,
+        metals_month: isMineActive && site ? (site.metals_day * currentMineModifier * 30) : 0,
+        nobles_month: isMineActive && site ? (site.nobles_day * currentMineModifier * 30) : 0,
+        fissiles_month: isMineActive && site ? (site.fissiles_day * currentMineModifier * 30) : 0,
+        miningModifier: currentMineModifier,
+      };
+
+      // 2. Current mine effects if powered (0 if under construction)
+      const currentMinePoweredEffects: MineEffects = {
+        water_month: isMineComplete && site ? (site.water_day * currentMineModifier * 30) : 0,
+        volatiles_month: isMineComplete && site ? (site.volatiles_day * currentMineModifier * 30) : 0,
+        metals_month: isMineComplete && site ? (site.metals_day * currentMineModifier * 30) : 0,
+        nobles_month: isMineComplete && site ? (site.nobles_day * currentMineModifier * 30) : 0,
+        fissiles_month: isMineComplete && site ? (site.fissiles_day * currentMineModifier * 30) : 0,
+        miningModifier: currentMineModifier,
+      };
+
+      // 3. Best unlocked mine effects
+      const bestUnlockedMine = habFaction
+        ? [...habModuleTemplates.values()]
+            .filter(
+              (module) =>
+                module.miningModifier &&
+                module.miningModifier > 0 &&
+                module.habType === hab.habType &&
+                module.tier <= hab.tier &&
+                habFaction.unlockedHabModules.has(module.dataName)
+            )
+            .reduce<typeof habModuleTemplates extends Map<string, infer T> ? T : never | null>(
+              (best, module) => {
+                if (!best || module.miningModifier > best.miningModifier) {
+                  return module;
+                }
+                return best;
+              },
+              null as any
+            )
+        : null;
+
+      const bestMineModifier = bestUnlockedMine?.miningModifier || 1;
+      const bestMineEffects: MineEffects = {
+        water_month: site ? (site.water_day * bestMineModifier * 30) : 0,
+        volatiles_month: site ? (site.volatiles_day * bestMineModifier * 30) : 0,
+        metals_month: site ? (site.metals_day * bestMineModifier * 30) : 0,
+        nobles_month: site ? (site.nobles_day * bestMineModifier * 30) : 0,
+        fissiles_month: site ? (site.fissiles_day * bestMineModifier * 30) : 0,
+        miningModifier: bestMineModifier,
+      };
+
       return {
         id: hab.ID.value,
         faction: hab.faction.value,
@@ -893,6 +962,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         canUpgradeMining,
         miningUpgradeInfo,
         upgradeableModuleNames,
+        currentMineEffects,
+        currentMinePoweredEffects,
+        bestMineEffects,
       };
     })
     .toSorted((a, b) =>
