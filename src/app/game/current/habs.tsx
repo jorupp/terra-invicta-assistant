@@ -246,17 +246,33 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
+        {hab.mineTier > 0 && (
+          <span
+            className={twMerge(
+              "text-black p-1 rounded text-xs",
+              hab.mineTier === 1 ? "bg-blue-100" : hab.mineTier === 2 ? "bg-blue-300" : "bg-blue-500 text-white"
+            )}
+          >
+            M{hab.mineTier}
+          </span>
+        )}{" "}
         {hab.highestActiveFactoryTier > 0 && (
           <span
-            className={`bg-green-200 p-1 rounded text-xs ${
+            className={twMerge(
+              "text-black p-1 rounded text-xs",
+              hab.highestActiveFactoryTier === 1
+                ? "bg-green-100"
+                : hab.highestActiveFactoryTier === 2
+                ? "bg-green-300"
+                : "bg-green-500",
               hab.highestActiveFactoryCount === 2
                 ? "outline outline-1 outline-black"
                 : hab.highestActiveFactoryCount >= 3
                 ? "outline outline-2 outline-black"
                 : ""
-            }`}
+            )}
           >
-            T{hab.highestActiveFactoryTier}
+            F{hab.highestActiveFactoryTier}
           </span>
         )}
       </TableCell>

@@ -1378,6 +1378,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       const currentMine = mine[0];
       const currentMineModifier = currentMine?.template?.miningModifier || 1;
+      
+      // Track mine tier (including inactive/under construction)
+      const mineTier = currentMine?.template?.tier || 0;
       const isMineActive =
         currentMine?.powered &&
         (currentMine.completionDate === noDate || currentMine.completionDate <= gameCurrentDateTimeFormatted);
@@ -1518,6 +1521,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         bestMineEffects,
         highestActiveFactoryTier,
         highestActiveFactoryCount,
+        mineTier,
       };
     })
     .toSorted((a, b) =>
