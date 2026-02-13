@@ -221,12 +221,14 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
         <ShowHabCombatEffects effects={hab.activeEffects} />
       </TableCell>
       <TableCell>
-        {highlightedCompletions.map((highlightedCompletion, ix) => (
-          <Fragment key={ix}>
-            {ix > 0 && ", "}
-            {highlightedCompletion.templateName} in {highlightedCompletion.daysToCompletion?.toFixed(0)} days
-          </Fragment>
-        ))}
+        <span className="whitespace-normal">
+          {highlightedCompletions.map((highlightedCompletion, ix) => (
+            <Fragment key={ix}>
+              {ix > 0 && ", "}
+              {highlightedCompletion.templateName} in {highlightedCompletion.daysToCompletion?.toFixed(0)} days
+            </Fragment>
+          ))}
+        </span>
       </TableCell>
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
@@ -379,8 +381,13 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
     .reduce(
       (acc, hab) => {
         const effects = hab.currentMineEffects;
-        if (effects.water_month > 0 || effects.volatiles_month > 0 || effects.metals_month > 0 || 
-            effects.nobles_month > 0 || effects.fissiles_month > 0) {
+        if (
+          effects.water_month > 0 ||
+          effects.volatiles_month > 0 ||
+          effects.metals_month > 0 ||
+          effects.nobles_month > 0 ||
+          effects.fissiles_month > 0
+        ) {
           acc.count++;
           acc.water_month += effects.water_month;
           acc.volatiles_month += effects.volatiles_month;
