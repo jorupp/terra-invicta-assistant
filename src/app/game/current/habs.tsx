@@ -1,6 +1,19 @@
 "use client";
 
-import { Boost, CombatScore, FactionIcons, HabPower, MissionControl, TechIcons, UnknownIcon, Water, Volatiles, Metals, Nobles, Fissiles } from "@/components/icons";
+import {
+  Boost,
+  CombatScore,
+  FactionIcons,
+  HabPower,
+  MissionControl,
+  TechIcons,
+  UnknownIcon,
+  Water,
+  Volatiles,
+  Metals,
+  Nobles,
+  Fissiles,
+} from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -722,7 +735,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
           <AccordionTrigger>
             <span>Manage Mines</span>
           </AccordionTrigger>
-          <AccordionContent>
+          <AccordionContent innerClassName="py-2 space-y-2">
             <Card>
               <CardHeader>
                 <CardTitle>Mining Bonuses</CardTitle>
@@ -771,9 +784,11 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <HabMineHeader />
               <TableBody>
-                {playerHabs.map((hab) => (
-                  <HabMineTableRow hab={hab} key={hab.id} time={time} />
-                ))}
+                {playerHabs
+                  .filter((i) => i.habType === "Base")
+                  .map((hab) => (
+                    <HabMineTableRow hab={hab} key={hab.id} time={time} />
+                  ))}
               </TableBody>
             </Table>
           </AccordionContent>

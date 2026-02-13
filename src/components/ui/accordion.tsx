@@ -51,7 +51,12 @@ function AccordionTrigger({ className, children, ...props }: React.ComponentProp
   );
 }
 
-function AccordionContent({ className, children, ...props }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
+function AccordionContent({
+  className,
+  children,
+  innerClassName,
+  ...props
+}: React.ComponentProps<typeof AccordionPrimitive.Content> & { innerClassName?: string }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
@@ -111,7 +116,9 @@ function AccordionContent({ className, children, ...props }: React.ComponentProp
           className
         )}
       >
-        <div ref={ref}>{children}</div>
+        <div className={innerClassName} ref={ref}>
+          {children}
+        </div>
       </div>
     </AccordionPrimitive.Content>
   );
