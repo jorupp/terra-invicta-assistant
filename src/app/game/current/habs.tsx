@@ -731,23 +731,23 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 <div className="grid grid-cols-5 gap-2 text-sm">
                   <div>
                     <div className="font-semibold">Water</div>
-                    <div>{((analysis.playerFaction.miningBonuses.water - 1) * 100).toFixed(0)}%</div>
+                    <div>{((analysis.playerFaction.miningMultipliers.water - 1) * 100).toFixed(0)}%</div>
                   </div>
                   <div>
                     <div className="font-semibold">Volatiles</div>
-                    <div>{((analysis.playerFaction.miningBonuses.volatiles - 1) * 100).toFixed(0)}%</div>
+                    <div>{((analysis.playerFaction.miningMultipliers.volatiles - 1) * 100).toFixed(0)}%</div>
                   </div>
                   <div>
                     <div className="font-semibold">Metals</div>
-                    <div>{((analysis.playerFaction.miningBonuses.metals - 1) * 100).toFixed(0)}%</div>
+                    <div>{((analysis.playerFaction.miningMultipliers.metals - 1) * 100).toFixed(0)}%</div>
                   </div>
                   <div>
                     <div className="font-semibold">Nobles</div>
-                    <div>{((analysis.playerFaction.miningBonuses.nobles - 1) * 100).toFixed(0)}%</div>
+                    <div>{((analysis.playerFaction.miningMultipliers.nobles - 1) * 100).toFixed(0)}%</div>
                   </div>
                   <div>
                     <div className="font-semibold">Fissiles</div>
-                    <div>{((analysis.playerFaction.miningBonuses.fissiles - 1) * 100).toFixed(0)}%</div>
+                    <div>{((analysis.playerFaction.miningMultipliers.fissiles - 1) * 100).toFixed(0)}%</div>
                   </div>
                 </div>
               </CardContent>
