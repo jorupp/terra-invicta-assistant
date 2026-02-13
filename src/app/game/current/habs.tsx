@@ -820,7 +820,6 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4 text-sm">
-                  {mineSortResource} - {mineSortDirection} -
                   <button
                     className="flex items-center gap-1 cursor-pointer hover:underline"
                     onClick={() => handleMineResourceSort("water")}
