@@ -23,7 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Analysis } from "@/lib/analysis";
 import { formatDateTime, noDate } from "@/lib/utils";
-import { Fragment } from "react/jsx-runtime";
+import { Fragment, useState } from "react";
 import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "./technologyGoals";
 import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
@@ -289,8 +289,12 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
   );
 }
 
+type MineResourceType = "water" | "volatiles" | "metals" | "nobles" | "fissiles" | null;
+type MineSortDirection = "asc" | "desc" | null;
+
 export function getHabsUi(analysis: Analysis) {
   const { playerHabs } = analysis;
+
   const missingMines = playerHabs.filter((h) => h.missingMine);
   const upgradablePowerHabs = playerHabs.filter((h) => h.canUpgradePower);
   const upgradableCombatHabs = playerHabs.filter((h) => h.canUpgradeCombat);
@@ -405,6 +409,10 @@ export function getHabsUi(analysis: Analysis) {
 }
 
 function HabsComponent({ analysis }: { analysis: Analysis }) {
+  // State for sorting mines table
+  const [mineSortResource, setMineSortResource] = useState<MineResourceType>(null);
+  const [mineSortDirection, setMineSortDirection] = useState<MineSortDirection>(null);
+
   const {
     playerHabs,
     playerFaction: { availableBoostProjects, availableCPProjects, availableMaxOrgProjects },
@@ -417,6 +425,40 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
     (acc, hab) => combineEffects(acc, hab.potentialEffects),
     {}
   );
+
+  // Handler for clicking mining bonus resources to sort
+  const handleMineResourceSort = (resource: MineResourceType) => {
+    if (mineSortResource === resource) {
+      // Same resource clicked - cycle through asc -> desc -> null
+      if (mineSortDirection === "desc") {
+        setMineSortDirection("asc");
+      } else if (mineSortDirection === "asc") {
+        setMineSortResource(null);
+        setMineSortDirection(null);
+      }
+    } else {
+      // New resource clicked - start with ascending
+      setMineSortResource(resource);
+      setMineSortDirection("desc");
+    }
+  };
+
+  // Sort habs for mines table
+  const sortedMineHabs = [...playerHabs]
+    .filter((i) => i.habType === "Base")
+    .sort((a, b) => {
+      if (!mineSortResource || !mineSortDirection) return 0;
+
+      const resourceKey = `${mineSortResource}_month` as keyof typeof a.currentMinePoweredEffects;
+      const aValue = a.currentMinePoweredEffects[resourceKey];
+      const bValue = b.currentMinePoweredEffects[resourceKey];
+
+      if (mineSortDirection === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return bValue < aValue ? -1 : bValue > aValue ? 1 : 0;
+      }
+    });
 
   const activeMineSummary = playerHabs
     .filter((h) => h.site)
@@ -771,26 +813,42 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4 text-sm">
-                  <div className="flex items-center gap-1">
+                  {mineSortResource} - {mineSortDirection} -
+                  <button
+                    className="flex items-center gap-1 cursor-pointer hover:underline"
+                    onClick={() => handleMineResourceSort("water")}
+                  >
                     <Water />
                     {((analysis.playerFaction.miningMultipliers.water - 1) * 100).toFixed(0)}%
-                  </div>
-                  <div className="flex items-center gap-1">
+                  </button>
+                  <button
+                    className="flex items-center gap-1 cursor-pointer hover:underline"
+                    onClick={() => handleMineResourceSort("volatiles")}
+                  >
                     <Volatiles />
                     {((analysis.playerFaction.miningMultipliers.volatiles - 1) * 100).toFixed(0)}%
-                  </div>
-                  <div className="flex items-center gap-1">
+                  </button>
+                  <button
+                    className="flex items-center gap-1 cursor-pointer hover:underline"
+                    onClick={() => handleMineResourceSort("metals")}
+                  >
                     <Metals />
                     {((analysis.playerFaction.miningMultipliers.metals - 1) * 100).toFixed(0)}%
-                  </div>
-                  <div className="flex items-center gap-1">
+                  </button>
+                  <button
+                    className="flex items-center gap-1 cursor-pointer hover:underline"
+                    onClick={() => handleMineResourceSort("nobles")}
+                  >
                     <Nobles />
                     {((analysis.playerFaction.miningMultipliers.nobles - 1) * 100).toFixed(0)}%
-                  </div>
-                  <div className="flex items-center gap-1">
+                  </button>
+                  <button
+                    className="flex items-center gap-1 cursor-pointer hover:underline"
+                    onClick={() => handleMineResourceSort("fissiles")}
+                  >
                     <Fissiles />
                     {((analysis.playerFaction.miningMultipliers.fissiles - 1) * 100).toFixed(0)}%
-                  </div>
+                  </button>
                 </div>
               </CardContent>
             </Card>
@@ -813,11 +871,9 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             <Table>
               <HabMineHeader />
               <TableBody>
-                {playerHabs
-                  .filter((i) => i.habType === "Base")
-                  .map((hab) => (
-                    <HabMineTableRow hab={hab} key={hab.id} time={time} />
-                  ))}
+                {sortedMineHabs.map((hab) => (
+                  <HabMineTableRow hab={hab} key={hab.id} time={time} />
+                ))}
               </TableBody>
             </Table>
           </AccordionContent>
