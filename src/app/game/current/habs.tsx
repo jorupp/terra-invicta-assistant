@@ -246,6 +246,19 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
+        {hab.highestActiveFactoryTier > 0 && (
+          <span
+            className={`bg-green-200 p-1 rounded text-xs ${
+              hab.highestActiveFactoryCount === 2
+                ? "outline outline-1 outline-black"
+                : hab.highestActiveFactoryCount >= 3
+                ? "outline outline-2 outline-black"
+                : ""
+            }`}
+          >
+            T{hab.highestActiveFactoryTier}
+          </span>
+        )}
       </TableCell>
       <TableCell>
         <ShowHabMineEffects effects={hab.currentMineEffects} />

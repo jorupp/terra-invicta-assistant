@@ -1353,6 +1353,19 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
       }
 
+      // Calculate active factory information
+      const activeFactories = moduleTemplates.filter(
+        ({ active, template }) => active && template.specialRules?.includes("CanFoundTier1Habs")
+      );
+      
+      const highestActiveFactoryTier = activeFactories.length > 0
+        ? Math.max(...activeFactories.map(({ template }) => template.tier))
+        : 0;
+      
+      const highestActiveFactoryCount = activeFactories.filter(
+        ({ template }) => template.tier === highestActiveFactoryTier
+      ).length;
+
       // Calculate mine effects
       type MineEffects = {
         water_month: number;
@@ -1503,6 +1516,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         currentMineEffects,
         currentMinePoweredEffects,
         bestMineEffects,
+        highestActiveFactoryTier,
+        highestActiveFactoryCount,
       };
     })
     .toSorted((a, b) =>
