@@ -1366,6 +1366,68 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         ({ template }) => template.tier === highestActiveFactoryTier
       ).length;
 
+      // Check if hab is automated
+      const isAutomated = moduleTemplates.some(({ template }) => template.automated === true);
+
+      // Track Operations Center (missionControl > 0) for non-automated habs
+      let operationsCenterTier = 0;
+      let needsOperationsCenterUpgrade = false;
+      
+      if (!isAutomated && habFaction) {
+        const currentOperationsCenter = moduleTemplates.find(
+          ({ template }) => (template.missionControl ?? 0) > 0
+        );
+        operationsCenterTier = currentOperationsCenter?.template?.tier || 0;
+
+        // Find highest unlocked Operations Center that is <= hab tier
+        const bestUnlockedOperationsCenter = Array.from(habModuleTemplates.values())
+          .filter(
+            (template) =>
+              (template.missionControl ?? 0) > 0 &&
+              template.tier <= hab.tier &&
+              habFaction.unlockedHabModules.has(template.dataName)
+          )
+          .reduce<(typeof habModuleTemplates extends Map<string, infer T> ? T : never) | null>((best, module) => {
+            if (!best || module.tier > best.tier) {
+              return module;
+            }
+            return best;
+          }, null as any);
+
+        if (bestUnlockedOperationsCenter && bestUnlockedOperationsCenter.tier > operationsCenterTier) {
+          needsOperationsCenterUpgrade = true;
+        }
+      }
+
+      // Track AdminTower (controlPointCapacity > 0) for LEO habs
+      let adminTowerTier = 0;
+      let needsAdminTowerUpgrade = false;
+
+      if (hab.inEarthLEO && habFaction) {
+        const currentAdminTower = moduleTemplates.find(
+          ({ template }) => (template.controlPointCapacity ?? 0) > 0
+        );
+        adminTowerTier = currentAdminTower?.template?.tier || 0;
+
+        // Find highest unlocked AdminTower
+        const bestUnlockedAdminTower = Array.from(habModuleTemplates.values())
+          .filter(
+            (template) =>
+              (template.controlPointCapacity ?? 0) > 0 &&
+              habFaction.unlockedHabModules.has(template.dataName)
+          )
+          .reduce<(typeof habModuleTemplates extends Map<string, infer T> ? T : never) | null>((best, module) => {
+            if (!best || module.tier > best.tier) {
+              return module;
+            }
+            return best;
+          }, null as any);
+
+        if (bestUnlockedAdminTower && bestUnlockedAdminTower.tier > adminTowerTier) {
+          needsAdminTowerUpgrade = true;
+        }
+      }
+
       // Calculate mine effects
       type MineEffects = {
         water_month: number;
@@ -1522,6 +1584,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         highestActiveFactoryTier,
         highestActiveFactoryCount,
         mineTier,
+        isAutomated,
+        operationsCenterTier,
+        needsOperationsCenterUpgrade,
+        adminTowerTier,
+        needsAdminTowerUpgrade,
       };
     })
     .toSorted((a, b) =>

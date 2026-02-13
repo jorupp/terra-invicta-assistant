@@ -13,6 +13,7 @@ import {
   Metals,
   Nobles,
   Fissiles,
+  ControlPoint,
 } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -172,6 +173,12 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
             </Tooltip>
           </TooltipProvider>
         )}
+        {hab.needsOperationsCenterUpgrade && (
+          <span className="p-1" title="Operations Center upgrade available">
+            <MissionControl />
+          </span>
+        )}
+        {hab.needsAdminTowerUpgrade && <span className="p-1" title="Admin Tower upgrade available"></span>}
         {hab.upgradeableModuleNames.length > 0 && (
           <span title={`Can upgrade to:\n${hab.upgradeableModuleNames.join("\n")}`} className="p-1">
             <ArrowUp className="inline h-4 w-4" />
