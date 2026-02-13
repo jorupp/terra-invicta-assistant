@@ -140,10 +140,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         // Extract the CP bonus from the effect string (e.g., "Effect_ControlPointMaintenanceBonus10" -> 10)
         const cpEffect = effects?.find((e) => e.startsWith("Effect_ControlPointMaintenanceBonus"));
         const cpBonus = cpEffect ? parseInt(cpEffect.replace("Effect_ControlPointMaintenanceBonus", "") || "0") : 0;
-        
+
         // Find current progress for this project
         const progress = faction.currentProjectProgress.find((p) => p.projectTemplateName === dataName);
-        
+
         return {
           friendlyName,
           techCategory,
@@ -467,6 +467,495 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     }) => ({ id, parentBodyId, water_day, volatiles_day, metals_day, nobles_day, fissiles_day })
   );
   const habSitesById = new Map<number, (typeof habSites)[0]>(habSites.map((site) => [site.id, site]));
+
+  const alienFaction = factions.find((faction) => faction.templateName === "AlienCouncil");
+  if (!alienFaction) {
+    throw new Error("Alien faction data not found in save file.");
+  }
+
+  const regions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIRegionState"].map(({ Value: region }) => ({
+    id: region.ID.value,
+    templateName: region.templateName,
+    nationId: region.nation.value,
+    boostPerYear: region.boostPerYear_dekatons,
+    missionControl: region.missionControl,
+    populationInMillions: region.populationInMillions,
+  }));
+  const regionsById = new Map<number, (typeof regions)[0]>(regions.map((region) => [region.id, region]));
+  const regionsByNationId = regions.reduce((acc, region) => {
+    if (!region.nationId) return acc;
+    if (!acc.has(region.nationId)) {
+      acc.set(region.nationId, []);
+    }
+    acc.get(region.nationId)!.push(region);
+    return acc;
+  }, new Map<number, typeof regions>());
+
+  const controlPoints = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIControlPoint"].map(({ Value: cp }) => ({
+    id: cp.ID.value,
+    factionId: cp.faction?.value,
+    nationId: cp.nation?.value,
+    displayName: cp.displayName,
+    benefitsDisabled: cp.benefitsDisabled,
+    crackdownExpiration: cp.crackdownExpiration,
+    defended: cp.defended,
+    controlPointPriorities: cp.controlPointPriorities,
+  }));
+  const controlPointsByNationId = controlPoints.reduce((acc, cp) => {
+    if (!cp.nationId) return acc;
+    if (!acc.has(cp.nationId)) {
+      acc.set(cp.nationId, []);
+    }
+    acc.get(cp.nationId)!.push(cp);
+    return acc;
+  }, new Map<number, typeof controlPoints>());
+  const nations = saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"]
+    .filter((i) => i.Value.exists && !!i.Value.capital)
+    .map(({ Value: nation }) => {
+      const investmentPoints = nation.baseInvestmentPoints_month;
+      const valuePerSpoilsIP =
+        5 * investmentPoints +
+        5 * nation.numMiningRegions_dailyCache +
+        5 * nation.numOilRegions_dailyCache +
+        2.5 * (10 - nation.democracy);
+      const totalSpoils = valuePerSpoilsIP * investmentPoints;
+      const cpCount = nation.controlPoints.length;
+      const totalCpCost = Math.pow(nation.GDP / 1000000000, 0.6) / 2; // https://www.reddit.com/r/TerraInvicta/comments/1c9t3c2/control_point_cost_formula/
+      const totalSpoilsPerCpCost = totalCpCost > 0 ? totalSpoils / totalCpCost : 0;
+      const totalSpoilsPerControlPoint = cpCount > 0 ? totalSpoils / cpCount : 0;
+      const controlPoints = controlPointsByNationId.get(nation.ID.value) || [];
+      const regions = regionsByNationId.get(nation.ID.value) || [];
+      const mc = regions.reduce((acc, r) => acc + r.missionControl, 0);
+      const boostPerMonth = regions.reduce((acc, r) => acc + r.boostPerYear, 0) / 12;
+      const ipPerCpCost = totalCpCost > 0 ? investmentPoints / totalCpCost : 0;
+      const possibleBoostPerCpCost = boostPerMonth > 0 ? ipPerCpCost : 0;
+      const mcPerCpCost = totalCpCost > 0 ? mc / totalCpCost : 0;
+      const boostPerMonthPerCpCost = totalCpCost > 0 ? boostPerMonth / totalCpCost : 0;
+      const populationInMillions = regions.reduce((acc, r) => acc + r.populationInMillions, 0);
+      // allocate priorities like they work in game - as % within CP, then averaged across CPs
+      const allocatedPriorities = controlPoints
+        .map((cp) => {
+          const priorities = cp.controlPointPriorities;
+          const totalPriorities = Object.values(priorities).reduce((acc, val) => acc + val, 0);
+          const entries = Object.entries(priorities) as [keyof typeof priorities, number][];
+          return Object.fromEntries(
+            entries.map(([key, val]) => [key, totalPriorities > 0 ? val / totalPriorities / controlPoints.length : 0])
+          ) as typeof priorities;
+        })
+        .reduce((acc, pri) => {
+          (Object.keys(pri) as (keyof typeof pri)[]).forEach((key) => {
+            acc[key] = (acc[key] || 0) + pri[key];
+          });
+          return acc;
+        }, {} as Record<keyof (typeof controlPoints)[0]["controlPointPriorities"], number>);
+
+      const wastedOppression = allocatedPriorities.Oppression > 0 && nation.unrest <= 0.01; // oppression not really needed with no unrest
+      const tooHighUnrest = nation.unrest > 2 && (allocatedPriorities.Oppression || 0) < 0.5; // unrest high enough to start losing IP and not doing anything about it
+      const spoilsWithoutAllCPs =
+        allocatedPriorities.Spoils > 0 &&
+        controlPoints.some((cp) => cp.benefitsDisabled || cp.factionId !== playerFaction.id); // spoils but not all CPs controlled by player
+      const couldBuildBoost = allocatedPriorities.Spoils > 0 && boostPerMonth > 0; // spoils when we could be building boost
+
+      return {
+        id: nation.ID.value,
+        templateName: nation.templateName,
+        displayName: nation.displayName,
+        cpCount,
+        totalCpCost,
+        valuePerSpoilsIP,
+        totalSpoils,
+        totalSpoilsPerCpCost,
+        totalSpoilsPerControlPoint,
+        controlPoints,
+        investmentPoints,
+        unrest: nation.unrest,
+        democracy: nation.democracy,
+        GDP: nation.GDP,
+        mc,
+        mcPerCpCost,
+        boostPerMonth,
+        boostPerMonthPerCpCost,
+        populationInMillions,
+        allocatedPriorities,
+        wastedOppression,
+        tooHighUnrest,
+        spoilsWithoutAllCPs,
+        couldBuildBoost,
+        ipPerCpCost,
+        possibleBoostPerCpCost,
+      };
+    })
+    .filter((i) => i.populationInMillions > 0);
+  const nationsById = new Map<number, (typeof nations)[0]>(nations.map((nation) => [nation.id, nation]));
+
+  // Add nation history to factions - aggregate all nations where faction has CPs
+  const allNationStates = saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"]
+    .filter((i) => i.Value.exists && !!i.Value.capital)
+    .map((i) => i.Value);
+
+  for (const faction of factions) {
+    // Find all nations where this faction has at least one control point
+    const controlledNationsWithCPs: Array<{
+      nation: (typeof allNationStates)[0];
+      factionCPs: number;
+      totalCPs: number;
+    }> = [];
+
+    for (const nationState of allNationStates) {
+      const nationId = nationState.ID.value;
+      const controlPoints = controlPointsByNationId.get(nationId) || [];
+
+      // Count how many CPs this faction has in this nation
+      const factionCPCount = controlPoints.filter((cp) => cp.factionId === faction.id).length;
+
+      if (factionCPCount > 0) {
+        controlledNationsWithCPs.push({
+          nation: nationState,
+          factionCPs: factionCPCount,
+          totalCPs: controlPoints.length,
+        });
+      }
+    }
+
+    // Aggregate histories across all controlled nations
+    if (controlledNationsWithCPs.length > 0) {
+      // Find the maximum history length
+      const maxMCLength = Math.max(
+        ...controlledNationsWithCPs.map((n) => (n.nation.historyMissionControl || []).length)
+      );
+      const maxBoostLength = Math.max(...controlledNationsWithCPs.map((n) => (n.nation.historyBoost || []).length));
+
+      // Sum up histories across all nations, weighted by faction's share of CPs
+      faction.nationHistory.historyMissionControl = Array.from({ length: maxMCLength }, (_, index) => {
+        return controlledNationsWithCPs.reduce((sum, { nation, factionCPs, totalCPs }) => {
+          const history = nation.historyMissionControl || [];
+          const value = history[index] || 0;
+          // Divide by total CPs and multiply by faction's CPs to get this faction's share
+          return sum + (value / totalCPs) * factionCPs;
+        }, 0);
+      });
+
+      faction.nationHistory.historyBoost = Array.from({ length: maxBoostLength }, (_, index) => {
+        return controlledNationsWithCPs.reduce((sum, { nation, factionCPs, totalCPs }) => {
+          const history = nation.historyBoost || [];
+          const value = history[index] || 0;
+          // Divide by total CPs and multiply by faction's CPs to get this faction's share
+          return sum + (value / totalCPs) * factionCPs;
+        }, 0);
+      });
+
+      // Calculate summary statistics
+      const historyBoost = faction.nationHistory.historyBoost;
+      const historyMC = faction.nationHistory.historyMissionControl;
+
+      faction.nationHistory.currentBoost = historyBoost.length > 0 ? historyBoost[0] : 0;
+      faction.nationHistory.currentMC = historyMC.length > 0 ? historyMC[0] : 0;
+
+      faction.nationHistory.boostMonthlyChange =
+        historyBoost.length > 0 ? historyBoost[0] - (historyBoost[historyBoost.length - 1] || 0) : 0;
+      faction.nationHistory.mcMonthlyChange =
+        historyMC.length > 0 ? historyMC[0] - (historyMC[historyMC.length - 1] || 0) : 0;
+    }
+  }
+
+  const orgTemplates = new Map(
+    (await templates.orgs()).map((org) => [
+      org.dataName,
+      {
+        // may not need some of these, as they end up in the org state itself
+        dataName: org.dataName,
+        friendlyName: org.friendlyName,
+        orgType: org.orgType,
+        requiresNationality: org.requiresNationality,
+        allowedOnMarket: org.allowedOnMarket,
+        requiredOwnerTraits: org.requiredOwnerTraits,
+        prohibitedOwnerTraits: org.prohibitedOwnerTraits,
+        // homeRegionMapTemplateName: org.homeRegionMapTemplateName, // regionid is on org
+        missionsGrantedNames: org.missionsGrantedNames,
+        grantsMarked: org.grantsMarked,
+        techBonuses: org.techBonuses,
+      },
+    ])
+  );
+
+  const orgs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrgState"].map(({ Value: org }) => {
+    const template = org.templateName ? orgTemplates.get(org.templateName) : undefined;
+    const homeRegionId = org.homeRegion?.value;
+    const homeNationId = regionsById.get(homeRegionId || -1)?.nationId;
+    const homeNation = homeNationId ? nationsById.get(homeNationId) : undefined;
+    return {
+      id: org.ID.value,
+      displayName: org.displayName!,
+      templateName: org.templateName,
+      template,
+      assignedCouncilorId: org.assignedCouncilor?.value,
+      factionOrbitId: org.factionOrbit?.value,
+      homeRegionId,
+      homeNationId,
+      homeNationTemplateName: homeNation?.templateName,
+      homeNationName: homeNation?.displayName,
+      tier: org.tier,
+      takeoverDefense: org.takeoverDefense,
+      costMoney: org.costMoney,
+      costInfluence: org.costInfluence,
+      costOps: org.costOps,
+      costBoost: org.costBoost,
+      incomeMoney_month: org.incomeMoney_month,
+      incomeInfluence_month: org.incomeInfluence_month,
+      incomeOps_month: org.incomeOps_month,
+      incomeBoost_month: org.incomeBoost_month,
+      incomeMissionControl: org.incomeMissionControl,
+      incomeResearch_month: org.incomeResearch_month,
+      projectCapacityGranted: org.projectCapacityGranted,
+      persuasion: org.persuasion,
+      command: org.command,
+      investigation: org.investigation,
+      espionage: org.espionage,
+      administration: org.administration,
+      science: org.science,
+      security: org.security,
+      economyBonus: org.economyBonus,
+      welfareBonus: org.welfareBonus,
+      environmentBonus: org.environmentBonus,
+      knowledgeBonus: org.knowledgeBonus,
+      governmentBonus: org.governmentBonus,
+      unityBonus: org.unityBonus,
+      militaryBonus: org.militaryBonus,
+      oppressionBonus: org.oppressionBonus,
+      spoilsBonus: org.spoilsBonus,
+      spaceDevBonus: org.spaceDevBonus,
+      spaceflightBonus: org.spaceflightBonus,
+      MCBonus: org.MCBonus,
+      miningBonus: org.miningBonus,
+      XPModifier: org.XPModifier,
+      isAdminOrg: (org.tier || 0) < (org.administration || 0),
+    };
+  });
+  const orgsById = new Map<number, (typeof orgs)[0]>(orgs.map((org) => [org.id, org]));
+  const playerUnassignedOrgs = orgs.filter((org) => playerFaction?.unassignedOrgIds.includes(org.id));
+  const playerAvailableOrgs = orgs.filter((org) => playerFaction?.availableOrgIds.includes(org.id));
+
+  const councilorTraitTemplates = (await templates.traits()).map((trait) => ({
+    dataName: trait.dataName,
+    friendlyName: trait.friendlyName,
+    xpCost: trait.XPCost,
+    xpModifier: trait.XPModifier,
+    upgradesFrom: trait.upgradesFrom,
+    boostCost: trait.boostCost,
+    opsCost: trait.opsCost,
+    detectionEspBonus: trait.detectionEspBonus,
+    incomeBoost: trait.incomeBoost,
+    incomeInfluence: trait.incomeInfluence,
+    incomeMoney: trait.incomeMoney,
+    incomeResearch: trait.incomeResearch,
+    priorityBonuses: trait.priorityBonuses,
+    statMods: trait.statMods,
+    techBonuses: trait.techBonuses,
+    missionsGrantedNames: trait.missionsGrantedNames,
+    tags: trait.tags,
+  }));
+  const councilorTraitTemplatesByDataName = new Map(councilorTraitTemplates.map((trait) => [trait.dataName, trait]));
+  const councilorTypes = (await templates.councilorTypes()).map((type) => ({
+    dataName: type.dataName,
+    friendlyName: type.friendlyName,
+    missionNames: type.missionNames,
+  }));
+  const councilorTypesByDataName = new Map(councilorTypes.map((type) => [type.dataName, type]));
+
+  function computeCouncilorEffects(
+    attributes: ShowEffectsProps,
+    traitTemplates: typeof councilorTraitTemplates,
+    councilorOrgs: typeof orgs
+  ): { effectsBaseAndUnaugmentedTraits: ShowEffectsProps; effectsWithOrgsAndAugments: ShowEffectsProps } {
+    function addTraits(effects: ShowEffectsProps, traits: typeof councilorTraitTemplates): ShowEffectsProps {
+      // Add trait effects
+      let finalEffects = traits.reduce<ShowEffectsProps>(
+        (acc, trait) => {
+          return combineEffects(acc, {
+            incomeMoney_month: trait?.incomeMoney,
+            incomeBoost_month: trait?.incomeBoost,
+            incomeInfluence_month: trait?.incomeInfluence,
+            incomeResearch_month: trait?.incomeResearch,
+            councilorTechBonus: trait?.techBonuses,
+            missionsGrantedNames: trait?.missionsGrantedNames,
+            xpModifier: trait?.xpModifier,
+          });
+        },
+        { ...effects }
+      );
+
+      // Apply trait statMods and priorityBonuses
+      for (const trait of traits) {
+        for (const { stat, operation, strValue, condition } of trait.statMods || []) {
+          if (stat && strValue && !condition && operation === "Additive") {
+            (finalEffects as any)[stat] = ((finalEffects as any)[stat] || 0) + Number(strValue);
+          }
+          if (stat === "Loyalty" && strValue && !condition && operation === "Additive") {
+            (finalEffects as any)["maxLoyalty"] = ((finalEffects as any)["maxLoyalty"] || 0) + Number(strValue);
+          }
+        }
+        for (const { priority, bonus } of trait.priorityBonuses || []) {
+          if (priority && bonus) {
+            const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
+            (finalEffects as any)[key] = ((finalEffects as any)[key] || 0) + bonus;
+          }
+        }
+      }
+      for (const trait of traits) {
+        for (const { stat, operation, strValue, condition } of trait.statMods || []) {
+          if (stat && strValue && !condition && operation === "SetToAnotherAttribute") {
+            (finalEffects as any)[stat] = (finalEffects as any)[strValue] || 0;
+          }
+        }
+      }
+      return finalEffects;
+    }
+
+    // Start with base attributes
+    const effectsBaseAndUnaugmentedTraits = addTraits(
+      { ...attributes, maxLoyalty: 25 },
+      traitTemplates.filter((t) => !(t.tags || []).includes("Augmented"))
+    );
+
+    const effectsWithAugments = addTraits(
+      effectsBaseAndUnaugmentedTraits,
+      traitTemplates.filter((t) => (t.tags || []).includes("Augmented"))
+    );
+
+    // Add org effects to create the full effects value
+    const effectsWithOrgsAndAugments = councilorOrgs.reduce<ShowEffectsProps>((acc, org) => {
+      return combineEffects(acc, {
+        ...org,
+        techBonuses: org.template?.techBonuses,
+        missionsGrantedNames: org.template?.missionsGrantedNames,
+      });
+    }, effectsWithAugments);
+
+    return { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments };
+  }
+
+  const councilors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TICouncilorState"].map(
+    ({ Value: councilor }) => {
+      const orgIds = new Set(councilor.orgs.map((i) => i.value));
+      const councilorOrgs = orgs.filter((org) => orgIds.has(org.id));
+      const traitTemplates = councilor.traitTemplateNames
+        .map((name) => councilorTraitTemplatesByDataName.get(name))
+        .filter((t): t is (typeof councilorTraitTemplates)[0] => !!t);
+      const councilorType = councilorTypesByDataName.get(councilor.typeTemplateName);
+      const playerIntel = playerFaction.intel.get(councilor.ID.value) || 0;
+      const playerMaxIntel = playerFaction.highestIntel.get(councilor.ID.value) || 0;
+      const lastRecordedLoyalty = playerFaction.lastRecordedLoyalty.get(councilor.ID.value) || 0;
+
+      const { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments } = computeCouncilorEffects(
+        {
+          ...councilor.attributes,
+          missionsGrantedNames: councilorType?.missionNames,
+          xp: councilor.XP,
+          traitTemplateNames: councilor.traitTemplateNames,
+          typeTemplateName: councilor.typeTemplateName,
+          playerIntel,
+          playerMaxIntel,
+          lastRecordedLoyalty,
+        },
+        traitTemplates,
+        councilorOrgs
+      );
+
+      // councilor.learnedMissionsTemplateNames is always [] - ignoring
+
+      return {
+        id: councilor.ID.value,
+        displayName: councilor.displayName!,
+        factionId: councilor.faction?.value,
+        councilorType,
+        traitTemplateNames: councilor.traitTemplateNames,
+        traitTemplates,
+        attributes: councilor.attributes,
+        orgs: councilorOrgs,
+        homeRegionId: councilor.homeRegion?.value,
+        homeNationId: regionsById.get(councilor.homeRegion?.value || -1)?.nationId,
+        typeTemplateName: councilor.typeTemplateName,
+        xp: councilor.XP,
+        effectsBaseAndUnaugmentedTraits,
+        effectsWithOrgsAndAugments,
+        playerIntel,
+      };
+    }
+  );
+  const playerCouncilors = councilors.filter((councilor) => playerFaction?.councilorIds.includes(councilor.id));
+
+  // Calculate mining bonuses for each faction
+  const effectsState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIEffectsState"][0]?.Value;
+
+  factions.forEach((faction) => {
+    // Start with base 0% bonus for each resource
+    let waterBonus = 0;
+    let volatilesBonus = 0;
+    let metalsBonus = 0;
+    let noblesBonus = 0;
+    let fissilesBonus = 0;
+
+    // 1. Add councilor mining bonuses (applies to all resources)
+    const factionCouncilors = councilors.filter((c) => c.factionId === faction.id);
+    const councilorMiningBonus = factionCouncilors.reduce(
+      (sum, c) => sum + (c.effectsWithOrgsAndAugments.miningBonus || 0),
+      0
+    );
+
+    waterBonus += councilorMiningBonus;
+    volatilesBonus += councilorMiningBonus;
+    metalsBonus += councilorMiningBonus;
+    noblesBonus += councilorMiningBonus;
+    fissilesBonus += councilorMiningBonus;
+
+    // 2. Add faction effects from TIEffectsState
+    if (effectsState?.factionEffectsNames) {
+      const factionEffects = effectsState.factionEffectsNames.find((kv) => kv.Key.value === faction.id)?.Value;
+
+      if (factionEffects) {
+        // SpaceMiningBonus (applies to all resources)
+        const spaceMiningEffects = factionEffects.SpaceMiningBonus || [];
+        spaceMiningEffects.forEach((effect) => {
+          // Extract percentage from effect name like "Effect_SpaceMiningBonus5" = 5%
+          const match = effect.match(/Effect_SpaceMiningBonus(\d+)/);
+          if (match) {
+            const bonus = parseInt(match[1], 10);
+            waterBonus += bonus;
+            volatilesBonus += bonus;
+            metalsBonus += bonus;
+            noblesBonus += bonus;
+            fissilesBonus += bonus;
+          }
+        });
+
+        // Resource-specific bonuses (15% each)
+        if (factionEffects.MiningWaterBonus?.includes("Effect_MiningWaterBonus")) {
+          waterBonus += 15;
+        }
+        if (factionEffects.MiningVolatilesBonus?.includes("Effect_MiningVolatilesBonus")) {
+          volatilesBonus += 15;
+        }
+        if (factionEffects.MiningMetalsBonus?.includes("Effect_MiningMetalsBonus")) {
+          metalsBonus += 15;
+        }
+        if (factionEffects.MiningNoblesBonus?.includes("Effect_MiningNoblesBonus")) {
+          noblesBonus += 15;
+        }
+        if (factionEffects.MiningFissilesBonus?.includes("Effect_MiningFissilesBonus")) {
+          fissilesBonus += 15;
+        }
+      }
+    }
+
+    // Store bonuses as multipliers (e.g., 15% = 1.15)
+    faction.miningBonuses = {
+      water: 1 + waterBonus / 100,
+      volatiles: 1 + volatilesBonus / 100,
+      metals: 1 + metalsBonus / 100,
+      nobles: 1 + noblesBonus / 100,
+      fissiles: 1 + fissilesBonus / 100,
+    };
+  });
   const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"]
     .map(({ Value: hab }) => {
       const tier = hab.tier;
@@ -769,32 +1258,30 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       // Calculate if any mining modules can be upgraded
       let canUpgradeMining = false;
       let miningUpgradeInfo: { upgradeName: string; factoryName: string; factoryTier: number } | null = null;
-      
+
       if (habFaction) {
         // Find the highest tier factory that the faction has unlocked
         const maxFactoryTier = Math.max(
           0,
           ...[...habModuleTemplates.values()]
-            .filter((t) => 
-              t.specialRules?.includes("CanFoundTier1Habs") && 
-              habFaction.unlockedHabModules.has(t.dataName)
+            .filter(
+              (t) => t.specialRules?.includes("CanFoundTier1Habs") && habFaction.unlockedHabModules.has(t.dataName)
             )
             .map((t) => t.tier)
         );
 
         // Find the best active factory at this hab
         const bestActiveFactory = moduleTemplates
-          .filter(({ active, template }) => 
-            active && 
-            template.specialRules?.includes("CanFoundTier1Habs") && 
-            template.tier === maxFactoryTier
+          .filter(
+            ({ active, template }) =>
+              active && template.specialRules?.includes("CanFoundTier1Habs") && template.tier === maxFactoryTier
           )
           .map(({ template }) => template)[0];
 
         // Get all mining modules that can be upgraded
         const miningModules = moduleTemplates.filter(
-          ({ template }) => 
-            template.miningModifier && 
+          ({ template }) =>
+            template.miningModifier &&
             template.miningModifier > 0 &&
             template.dataName &&
             moduleUpgradeMap.has(template.dataName)
@@ -834,7 +1321,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // Collect all other upgradeable modules (generic case)
       const upgradeableModuleNames: string[] = [];
-      
+
       if (habFaction) {
         // Get all modules that can be upgraded
         const allUpgradableModules = moduleTemplates.filter(
@@ -854,7 +1341,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
               const isFarm = template.specialRules?.includes("Farm");
               const isFactory = template.specialRules?.includes("CanFoundTier1Habs");
               const isMining = template.miningModifier && template.miningModifier > 0;
-              
+
               if (!isPower && !isCombat && !isFarm && !isFactory && !isMining) {
                 // Add the upgrade target name if not already in the list
                 if (!upgradeableModuleNames.includes(upgradeTemplate.friendlyName)) {
@@ -878,9 +1365,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       const currentMine = mine[0];
       const currentMineModifier = currentMine?.template?.miningModifier || 1;
-      const isMineActive = currentMine?.powered && 
+      const isMineActive =
+        currentMine?.powered &&
         (currentMine.completionDate === noDate || currentMine.completionDate <= gameCurrentDateTimeFormatted);
-      const isMineComplete = currentMine && 
+      const isMineComplete =
+        currentMine &&
         (currentMine.completionDate === noDate || currentMine.completionDate <= gameCurrentDateTimeFormatted);
 
       // Get faction mining bonuses
@@ -894,21 +1383,25 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // 1. Current mine effects (0 if unpowered or under construction)
       const currentMineEffects: MineEffects = {
-        water_month: isMineActive && site ? (site.water_day * currentMineModifier * 30 * miningBonuses.water) : 0,
-        volatiles_month: isMineActive && site ? (site.volatiles_day * currentMineModifier * 30 * miningBonuses.volatiles) : 0,
-        metals_month: isMineActive && site ? (site.metals_day * currentMineModifier * 30 * miningBonuses.metals) : 0,
-        nobles_month: isMineActive && site ? (site.nobles_day * currentMineModifier * 30 * miningBonuses.nobles) : 0,
-        fissiles_month: isMineActive && site ? (site.fissiles_day * currentMineModifier * 30 * miningBonuses.fissiles) : 0,
+        water_month: isMineActive && site ? site.water_day * currentMineModifier * 30 * miningBonuses.water : 0,
+        volatiles_month:
+          isMineActive && site ? site.volatiles_day * currentMineModifier * 30 * miningBonuses.volatiles : 0,
+        metals_month: isMineActive && site ? site.metals_day * currentMineModifier * 30 * miningBonuses.metals : 0,
+        nobles_month: isMineActive && site ? site.nobles_day * currentMineModifier * 30 * miningBonuses.nobles : 0,
+        fissiles_month:
+          isMineActive && site ? site.fissiles_day * currentMineModifier * 30 * miningBonuses.fissiles : 0,
         miningModifier: currentMineModifier,
       };
 
       // 2. Current mine effects if powered (0 if under construction)
       const currentMinePoweredEffects: MineEffects = {
-        water_month: isMineComplete && site ? (site.water_day * currentMineModifier * 30 * miningBonuses.water) : 0,
-        volatiles_month: isMineComplete && site ? (site.volatiles_day * currentMineModifier * 30 * miningBonuses.volatiles) : 0,
-        metals_month: isMineComplete && site ? (site.metals_day * currentMineModifier * 30 * miningBonuses.metals) : 0,
-        nobles_month: isMineComplete && site ? (site.nobles_day * currentMineModifier * 30 * miningBonuses.nobles) : 0,
-        fissiles_month: isMineComplete && site ? (site.fissiles_day * currentMineModifier * 30 * miningBonuses.fissiles) : 0,
+        water_month: isMineComplete && site ? site.water_day * currentMineModifier * 30 * miningBonuses.water : 0,
+        volatiles_month:
+          isMineComplete && site ? site.volatiles_day * currentMineModifier * 30 * miningBonuses.volatiles : 0,
+        metals_month: isMineComplete && site ? site.metals_day * currentMineModifier * 30 * miningBonuses.metals : 0,
+        nobles_month: isMineComplete && site ? site.nobles_day * currentMineModifier * 30 * miningBonuses.nobles : 0,
+        fissiles_month:
+          isMineComplete && site ? site.fissiles_day * currentMineModifier * 30 * miningBonuses.fissiles : 0,
         miningModifier: currentMineModifier,
       };
 
@@ -923,24 +1416,21 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
                 module.tier <= hab.tier &&
                 habFaction.unlockedHabModules.has(module.dataName)
             )
-            .reduce<typeof habModuleTemplates extends Map<string, infer T> ? T : never | null>(
-              (best, module) => {
-                if (!best || module.miningModifier > best.miningModifier) {
-                  return module;
-                }
-                return best;
-              },
-              null as any
-            )
+            .reduce<typeof habModuleTemplates extends Map<string, infer T> ? T : never | null>((best, module) => {
+              if (!best || module.miningModifier > best.miningModifier) {
+                return module;
+              }
+              return best;
+            }, null as any)
         : null;
 
       const bestMineModifier = bestUnlockedMine?.miningModifier || 1;
       const bestMineEffects: MineEffects = {
-        water_month: site ? (site.water_day * bestMineModifier * 30 * miningBonuses.water) : 0,
-        volatiles_month: site ? (site.volatiles_day * bestMineModifier * 30 * miningBonuses.volatiles) : 0,
-        metals_month: site ? (site.metals_day * bestMineModifier * 30 * miningBonuses.metals) : 0,
-        nobles_month: site ? (site.nobles_day * bestMineModifier * 30 * miningBonuses.nobles) : 0,
-        fissiles_month: site ? (site.fissiles_day * bestMineModifier * 30 * miningBonuses.fissiles) : 0,
+        water_month: site ? site.water_day * bestMineModifier * 30 * miningBonuses.water : 0,
+        volatiles_month: site ? site.volatiles_day * bestMineModifier * 30 * miningBonuses.volatiles : 0,
+        metals_month: site ? site.metals_day * bestMineModifier * 30 * miningBonuses.metals : 0,
+        nobles_month: site ? site.nobles_day * bestMineModifier * 30 * miningBonuses.nobles : 0,
+        fissiles_month: site ? site.fissiles_day * bestMineModifier * 30 * miningBonuses.fissiles : 0,
         miningModifier: bestMineModifier,
       };
 
@@ -986,294 +1476,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     .toSorted((a, b) =>
       a.finderSortOverride === b.finderSortOverride ? 0 : a.finderSortOverride < b.finderSortOverride ? -1 : 1
     );
-
-  const playerHabs = habs.filter((hab) => hab.faction === playerFaction.id);
-  const playerFleets = fleets.filter((fleet) => fleet.faction === playerFaction.id);
-
-  // Create a map from hab ID to original hab data for looking up inEarthLEO
-  const originalHabsById = new Map(
-    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => [hab.ID.value, hab])
-  );
-
-  // Create building summary: aggregate modules by template across all player habs
-  const buildingSummary = new Map<
-    string,
-    {
-      templateName: string;
-      friendlyName: string;
-      currentCount: number;
-      futureCount: number;
-      currentEffects: ShowEffectsProps;
-      futureEffects: ShowEffectsProps;
-    }
-  >();
-
-  for (const hab of playerHabs) {
-    const originalHab = originalHabsById.get(hab.id);
-    if (!originalHab) continue;
-
-    for (const { active, template } of hab.moduleTemplates) {
-      const templateName = template.dataName;
-      if (!templateName) continue;
-
-      const existing = buildingSummary.get(templateName) || {
-        templateName,
-        friendlyName: template.friendlyName || templateName,
-        currentCount: 0,
-        futureCount: 0,
-        currentEffects: {},
-        futureEffects: {},
-      };
-
-      // Count all modules (current + future under construction)
-      existing.futureCount++;
-
-      // Count only active modules as current
-      if (active) {
-        existing.currentCount++;
-      }
-
-      // Calculate effects for this module
-      const {
-        techBonuses,
-        incomeInfluence_month,
-        incomeMoney_month,
-        incomeOps_month,
-        incomeProjects,
-        incomeResearch_month,
-        supportMaterials_month,
-        missionControl,
-      } = template;
-
-      const moduleEffects: ShowEffectsProps = {
-        techBonuses,
-        incomeBoost_month: -(supportMaterials_month?.boost || 0),
-        incomeMissionControl: missionControl,
-        incomeInfluence_month,
-        incomeMoney_month: (incomeMoney_month || 0) - (supportMaterials_month?.money || 0),
-        incomeOps_month,
-        projectCapacityGranted: incomeProjects,
-        incomeResearch_month,
-        volatiles: -(supportMaterials_month?.volatiles || 0),
-        metals: -(supportMaterials_month?.metals || 0),
-        nobles: -(supportMaterials_month?.nobleMetals || 0),
-      };
-
-      if (originalHab.inEarthLEO) {
-        if (template.controlPointCapacity) {
-          moduleEffects.controlPoints = template.controlPointCapacity;
-        }
-        if (template.incomeProjects) {
-          moduleEffects.projectCapacityGranted = template.incomeProjects;
-        }
-        if (template.specialRules?.includes("LEOBonusEconomy"))
-          moduleEffects.economyBonus = (moduleEffects.economyBonus || 0) + template.specialRulesValue!;
-        if (template.specialRules?.includes("LEOBonusEnvironment"))
-          moduleEffects.environmentBonus = (moduleEffects.environmentBonus || 0) + template.specialRulesValue!;
-        if (template.specialRules?.includes("LEOBonusGovernment"))
-          moduleEffects.governmentBonus = (moduleEffects.governmentBonus || 0) + template.specialRulesValue!;
-        if (template.specialRules?.includes("LEOBonusKnowledge"))
-          moduleEffects.knowledgeBonus = (moduleEffects.knowledgeBonus || 0) + template.specialRulesValue!;
-        if (template.specialRules?.includes("LEOBonusLaunchFacilities"))
-          moduleEffects.spaceflightBonus = (moduleEffects.spaceflightBonus || 0) + template.specialRulesValue!;
-        if (template.specialRules?.includes("LEOBonusMissionControl"))
-          moduleEffects.MCBonus = (moduleEffects.MCBonus || 0) + template.specialRulesValue!;
-        if (template.specialRules?.includes("LEOBonusOppression"))
-          moduleEffects.oppressionBonus = (moduleEffects.oppressionBonus || 0) + template.specialRulesValue!;
-        if (template.specialRules?.includes("LEOBonusWelfare"))
-          moduleEffects.welfareBonus = (moduleEffects.welfareBonus || 0) + template.specialRulesValue!;
-        if (template.specialRules?.includes("LEOBonusArmyCombatValue"))
-          moduleEffects.miltechBonus = (moduleEffects.miltechBonus || 0) + template.specialRulesValue!;
-      }
-
-      // Add to future effects always
-      existing.futureEffects = combineEffects(existing.futureEffects, moduleEffects);
-
-      // Add to current effects only if active
-      if (active) {
-        existing.currentEffects = combineEffects(existing.currentEffects, moduleEffects);
-      }
-
-      buildingSummary.set(templateName, existing);
-    }
-  }
-
-  const buildingSummaryArray = Array.from(buildingSummary.values()).sort((a, b) =>
-    a.friendlyName.localeCompare(b.friendlyName)
-  );
-
-  // planets the player cares about: habs, fleet-origin, fleet-destination, fleet-orbiting
-  const playerOrbitIds = new Set<number | null | undefined>();
-  for (const hab of playerHabs) {
-    playerOrbitIds.add(hab.orbitStateId);
-  }
-  for (const fleet of playerFleets) {
-    playerOrbitIds.add(fleet.targetOrbitId);
-    playerOrbitIds.add(fleet.originOrbitId);
-  }
-  const playerBarycenters = new Set<number | null | undefined>(
-    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"]
-      .filter((orbit) => playerOrbitIds.has(orbit.Key.value))
-      .map((i) => i.Value.barycenter.value)
-  );
-  for (const hab of playerHabs) {
-    playerBarycenters.add(habSitesById.get(hab.habSiteId || 0)?.parentBodyId);
-  }
-  const playerPlanetIds = new Set<number>(
-    planets
-      .filter((planet) => playerBarycenters.has(planet.Key.value))
-      .map((planet) => planet.Value)
-      .map((p) => ((p.barycenter?.value ?? sol) === sol ? p.ID.value : p.barycenter!.value))
-  );
-  const playerPlanets = planets
-    .filter((planet) => playerPlanetIds.has(planet.Key.value))
-    .map((p) => p.Value)
-    .map((p) => ({
-      id: p.ID.value,
-      templateName: p.templateName,
-      displayName: p.displayName,
-      playerTag: p.playerTag,
-    }));
-
-  const playerInterestedBodyIds = new Set<number>(
-    [...playerPlanetIds]
-      .concat(planets.filter((i) => playerPlanetIds.has(i.Value.barycenter?.value ?? 0)).map((i) => i.Key.value))
-      .concat([earth])
-  );
-  const playerInterestedOrbitIds = new Set<number>(
-    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"]
-      .filter((orbit) => playerInterestedBodyIds.has(orbit.Value.barycenter.value))
-      .map((i) => i.Key.value)
-  );
-  const playerInterestedPlanets = planets
-    .filter((planet) => playerInterestedBodyIds.has(planet.Key.value))
-    .map((p) => p.Value);
-
-  const alienFaction = factions.find((faction) => faction.templateName === "AlienCouncil");
-  if (!alienFaction) {
-    throw new Error("Alien faction data not found in save file.");
-  }
-  const alienFleetsToPlayerOrbits = sortByDateTime(
-    fleets
-      .filter((fleet) => fleet.faction === alienFaction.id)
-      .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId)),
-    (i) => i.arrivalTime
-  );
-
-  const regions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIRegionState"].map(({ Value: region }) => ({
-    id: region.ID.value,
-    templateName: region.templateName,
-    nationId: region.nation.value,
-    boostPerYear: region.boostPerYear_dekatons,
-    missionControl: region.missionControl,
-    populationInMillions: region.populationInMillions,
-  }));
-  const regionsById = new Map<number, (typeof regions)[0]>(regions.map((region) => [region.id, region]));
-  const regionsByNationId = regions.reduce((acc, region) => {
-    if (!region.nationId) return acc;
-    if (!acc.has(region.nationId)) {
-      acc.set(region.nationId, []);
-    }
-    acc.get(region.nationId)!.push(region);
-    return acc;
-  }, new Map<number, typeof regions>());
-
-  const controlPoints = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIControlPoint"].map(({ Value: cp }) => ({
-    id: cp.ID.value,
-    factionId: cp.faction?.value,
-    nationId: cp.nation?.value,
-    displayName: cp.displayName,
-    benefitsDisabled: cp.benefitsDisabled,
-    crackdownExpiration: cp.crackdownExpiration,
-    defended: cp.defended,
-    controlPointPriorities: cp.controlPointPriorities,
-  }));
-  const controlPointsByNationId = controlPoints.reduce((acc, cp) => {
-    if (!cp.nationId) return acc;
-    if (!acc.has(cp.nationId)) {
-      acc.set(cp.nationId, []);
-    }
-    acc.get(cp.nationId)!.push(cp);
-    return acc;
-  }, new Map<number, typeof controlPoints>());
-  const nations = saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"]
-    .filter((i) => i.Value.exists && !!i.Value.capital)
-    .map(({ Value: nation }) => {
-      const investmentPoints = nation.baseInvestmentPoints_month;
-      const valuePerSpoilsIP =
-        5 * investmentPoints +
-        5 * nation.numMiningRegions_dailyCache +
-        5 * nation.numOilRegions_dailyCache +
-        2.5 * (10 - nation.democracy);
-      const totalSpoils = valuePerSpoilsIP * investmentPoints;
-      const cpCount = nation.controlPoints.length;
-      const totalCpCost = Math.pow(nation.GDP / 1000000000, 0.6) / 2; // https://www.reddit.com/r/TerraInvicta/comments/1c9t3c2/control_point_cost_formula/
-      const totalSpoilsPerCpCost = totalCpCost > 0 ? totalSpoils / totalCpCost : 0;
-      const totalSpoilsPerControlPoint = cpCount > 0 ? totalSpoils / cpCount : 0;
-      const controlPoints = controlPointsByNationId.get(nation.ID.value) || [];
-      const regions = regionsByNationId.get(nation.ID.value) || [];
-      const mc = regions.reduce((acc, r) => acc + r.missionControl, 0);
-      const boostPerMonth = regions.reduce((acc, r) => acc + r.boostPerYear, 0) / 12;
-      const ipPerCpCost = totalCpCost > 0 ? investmentPoints / totalCpCost : 0;
-      const possibleBoostPerCpCost = boostPerMonth > 0 ? ipPerCpCost : 0;
-      const mcPerCpCost = totalCpCost > 0 ? mc / totalCpCost : 0;
-      const boostPerMonthPerCpCost = totalCpCost > 0 ? boostPerMonth / totalCpCost : 0;
-      const populationInMillions = regions.reduce((acc, r) => acc + r.populationInMillions, 0);
-      // allocate priorities like they work in game - as % within CP, then averaged across CPs
-      const allocatedPriorities = controlPoints
-        .map((cp) => {
-          const priorities = cp.controlPointPriorities;
-          const totalPriorities = Object.values(priorities).reduce((acc, val) => acc + val, 0);
-          const entries = Object.entries(priorities) as [keyof typeof priorities, number][];
-          return Object.fromEntries(
-            entries.map(([key, val]) => [key, totalPriorities > 0 ? val / totalPriorities / controlPoints.length : 0])
-          ) as typeof priorities;
-        })
-        .reduce((acc, pri) => {
-          (Object.keys(pri) as (keyof typeof pri)[]).forEach((key) => {
-            acc[key] = (acc[key] || 0) + pri[key];
-          });
-          return acc;
-        }, {} as Record<keyof (typeof controlPoints)[0]["controlPointPriorities"], number>);
-
-      const wastedOppression = allocatedPriorities.Oppression > 0 && nation.unrest <= 0.01; // oppression not really needed with no unrest
-      const tooHighUnrest = nation.unrest > 2 && (allocatedPriorities.Oppression || 0) < 0.5; // unrest high enough to start losing IP and not doing anything about it
-      const spoilsWithoutAllCPs =
-        allocatedPriorities.Spoils > 0 &&
-        controlPoints.some((cp) => cp.benefitsDisabled || cp.factionId !== playerFaction.id); // spoils but not all CPs controlled by player
-      const couldBuildBoost = allocatedPriorities.Spoils > 0 && boostPerMonth > 0; // spoils when we could be building boost
-
-      return {
-        id: nation.ID.value,
-        templateName: nation.templateName,
-        displayName: nation.displayName,
-        cpCount,
-        totalCpCost,
-        valuePerSpoilsIP,
-        totalSpoils,
-        totalSpoilsPerCpCost,
-        totalSpoilsPerControlPoint,
-        controlPoints,
-        investmentPoints,
-        unrest: nation.unrest,
-        democracy: nation.democracy,
-        GDP: nation.GDP,
-        mc,
-        mcPerCpCost,
-        boostPerMonth,
-        boostPerMonthPerCpCost,
-        populationInMillions,
-        allocatedPriorities,
-        wastedOppression,
-        tooHighUnrest,
-        spoilsWithoutAllCPs,
-        couldBuildBoost,
-        ipPerCpCost,
-        possibleBoostPerCpCost,
-      };
-    })
-    .filter((i) => i.populationInMillions > 0);
-  const nationsById = new Map<number, (typeof nations)[0]>(nations.map((nation) => [nation.id, nation]));
 
   // Expand alien faction goals with details
   type ExpandedGoal = {
@@ -1600,374 +1802,174 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   // Sort by importance descending
   expandedAlienGoals.sort((a, b) => b.importance - a.importance);
 
-  // Add nation history to factions - aggregate all nations where faction has CPs
-  const allNationStates = saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"]
-    .filter((i) => i.Value.exists && !!i.Value.capital)
-    .map((i) => i.Value);
+  const playerHabs = habs.filter((hab) => hab.faction === playerFaction.id);
+  const playerFleets = fleets.filter((fleet) => fleet.faction === playerFaction.id);
 
-  for (const faction of factions) {
-    // Find all nations where this faction has at least one control point
-    const controlledNationsWithCPs: Array<{
-      nation: (typeof allNationStates)[0];
-      factionCPs: number;
-      totalCPs: number;
-    }> = [];
-
-    for (const nationState of allNationStates) {
-      const nationId = nationState.ID.value;
-      const controlPoints = controlPointsByNationId.get(nationId) || [];
-
-      // Count how many CPs this faction has in this nation
-      const factionCPCount = controlPoints.filter((cp) => cp.factionId === faction.id).length;
-
-      if (factionCPCount > 0) {
-        controlledNationsWithCPs.push({
-          nation: nationState,
-          factionCPs: factionCPCount,
-          totalCPs: controlPoints.length,
-        });
-      }
-    }
-
-    // Aggregate histories across all controlled nations
-    if (controlledNationsWithCPs.length > 0) {
-      // Find the maximum history length
-      const maxMCLength = Math.max(
-        ...controlledNationsWithCPs.map((n) => (n.nation.historyMissionControl || []).length)
-      );
-      const maxBoostLength = Math.max(...controlledNationsWithCPs.map((n) => (n.nation.historyBoost || []).length));
-
-      // Sum up histories across all nations, weighted by faction's share of CPs
-      faction.nationHistory.historyMissionControl = Array.from({ length: maxMCLength }, (_, index) => {
-        return controlledNationsWithCPs.reduce((sum, { nation, factionCPs, totalCPs }) => {
-          const history = nation.historyMissionControl || [];
-          const value = history[index] || 0;
-          // Divide by total CPs and multiply by faction's CPs to get this faction's share
-          return sum + (value / totalCPs) * factionCPs;
-        }, 0);
-      });
-
-      faction.nationHistory.historyBoost = Array.from({ length: maxBoostLength }, (_, index) => {
-        return controlledNationsWithCPs.reduce((sum, { nation, factionCPs, totalCPs }) => {
-          const history = nation.historyBoost || [];
-          const value = history[index] || 0;
-          // Divide by total CPs and multiply by faction's CPs to get this faction's share
-          return sum + (value / totalCPs) * factionCPs;
-        }, 0);
-      });
-
-      // Calculate summary statistics
-      const historyBoost = faction.nationHistory.historyBoost;
-      const historyMC = faction.nationHistory.historyMissionControl;
-
-      faction.nationHistory.currentBoost = historyBoost.length > 0 ? historyBoost[0] : 0;
-      faction.nationHistory.currentMC = historyMC.length > 0 ? historyMC[0] : 0;
-
-      faction.nationHistory.boostMonthlyChange =
-        historyBoost.length > 0 ? historyBoost[0] - (historyBoost[historyBoost.length - 1] || 0) : 0;
-      faction.nationHistory.mcMonthlyChange =
-        historyMC.length > 0 ? historyMC[0] - (historyMC[historyMC.length - 1] || 0) : 0;
-    }
-  }
-
-  const orgTemplates = new Map(
-    (await templates.orgs()).map((org) => [
-      org.dataName,
-      {
-        // may not need some of these, as they end up in the org state itself
-        dataName: org.dataName,
-        friendlyName: org.friendlyName,
-        orgType: org.orgType,
-        requiresNationality: org.requiresNationality,
-        allowedOnMarket: org.allowedOnMarket,
-        requiredOwnerTraits: org.requiredOwnerTraits,
-        prohibitedOwnerTraits: org.prohibitedOwnerTraits,
-        // homeRegionMapTemplateName: org.homeRegionMapTemplateName, // regionid is on org
-        missionsGrantedNames: org.missionsGrantedNames,
-        grantsMarked: org.grantsMarked,
-        techBonuses: org.techBonuses,
-      },
-    ])
+  // Create a map from hab ID to original hab data for looking up inEarthLEO
+  const originalHabsById = new Map(
+    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => [hab.ID.value, hab])
   );
 
-  const orgs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrgState"].map(({ Value: org }) => {
-    const template = org.templateName ? orgTemplates.get(org.templateName) : undefined;
-    const homeRegionId = org.homeRegion?.value;
-    const homeNationId = regionsById.get(homeRegionId || -1)?.nationId;
-    const homeNation = homeNationId ? nationsById.get(homeNationId) : undefined;
-    return {
-      id: org.ID.value,
-      displayName: org.displayName!,
-      templateName: org.templateName,
-      template,
-      assignedCouncilorId: org.assignedCouncilor?.value,
-      factionOrbitId: org.factionOrbit?.value,
-      homeRegionId,
-      homeNationId,
-      homeNationTemplateName: homeNation?.templateName,
-      homeNationName: homeNation?.displayName,
-      tier: org.tier,
-      takeoverDefense: org.takeoverDefense,
-      costMoney: org.costMoney,
-      costInfluence: org.costInfluence,
-      costOps: org.costOps,
-      costBoost: org.costBoost,
-      incomeMoney_month: org.incomeMoney_month,
-      incomeInfluence_month: org.incomeInfluence_month,
-      incomeOps_month: org.incomeOps_month,
-      incomeBoost_month: org.incomeBoost_month,
-      incomeMissionControl: org.incomeMissionControl,
-      incomeResearch_month: org.incomeResearch_month,
-      projectCapacityGranted: org.projectCapacityGranted,
-      persuasion: org.persuasion,
-      command: org.command,
-      investigation: org.investigation,
-      espionage: org.espionage,
-      administration: org.administration,
-      science: org.science,
-      security: org.security,
-      economyBonus: org.economyBonus,
-      welfareBonus: org.welfareBonus,
-      environmentBonus: org.environmentBonus,
-      knowledgeBonus: org.knowledgeBonus,
-      governmentBonus: org.governmentBonus,
-      unityBonus: org.unityBonus,
-      militaryBonus: org.militaryBonus,
-      oppressionBonus: org.oppressionBonus,
-      spoilsBonus: org.spoilsBonus,
-      spaceDevBonus: org.spaceDevBonus,
-      spaceflightBonus: org.spaceflightBonus,
-      MCBonus: org.MCBonus,
-      miningBonus: org.miningBonus,
-      XPModifier: org.XPModifier,
-      isAdminOrg: (org.tier || 0) < (org.administration || 0),
-    };
-  });
-  const orgsById = new Map<number, (typeof orgs)[0]>(orgs.map((org) => [org.id, org]));
-  const playerUnassignedOrgs = orgs.filter((org) => playerFaction?.unassignedOrgIds.includes(org.id));
-  const playerAvailableOrgs = orgs.filter((org) => playerFaction?.availableOrgIds.includes(org.id));
-
-  const councilorTraitTemplates = (await templates.traits()).map((trait) => ({
-    dataName: trait.dataName,
-    friendlyName: trait.friendlyName,
-    xpCost: trait.XPCost,
-    xpModifier: trait.XPModifier,
-    upgradesFrom: trait.upgradesFrom,
-    boostCost: trait.boostCost,
-    opsCost: trait.opsCost,
-    detectionEspBonus: trait.detectionEspBonus,
-    incomeBoost: trait.incomeBoost,
-    incomeInfluence: trait.incomeInfluence,
-    incomeMoney: trait.incomeMoney,
-    incomeResearch: trait.incomeResearch,
-    priorityBonuses: trait.priorityBonuses,
-    statMods: trait.statMods,
-    techBonuses: trait.techBonuses,
-    missionsGrantedNames: trait.missionsGrantedNames,
-    tags: trait.tags,
-  }));
-  const councilorTraitTemplatesByDataName = new Map(councilorTraitTemplates.map((trait) => [trait.dataName, trait]));
-  const councilorTypes = (await templates.councilorTypes()).map((type) => ({
-    dataName: type.dataName,
-    friendlyName: type.friendlyName,
-    missionNames: type.missionNames,
-  }));
-  const councilorTypesByDataName = new Map(councilorTypes.map((type) => [type.dataName, type]));
-
-  function computeCouncilorEffects(
-    attributes: ShowEffectsProps,
-    traitTemplates: typeof councilorTraitTemplates,
-    councilorOrgs: typeof orgs
-  ): { effectsBaseAndUnaugmentedTraits: ShowEffectsProps; effectsWithOrgsAndAugments: ShowEffectsProps } {
-    function addTraits(effects: ShowEffectsProps, traits: typeof councilorTraitTemplates): ShowEffectsProps {
-      // Add trait effects
-      let finalEffects = traits.reduce<ShowEffectsProps>(
-        (acc, trait) => {
-          return combineEffects(acc, {
-            incomeMoney_month: trait?.incomeMoney,
-            incomeBoost_month: trait?.incomeBoost,
-            incomeInfluence_month: trait?.incomeInfluence,
-            incomeResearch_month: trait?.incomeResearch,
-            councilorTechBonus: trait?.techBonuses,
-            missionsGrantedNames: trait?.missionsGrantedNames,
-            xpModifier: trait?.xpModifier,
-          });
-        },
-        { ...effects }
-      );
-
-      // Apply trait statMods and priorityBonuses
-      for (const trait of traits) {
-        for (const { stat, operation, strValue, condition } of trait.statMods || []) {
-          if (stat && strValue && !condition && operation === "Additive") {
-            (finalEffects as any)[stat] = ((finalEffects as any)[stat] || 0) + Number(strValue);
-          }
-          if (stat === "Loyalty" && strValue && !condition && operation === "Additive") {
-            (finalEffects as any)["maxLoyalty"] = ((finalEffects as any)["maxLoyalty"] || 0) + Number(strValue);
-          }
-        }
-        for (const { priority, bonus } of trait.priorityBonuses || []) {
-          if (priority && bonus) {
-            const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
-            (finalEffects as any)[key] = ((finalEffects as any)[key] || 0) + bonus;
-          }
-        }
-      }
-      for (const trait of traits) {
-        for (const { stat, operation, strValue, condition } of trait.statMods || []) {
-          if (stat && strValue && !condition && operation === "SetToAnotherAttribute") {
-            (finalEffects as any)[stat] = (finalEffects as any)[strValue] || 0;
-          }
-        }
-      }
-      return finalEffects;
+  // Create building summary: aggregate modules by template across all player habs
+  const buildingSummary = new Map<
+    string,
+    {
+      templateName: string;
+      friendlyName: string;
+      currentCount: number;
+      futureCount: number;
+      currentEffects: ShowEffectsProps;
+      futureEffects: ShowEffectsProps;
     }
+  >();
 
-    // Start with base attributes
-    const effectsBaseAndUnaugmentedTraits = addTraits(
-      { ...attributes, maxLoyalty: 25 },
-      traitTemplates.filter((t) => !(t.tags || []).includes("Augmented"))
-    );
+  for (const hab of playerHabs) {
+    const originalHab = originalHabsById.get(hab.id);
+    if (!originalHab) continue;
 
-    const effectsWithAugments = addTraits(
-      effectsBaseAndUnaugmentedTraits,
-      traitTemplates.filter((t) => (t.tags || []).includes("Augmented"))
-    );
+    for (const { active, template } of hab.moduleTemplates) {
+      const templateName = template.dataName;
+      if (!templateName) continue;
 
-    // Add org effects to create the full effects value
-    const effectsWithOrgsAndAugments = councilorOrgs.reduce<ShowEffectsProps>((acc, org) => {
-      return combineEffects(acc, {
-        ...org,
-        techBonuses: org.template?.techBonuses,
-        missionsGrantedNames: org.template?.missionsGrantedNames,
-      });
-    }, effectsWithAugments);
-
-    return { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments };
-  }
-
-  const councilors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TICouncilorState"].map(
-    ({ Value: councilor }) => {
-      const orgIds = new Set(councilor.orgs.map((i) => i.value));
-      const councilorOrgs = orgs.filter((org) => orgIds.has(org.id));
-      const traitTemplates = councilor.traitTemplateNames
-        .map((name) => councilorTraitTemplatesByDataName.get(name))
-        .filter((t): t is (typeof councilorTraitTemplates)[0] => !!t);
-      const councilorType = councilorTypesByDataName.get(councilor.typeTemplateName);
-      const playerIntel = playerFaction.intel.get(councilor.ID.value) || 0;
-      const playerMaxIntel = playerFaction.highestIntel.get(councilor.ID.value) || 0;
-      const lastRecordedLoyalty = playerFaction.lastRecordedLoyalty.get(councilor.ID.value) || 0;
-
-      const { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments } = computeCouncilorEffects(
-        {
-          ...councilor.attributes,
-          missionsGrantedNames: councilorType?.missionNames,
-          xp: councilor.XP,
-          traitTemplateNames: councilor.traitTemplateNames,
-          typeTemplateName: councilor.typeTemplateName,
-          playerIntel,
-          playerMaxIntel,
-          lastRecordedLoyalty,
-        },
-        traitTemplates,
-        councilorOrgs
-      );
-
-      // councilor.learnedMissionsTemplateNames is always [] - ignoring
-
-      return {
-        id: councilor.ID.value,
-        displayName: councilor.displayName!,
-        factionId: councilor.faction?.value,
-        councilorType,
-        traitTemplateNames: councilor.traitTemplateNames,
-        traitTemplates,
-        attributes: councilor.attributes,
-        orgs: councilorOrgs,
-        homeRegionId: councilor.homeRegion?.value,
-        homeNationId: regionsById.get(councilor.homeRegion?.value || -1)?.nationId,
-        typeTemplateName: councilor.typeTemplateName,
-        xp: councilor.XP,
-        effectsBaseAndUnaugmentedTraits,
-        effectsWithOrgsAndAugments,
-        playerIntel,
+      const existing = buildingSummary.get(templateName) || {
+        templateName,
+        friendlyName: template.friendlyName || templateName,
+        currentCount: 0,
+        futureCount: 0,
+        currentEffects: {},
+        futureEffects: {},
       };
-    }
-  );
-  const playerCouncilors = councilors.filter((councilor) => playerFaction?.councilorIds.includes(councilor.id));
 
-  // Calculate mining bonuses for each faction
-  const effectsState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIEffectsState"][0]?.Value;
+      // Count all modules (current + future under construction)
+      existing.futureCount++;
 
-  factions.forEach((faction) => {
-    // Start with base 0% bonus for each resource
-    let waterBonus = 0;
-    let volatilesBonus = 0;
-    let metalsBonus = 0;
-    let noblesBonus = 0;
-    let fissilesBonus = 0;
-
-    // 1. Add councilor mining bonuses (applies to all resources)
-    const factionCouncilors = councilors.filter((c) => c.factionId === faction.id);
-    const councilorMiningBonus = factionCouncilors.reduce(
-      (sum, c) => sum + (c.effectsWithOrgsAndAugments.miningBonus || 0),
-      0
-    );
-    
-    waterBonus += councilorMiningBonus;
-    volatilesBonus += councilorMiningBonus;
-    metalsBonus += councilorMiningBonus;
-    noblesBonus += councilorMiningBonus;
-    fissilesBonus += councilorMiningBonus;
-
-    // 2. Add faction effects from TIEffectsState
-    if (effectsState?.factionEffectsNames) {
-      const factionEffects = effectsState.factionEffectsNames.find((kv) => kv.Key.value === faction.id)?.Value;
-      
-      if (factionEffects) {
-        // SpaceMiningBonus (applies to all resources)
-        const spaceMiningEffects = factionEffects.SpaceMiningBonus || [];
-        spaceMiningEffects.forEach((effect) => {
-          // Extract percentage from effect name like "Effect_SpaceMiningBonus5" = 5%
-          const match = effect.match(/Effect_SpaceMiningBonus(\d+)/);
-          if (match) {
-            const bonus = parseInt(match[1], 10);
-            waterBonus += bonus;
-            volatilesBonus += bonus;
-            metalsBonus += bonus;
-            noblesBonus += bonus;
-            fissilesBonus += bonus;
-          }
-        });
-
-        // Resource-specific bonuses (15% each)
-        if (factionEffects.MiningWaterBonus?.includes("Effect_MiningWaterBonus")) {
-          waterBonus += 15;
-        }
-        if (factionEffects.MiningVolatilesBonus?.includes("Effect_MiningVolatilesBonus")) {
-          volatilesBonus += 15;
-        }
-        if (factionEffects.MiningMetalsBonus?.includes("Effect_MiningMetalsBonus")) {
-          metalsBonus += 15;
-        }
-        if (factionEffects.MiningNoblesBonus?.includes("Effect_MiningNoblesBonus")) {
-          noblesBonus += 15;
-        }
-        if (factionEffects.MiningFissilesBonus?.includes("Effect_MiningFissilesBonus")) {
-          fissilesBonus += 15;
-        }
+      // Count only active modules as current
+      if (active) {
+        existing.currentCount++;
       }
-    }
 
-    // Store bonuses as multipliers (e.g., 15% = 1.15)
-    faction.miningBonuses = {
-      water: 1 + waterBonus / 100,
-      volatiles: 1 + volatilesBonus / 100,
-      metals: 1 + metalsBonus / 100,
-      nobles: 1 + noblesBonus / 100,
-      fissiles: 1 + fissilesBonus / 100,
-    };
-  });
+      // Calculate effects for this module
+      const {
+        techBonuses,
+        incomeInfluence_month,
+        incomeMoney_month,
+        incomeOps_month,
+        incomeProjects,
+        incomeResearch_month,
+        supportMaterials_month,
+        missionControl,
+      } = template;
+
+      const moduleEffects: ShowEffectsProps = {
+        techBonuses,
+        incomeBoost_month: -(supportMaterials_month?.boost || 0),
+        incomeMissionControl: missionControl,
+        incomeInfluence_month,
+        incomeMoney_month: (incomeMoney_month || 0) - (supportMaterials_month?.money || 0),
+        incomeOps_month,
+        projectCapacityGranted: incomeProjects,
+        incomeResearch_month,
+        volatiles: -(supportMaterials_month?.volatiles || 0),
+        metals: -(supportMaterials_month?.metals || 0),
+        nobles: -(supportMaterials_month?.nobleMetals || 0),
+      };
+
+      if (originalHab.inEarthLEO) {
+        if (template.controlPointCapacity) {
+          moduleEffects.controlPoints = template.controlPointCapacity;
+        }
+        if (template.incomeProjects) {
+          moduleEffects.projectCapacityGranted = template.incomeProjects;
+        }
+        if (template.specialRules?.includes("LEOBonusEconomy"))
+          moduleEffects.economyBonus = (moduleEffects.economyBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusEnvironment"))
+          moduleEffects.environmentBonus = (moduleEffects.environmentBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusGovernment"))
+          moduleEffects.governmentBonus = (moduleEffects.governmentBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusKnowledge"))
+          moduleEffects.knowledgeBonus = (moduleEffects.knowledgeBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusLaunchFacilities"))
+          moduleEffects.spaceflightBonus = (moduleEffects.spaceflightBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusMissionControl"))
+          moduleEffects.MCBonus = (moduleEffects.MCBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusOppression"))
+          moduleEffects.oppressionBonus = (moduleEffects.oppressionBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusWelfare"))
+          moduleEffects.welfareBonus = (moduleEffects.welfareBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusArmyCombatValue"))
+          moduleEffects.miltechBonus = (moduleEffects.miltechBonus || 0) + template.specialRulesValue!;
+      }
+
+      // Add to future effects always
+      existing.futureEffects = combineEffects(existing.futureEffects, moduleEffects);
+
+      // Add to current effects only if active
+      if (active) {
+        existing.currentEffects = combineEffects(existing.currentEffects, moduleEffects);
+      }
+
+      buildingSummary.set(templateName, existing);
+    }
+  }
+
+  const buildingSummaryArray = Array.from(buildingSummary.values()).sort((a, b) =>
+    a.friendlyName.localeCompare(b.friendlyName)
+  );
+
+  // planets the player cares about: habs, fleet-origin, fleet-destination, fleet-orbiting
+  const playerOrbitIds = new Set<number | null | undefined>();
+  for (const hab of playerHabs) {
+    playerOrbitIds.add(hab.orbitStateId);
+  }
+  for (const fleet of playerFleets) {
+    playerOrbitIds.add(fleet.targetOrbitId);
+    playerOrbitIds.add(fleet.originOrbitId);
+  }
+  const playerBarycenters = new Set<number | null | undefined>(
+    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"]
+      .filter((orbit) => playerOrbitIds.has(orbit.Key.value))
+      .map((i) => i.Value.barycenter.value)
+  );
+  for (const hab of playerHabs) {
+    playerBarycenters.add(habSitesById.get(hab.habSiteId || 0)?.parentBodyId);
+  }
+  const playerPlanetIds = new Set<number>(
+    planets
+      .filter((planet) => playerBarycenters.has(planet.Key.value))
+      .map((planet) => planet.Value)
+      .map((p) => ((p.barycenter?.value ?? sol) === sol ? p.ID.value : p.barycenter!.value))
+  );
+  const playerPlanets = planets
+    .filter((planet) => playerPlanetIds.has(planet.Key.value))
+    .map((p) => p.Value)
+    .map((p) => ({
+      id: p.ID.value,
+      templateName: p.templateName,
+      displayName: p.displayName,
+      playerTag: p.playerTag,
+    }));
+
+  const playerInterestedBodyIds = new Set<number>(
+    [...playerPlanetIds]
+      .concat(planets.filter((i) => playerPlanetIds.has(i.Value.barycenter?.value ?? 0)).map((i) => i.Key.value))
+      .concat([earth])
+  );
+  const playerInterestedOrbitIds = new Set<number>(
+    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"]
+      .filter((orbit) => playerInterestedBodyIds.has(orbit.Value.barycenter.value))
+      .map((i) => i.Key.value)
+  );
+  const playerInterestedPlanets = planets
+    .filter((planet) => playerInterestedBodyIds.has(planet.Key.value))
+    .map((p) => p.Value);
+
+  const alienFleetsToPlayerOrbits = sortByDateTime(
+    fleets
+      .filter((fleet) => fleet.faction === alienFaction.id)
+      .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId)),
+    (i) => i.arrivalTime
+  );
 
   const playerNationIds = new Set<number>(
     controlPoints
