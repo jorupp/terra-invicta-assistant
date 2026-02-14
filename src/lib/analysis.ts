@@ -19,7 +19,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const mcMaskingTechs = new Set(
     (await templates.projects())
       .filter((i) => i.effects?.some((e) => e === "Effect_MCUsageMasking"))
-      .map((i) => i.dataName)
+      .map((i) => i.dataName),
   );
   const metadata = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIMetadataState"][0].Value;
   const { difficulty } = metadata;
@@ -45,7 +45,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   })();
 
   const playerState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIPlayerState"].find(
-    (i) => !i.Value.isAI
+    (i) => !i.Value.isAI,
   )?.Value;
   if (!playerState) {
     throw new Error("Player data not found in save file.");
@@ -111,15 +111,15 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       (difficulty === "Cinematic"
         ? 0.05
         : difficulty === "Normal"
-        ? 0.3
-        : difficulty === "Veteran"
-        ? 0.6
-        : difficulty === "Brutal"
-        ? 1
-        : 9999) * Math.pow(0.8, faction.finishedProjectNames.filter((name) => mcMaskingTechs.has(name)).length);
+          ? 0.3
+          : difficulty === "Veteran"
+            ? 0.6
+            : difficulty === "Brutal"
+              ? 1
+              : 9999) * Math.pow(0.8, faction.finishedProjectNames.filter((name) => mcMaskingTechs.has(name)).length);
     const mcDailyTransactions = sortByDateTime(
       faction.Transactions["Daily Income"]?.filter((i) => i.Resource === "MissionControl"),
-      (i) => i.Date
+      (i) => i.Date,
     );
     const mcCurrentLimit =
       mcDailyTransactions.length > 0 ? mcDailyTransactions[mcDailyTransactions.length - 1].Amount : 0;
@@ -192,7 +192,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       intel: new Map((faction.intel || []).map((i) => [i.Key.value, i.Value])),
       highestIntel: new Map((faction.highestIntel || []).map((i) => [i.Key.value, i.Value])),
       lastRecordedLoyalty: new Map(
-        Array.isArray(faction.lastRecordedLoyalty) ? faction.lastRecordedLoyalty.map((i) => [i.Key.value, i.Value]) : []
+        Array.isArray(faction.lastRecordedLoyalty)
+          ? faction.lastRecordedLoyalty.map((i) => [i.Key.value, i.Value])
+          : [],
       ),
       monthlyTransactionSummary: [
         ...Object.entries(faction.Transactions)
@@ -202,7 +204,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
               resource: t.Resource,
               amount: t.Amount,
               date: t.Date,
-            }))
+            })),
           )
           .filter((t) => toDays(diffDateTime(lastMonth, t.date)) < 0)
           .reduce((acc, t) => {
@@ -230,9 +232,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       unlockedHabModules: new Set(
         [...habModuleTemplates.values()]
           .filter(
-            (module) => !module.requiredProjectName || faction.finishedProjectNames.includes(module.requiredProjectName)
+            (module) =>
+              !module.requiredProjectName || faction.finishedProjectNames.includes(module.requiredProjectName),
           )
-          .map((module) => module.dataName)
+          .map((module) => module.dataName),
       ),
       factionHate: new Map((faction.factionHate || []).map((i) => [i.Key.value, i.Value])),
       assessedAlienHateOfMe: faction.assessedAlienHateOfMe,
@@ -259,7 +262,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   });
   const factionsById = new Map<number, (typeof factions)[0]>(factions.map((faction) => [faction.id, faction]));
   const shipDesignsByDataName = new Map<string, (typeof factions)[0]["shipDesigns"][0]>(
-    factions.flatMap((faction) => faction.shipDesigns).map((design) => [design.dataName, design])
+    factions.flatMap((faction) => faction.shipDesigns).map((design) => [design.dataName, design]),
   );
 
   const playerFaction = factions.find((faction) => faction.id === player.faction);
@@ -285,7 +288,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         templateName: orbit.templateName,
         barycenterId: orbit.barycenter.value,
       },
-    ])
+    ]),
   );
   const bodiesById = new Map(
     planets.map(({ Value: body }) => [
@@ -296,7 +299,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         templateName: body.templateName,
         solarMirrorBonusByFactionId: new Map(body.solarMirrorBonus.map((i) => [i.Key.value, i.Value])),
       },
-    ])
+    ]),
   );
 
   const shipHulls = (await templates.shipHulls()).map((h) => ({
@@ -464,7 +467,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         nobles_day,
         fissiles_day,
       },
-    }) => ({ id, parentBodyId, water_day, volatiles_day, metals_day, nobles_day, fissiles_day })
+    }) => ({ id, parentBodyId, water_day, volatiles_day, metals_day, nobles_day, fissiles_day }),
   );
   const habSitesById = new Map<number, (typeof habSites)[0]>(habSites.map((site) => [site.id, site]));
 
@@ -539,15 +542,18 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           const totalPriorities = Object.values(priorities).reduce((acc, val) => acc + val, 0);
           const entries = Object.entries(priorities) as [keyof typeof priorities, number][];
           return Object.fromEntries(
-            entries.map(([key, val]) => [key, totalPriorities > 0 ? val / totalPriorities / controlPoints.length : 0])
+            entries.map(([key, val]) => [key, totalPriorities > 0 ? val / totalPriorities / controlPoints.length : 0]),
           ) as typeof priorities;
         })
-        .reduce((acc, pri) => {
-          (Object.keys(pri) as (keyof typeof pri)[]).forEach((key) => {
-            acc[key] = (acc[key] || 0) + pri[key];
-          });
-          return acc;
-        }, {} as Record<keyof (typeof controlPoints)[0]["controlPointPriorities"], number>);
+        .reduce(
+          (acc, pri) => {
+            (Object.keys(pri) as (keyof typeof pri)[]).forEach((key) => {
+              acc[key] = (acc[key] || 0) + pri[key];
+            });
+            return acc;
+          },
+          {} as Record<keyof (typeof controlPoints)[0]["controlPointPriorities"], number>,
+        );
 
       const wastedOppression = allocatedPriorities.Oppression > 0 && nation.unrest <= 0.01; // oppression not really needed with no unrest
       const tooHighUnrest = nation.unrest > 2 && (allocatedPriorities.Oppression || 0) < 0.5; // unrest high enough to start losing IP and not doing anything about it
@@ -621,7 +627,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     if (controlledNationsWithCPs.length > 0) {
       // Find the maximum history length
       const maxMCLength = Math.max(
-        ...controlledNationsWithCPs.map((n) => (n.nation.historyMissionControl || []).length)
+        ...controlledNationsWithCPs.map((n) => (n.nation.historyMissionControl || []).length),
       );
       const maxBoostLength = Math.max(...controlledNationsWithCPs.map((n) => (n.nation.historyBoost || []).length));
 
@@ -675,7 +681,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         grantsMarked: org.grantsMarked,
         techBonuses: org.techBonuses,
       },
-    ])
+    ]),
   );
 
   const orgs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrgState"].map(({ Value: org }) => {
@@ -765,7 +771,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   function computeCouncilorEffects(
     attributes: ShowEffectsProps,
     traitTemplates: typeof councilorTraitTemplates,
-    councilorOrgs: typeof orgs
+    councilorOrgs: typeof orgs,
   ): { effectsBaseAndUnaugmentedTraits: ShowEffectsProps; effectsWithOrgsAndAugments: ShowEffectsProps } {
     function addTraits(effects: ShowEffectsProps, traits: typeof councilorTraitTemplates): ShowEffectsProps {
       // Add trait effects
@@ -781,7 +787,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             xpModifier: trait?.xpModifier,
           });
         },
-        { ...effects }
+        { ...effects },
       );
 
       // Apply trait statMods and priorityBonuses
@@ -814,12 +820,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     // Start with base attributes
     const effectsBaseAndUnaugmentedTraits = addTraits(
       { ...attributes, maxLoyalty: 25 },
-      traitTemplates.filter((t) => !(t.tags || []).includes("Augmented"))
+      traitTemplates.filter((t) => !(t.tags || []).includes("Augmented")),
     );
 
     const effectsWithAugments = addTraits(
       effectsBaseAndUnaugmentedTraits,
-      traitTemplates.filter((t) => (t.tags || []).includes("Augmented"))
+      traitTemplates.filter((t) => (t.tags || []).includes("Augmented")),
     );
 
     // Add org effects to create the full effects value
@@ -858,7 +864,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           lastRecordedLoyalty,
         },
         traitTemplates,
-        councilorOrgs
+        councilorOrgs,
       );
 
       // councilor.learnedMissionsTemplateNames is always [] - ignoring
@@ -880,7 +886,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         effectsWithOrgsAndAugments,
         playerIntel,
       };
-    }
+    },
   );
   const playerCouncilors = councilors.filter((councilor) => playerFaction?.councilorIds.includes(councilor.id));
 
@@ -919,25 +925,24 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         // Resource-specific bonuses (15% each), can appear multiple times, and are multiplicative, not additive
         waterMultiplier *= Math.pow(
           1.15,
-          factionEffects.MiningWaterBonus?.filter((e) => e === "Effect_MiningWaterBonus").length || 0
+          factionEffects.MiningWaterBonus?.filter((e) => e === "Effect_MiningWaterBonus").length || 0,
         );
         volatilesMultiplier *= Math.pow(
           1.15,
-          factionEffects.MiningVolatilesBonus?.filter((e) => e === "Effect_MiningVolatilesBonus").length || 0
+          factionEffects.MiningVolatilesBonus?.filter((e) => e === "Effect_MiningVolatilesBonus").length || 0,
         );
         metalsMultiplier *= Math.pow(
           1.15,
-          factionEffects.MiningMetalsBonus?.filter((e) => e === "Effect_MiningMetalsBonus").length || 0
+          factionEffects.MiningMetalsBonus?.filter((e) => e === "Effect_MiningMetalsBonus").length || 0,
         );
         noblesMultiplier *= Math.pow(
           1.15,
-          factionEffects.MiningNoblesBonus?.filter((e) => e === "Effect_MiningNoblesBonus").length || 0
+          factionEffects.MiningNoblesBonus?.filter((e) => e === "Effect_MiningNoblesBonus").length || 0,
         );
         fissilesMultiplier *= Math.pow(
           1.15,
-          factionEffects.MiningFissilesBonus?.filter((e) => e === "Effect_MiningFissilesBonus").length || 0
+          factionEffects.MiningFissilesBonus?.filter((e) => e === "Effect_MiningFissilesBonus").length || 0,
         );
-        console.log({ waterMultiplier, volatilesMultiplier, metalsMultiplier, noblesMultiplier, fissilesMultiplier });
       }
     }
 
@@ -967,10 +972,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // there's probably some data to indicate which sectors are populated for a given tier + habType (shrug)
       const validSectors = new Set(
-        tier === 1 ? [0] : tier === 2 ? (hab.habType === "Station" ? [0, 2, 4] : [0, 1, 2]) : [0, 1, 2, 3, 4]
+        tier === 1 ? [0] : tier === 2 ? (hab.habType === "Station" ? [0, 2, 4] : [0, 1, 2]) : [0, 1, 2, 3, 4],
       );
       const sectors = (habSectorsByHabId.get(hab.ID.value) || []).filter(
-        (s) => s.exists && validSectors.has(s.sectorNum)
+        (s) => s.exists && validSectors.has(s.sectorNum),
       );
       const modules = sectors
         .flatMap((s) => s.habModules)
@@ -1081,7 +1086,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         .reduce<ShowEffectsProps>((acc, curr) => combineEffects(acc, curr.effects), {});
       const potentialEffects = moduleBonuses.reduce<ShowEffectsProps>(
         (acc, curr) => combineEffects(acc, curr.effects),
-        {}
+        {},
       );
       const defenseModules = moduleTemplates.map(({ active, template: t }) => {
         if (t.spaceCombatModule) {
@@ -1136,7 +1141,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           }))
           .filter(
             ({ active, template, actualPower }) =>
-              active && actualPower > 0 && template.dataName && moduleUpgradeMap.has(template.dataName)
+              active && actualPower > 0 && template.dataName && moduleUpgradeMap.has(template.dataName),
           );
 
         // Check if any module can be safely upgraded
@@ -1159,7 +1164,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       if (habFaction) {
         // Check if any space combat modules are under construction or unpowered
         const combatModulesNotReady = moduleTemplates.some(
-          ({ active, template }) => template.spaceCombatModule && !active
+          ({ active, template }) => template.spaceCombatModule && !active,
         );
 
         // Only check for upgrades if all combat modules are active
@@ -1167,7 +1172,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           // Get all active combat modules that can be upgraded
           const activeCombatModules = moduleTemplates.filter(
             ({ active, template }) =>
-              active && template.spaceCombatModule && template.dataName && moduleUpgradeMap.has(template.dataName)
+              active && template.spaceCombatModule && template.dataName && moduleUpgradeMap.has(template.dataName),
           );
 
           // Check if any combat module has an unlocked upgrade
@@ -1198,7 +1203,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           // Get all farms that can be upgraded
           const upgradableFarms = moduleTemplates.filter(
             ({ template }) =>
-              template.specialRules?.includes("Farm") && template.dataName && moduleUpgradeMap.has(template.dataName)
+              template.specialRules?.includes("Farm") && template.dataName && moduleUpgradeMap.has(template.dataName),
           );
 
           // Check if any farm has an unlocked upgrade
@@ -1218,7 +1223,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       if (habFaction) {
         // Get all factory modules at this hab
         const factoryModules = moduleTemplates.filter(({ template }) =>
-          template.specialRules?.includes("CanFoundTier1Habs")
+          template.specialRules?.includes("CanFoundTier1Habs"),
         );
 
         // Count how many modules are currently under construction
@@ -1237,7 +1242,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         if (safeToUpgrade) {
           // Get all factories that can be upgraded
           const upgradableFactories = factoryModules.filter(
-            ({ template }) => template.dataName && moduleUpgradeMap.has(template.dataName)
+            ({ template }) => template.dataName && moduleUpgradeMap.has(template.dataName),
           );
 
           // Check if any factory has an unlocked upgrade with appropriate tier
@@ -1265,16 +1270,16 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           0,
           ...[...habModuleTemplates.values()]
             .filter(
-              (t) => t.specialRules?.includes("CanFoundTier1Habs") && habFaction.unlockedHabModules.has(t.dataName)
+              (t) => t.specialRules?.includes("CanFoundTier1Habs") && habFaction.unlockedHabModules.has(t.dataName),
             )
-            .map((t) => t.tier)
+            .map((t) => t.tier),
         );
 
         // Find the best active factory at this hab
         const bestActiveFactory = moduleTemplates
           .filter(
             ({ active, template }) =>
-              active && template.specialRules?.includes("CanFoundTier1Habs") && template.tier === maxFactoryTier
+              active && template.specialRules?.includes("CanFoundTier1Habs") && template.tier === maxFactoryTier,
           )
           .map(({ template }) => template)[0];
 
@@ -1284,7 +1289,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             template.miningModifier &&
             template.miningModifier > 0 &&
             template.dataName &&
-            moduleUpgradeMap.has(template.dataName)
+            moduleUpgradeMap.has(template.dataName),
         );
 
         // Check if any mining module can be upgraded
@@ -1325,7 +1330,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       if (habFaction) {
         // Get all modules that can be upgraded
         const allUpgradableModules = moduleTemplates.filter(
-          ({ template }) => template.dataName && moduleUpgradeMap.has(template.dataName)
+          ({ template }) => template.dataName && moduleUpgradeMap.has(template.dataName),
         );
 
         // Check each module for valid upgrades
@@ -1355,15 +1360,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       // Calculate active factory information
       const activeFactories = moduleTemplates.filter(
-        ({ active, template }) => active && template.specialRules?.includes("CanFoundTier1Habs")
+        ({ active, template }) => active && template.specialRules?.includes("CanFoundTier1Habs"),
       );
-      
-      const highestActiveFactoryTier = activeFactories.length > 0
-        ? Math.max(...activeFactories.map(({ template }) => template.tier))
-        : 0;
-      
+
+      const highestActiveFactoryTier =
+        activeFactories.length > 0 ? Math.max(...activeFactories.map(({ template }) => template.tier)) : 0;
+
       const highestActiveFactoryCount = activeFactories.filter(
-        ({ template }) => template.tier === highestActiveFactoryTier
+        ({ template }) => template.tier === highestActiveFactoryTier,
       ).length;
 
       // Check if hab is automated
@@ -1372,11 +1376,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       // Track Operations Center (missionControl > 0) for non-automated habs
       let operationsCenterTier = 0;
       let needsOperationsCenterUpgrade = false;
-      
+
       if (!isAutomated && habFaction) {
-        const currentOperationsCenter = moduleTemplates.find(
-          ({ template }) => (template.missionControl ?? 0) > 0
-        );
+        const currentOperationsCenter = moduleTemplates.find(({ template }) => (template.missionControl ?? 0) > 0);
         operationsCenterTier = currentOperationsCenter?.template?.tier || 0;
 
         // Find highest unlocked Operations Center that is <= hab tier
@@ -1385,7 +1387,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             (template) =>
               (template.missionControl ?? 0) > 0 &&
               template.tier <= hab.tier &&
-              habFaction.unlockedHabModules.has(template.dataName)
+              habFaction.unlockedHabModules.has(template.dataName),
           )
           .reduce<(typeof habModuleTemplates extends Map<string, infer T> ? T : never) | null>((best, module) => {
             if (!best || module.tier > best.tier) {
@@ -1404,17 +1406,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       let needsAdminTowerUpgrade = false;
 
       if (hab.inEarthLEO && habFaction) {
-        const currentAdminTower = moduleTemplates.find(
-          ({ template }) => (template.controlPointCapacity ?? 0) > 0
-        );
+        const currentAdminTower = moduleTemplates.find(({ template }) => (template.controlPointCapacity ?? 0) > 0);
         adminTowerTier = currentAdminTower?.template?.tier || 0;
 
         // Find highest unlocked AdminTower
         const bestUnlockedAdminTower = Array.from(habModuleTemplates.values())
           .filter(
             (template) =>
-              (template.controlPointCapacity ?? 0) > 0 &&
-              habFaction.unlockedHabModules.has(template.dataName)
+              (template.controlPointCapacity ?? 0) > 0 && habFaction.unlockedHabModules.has(template.dataName),
           )
           .reduce<(typeof habModuleTemplates extends Map<string, infer T> ? T : never) | null>((best, module) => {
             if (!best || module.tier > best.tier) {
@@ -1440,7 +1439,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
       const currentMine = mine[0];
       const currentMineModifier = currentMine?.template?.miningModifier || 1;
-      
+
       // Track mine tier (including inactive/under construction)
       const mineTier = currentMine?.template?.tier || 0;
       const isMineActive =
@@ -1520,7 +1519,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
                 module.miningModifier > 0 &&
                 module.habType === hab.habType &&
                 module.tier <= hab.tier &&
-                habFaction.unlockedHabModules.has(module.dataName)
+                habFaction.unlockedHabModules.has(module.dataName),
             )
             .reduce<typeof habModuleTemplates extends Map<string, infer T> ? T : never | null>((best, module) => {
               if (!best || module.miningModifier > best.miningModifier) {
@@ -1592,7 +1591,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       };
     })
     .toSorted((a, b) =>
-      a.finderSortOverride === b.finderSortOverride ? 0 : a.finderSortOverride < b.finderSortOverride ? -1 : 1
+      a.finderSortOverride === b.finderSortOverride ? 0 : a.finderSortOverride < b.finderSortOverride ? -1 : 1,
     );
 
   // Expand alien faction goals with details
@@ -1614,47 +1613,47 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   // Helper functions to safely get typed goal states
   const getCaptureNationClean = (goalId: number): FactionGoal_CaptureNation_Clean | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_CaptureNation_Clean"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_CaptureNation_Clean | undefined;
   };
   const getCaptureNationDirty = (goalId: number): FactionGoal_CaptureNation_Dirty | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_CaptureNation_Dirty"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_CaptureNation_Dirty | undefined;
   };
   const getNeutralizeNation = (goalId: number): FactionGoal_NeutralizeNation | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_NeutralizeNation"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_NeutralizeNation | undefined;
   };
   const getAttackWithFleet = (goalId: number): FactionGoal_AttackWithFleet | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_AttackWithFleet"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_AttackWithFleet | undefined;
   };
   const getDefendWithFleet = (goalId: number): FactionGoal_DefendWithFleet | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_DefendWithFleet"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_DefendWithFleet | undefined;
   };
   const getWarOnFaction = (goalId: number): FactionGoal_WarOnFaction | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_WarOnFaction"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_WarOnFaction | undefined;
   };
   const getInvadeEarth = (goalId: number): FactionGoal_InvadeEarth | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_InvadeEarth"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_InvadeEarth | undefined;
   };
   const getBuildFullStation = (goalId: number): FactionGoal_BuildFullStation | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_BuildFullStation"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_BuildFullStation | undefined;
   };
   const getBuildFullBase = (goalId: number): FactionGoal_BuildFullBase | undefined => {
     return (saveFile.gamestates as any)["PavonisInteractive.TerraInvicta.FactionGoal_BuildFullBase"]?.find(
-      (g: any) => g.Value?.ID?.value === goalId
+      (g: any) => g.Value?.ID?.value === goalId,
     )?.Value as FactionGoal_BuildFullBase | undefined;
   };
 
@@ -1925,7 +1924,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
   // Create a map from hab ID to original hab data for looking up inEarthLEO
   const originalHabsById = new Map(
-    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => [hab.ID.value, hab])
+    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => [hab.ID.value, hab]),
   );
 
   // Create building summary: aggregate modules by template across all player habs
@@ -2032,7 +2031,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   }
 
   const buildingSummaryArray = Array.from(buildingSummary.values()).sort((a, b) =>
-    a.friendlyName.localeCompare(b.friendlyName)
+    a.friendlyName.localeCompare(b.friendlyName),
   );
 
   // planets the player cares about: habs, fleet-origin, fleet-destination, fleet-orbiting
@@ -2047,7 +2046,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const playerBarycenters = new Set<number | null | undefined>(
     saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"]
       .filter((orbit) => playerOrbitIds.has(orbit.Key.value))
-      .map((i) => i.Value.barycenter.value)
+      .map((i) => i.Value.barycenter.value),
   );
   for (const hab of playerHabs) {
     playerBarycenters.add(habSitesById.get(hab.habSiteId || 0)?.parentBodyId);
@@ -2056,7 +2055,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     planets
       .filter((planet) => playerBarycenters.has(planet.Key.value))
       .map((planet) => planet.Value)
-      .map((p) => ((p.barycenter?.value ?? sol) === sol ? p.ID.value : p.barycenter!.value))
+      .map((p) => ((p.barycenter?.value ?? sol) === sol ? p.ID.value : p.barycenter!.value)),
   );
   const playerPlanets = planets
     .filter((planet) => playerPlanetIds.has(planet.Key.value))
@@ -2071,12 +2070,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const playerInterestedBodyIds = new Set<number>(
     [...playerPlanetIds]
       .concat(planets.filter((i) => playerPlanetIds.has(i.Value.barycenter?.value ?? 0)).map((i) => i.Key.value))
-      .concat([earth])
+      .concat([earth]),
   );
   const playerInterestedOrbitIds = new Set<number>(
     saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"]
       .filter((orbit) => playerInterestedBodyIds.has(orbit.Value.barycenter.value))
-      .map((i) => i.Key.value)
+      .map((i) => i.Key.value),
   );
   const playerInterestedPlanets = planets
     .filter((planet) => playerInterestedBodyIds.has(planet.Key.value))
@@ -2086,18 +2085,18 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     fleets
       .filter((fleet) => fleet.faction === alienFaction.id)
       .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId)),
-    (i) => i.arrivalTime
+    (i) => i.arrivalTime,
   );
 
   const playerNationIds = new Set<number>(
     controlPoints
       .filter((cp) => cp.factionId === playerFaction.id && cp.nationId)
       .map((cp) => cp.nationId!)
-      .concat(playerCouncilors.map((c) => c.homeNationId).filter((id): id is number => !!id))
+      .concat(playerCouncilors.map((c) => c.homeNationId).filter((id): id is number => !!id)),
   );
 
   const playerAvailableCouncilors = councilors.filter((councilor) =>
-    playerFaction?.availableCouncilorIds.includes(councilor.id)
+    playerFaction?.availableCouncilorIds.includes(councilor.id),
   );
   const playerMissionCounts = playerCouncilors.reduce((acc, councilor) => {
     const missionNames = councilor.effectsWithOrgsAndAugments.missionsGrantedNames || [];
@@ -2115,16 +2114,16 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           acc +
           Math.max(
             0,
-            (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0)
+            (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0),
           )
         );
       }, 0);
       return [faction.id, totalAdmin / Math.max(1, factionCouncilors.length)];
-    })
+    }),
   );
   const playerVisibleCouncilors = councilors.filter((i) => i.factionId !== playerFaction.id && i.playerIntel >= 0.25); // TODO: figure out exact intel threshold
   const playerVisibleFactionIds = new Set<number>(
-    playerVisibleCouncilors.map((c) => c.factionId).filter((id): id is number => !!id)
+    playerVisibleCouncilors.map((c) => c.factionId).filter((id): id is number => !!id),
   );
   const playerStealableOrgs = playerVisibleCouncilors
     .filter((c) => c.playerIntel >= 0.5) // TODO: figure out exact intel threshold for stealing
@@ -2137,7 +2136,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           councilor: c.displayName as string | undefined,
           admin: Math.max(
             0,
-            (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0)
+            (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0),
           ) as number | undefined,
           faction: faction && {
             id: faction.id,
@@ -2167,7 +2166,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
               },
             };
           });
-        })
+        }),
     )
     .filter((o) => o.template?.allowedOnMarket);
 
@@ -2180,7 +2179,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     .filter(
       (i) =>
         !playerFaction.availableProjectNames.includes(i.projectName) &&
-        !playerFaction.finishedProjectNames.includes(i.projectName)
+        !playerFaction.finishedProjectNames.includes(i.projectName),
     )
     .filter((i) => {
       const project = projects.get(i.projectName);
@@ -2423,8 +2422,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
                 ? current
                 : best
               : current.efficiency > best.efficiency
-              ? current
-              : best;
+                ? current
+                : best;
           })
         : undefined;
 
@@ -2519,6 +2518,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       thrust_N: drive.thrust_N,
       EV_kps: drive.EV_kps,
       efficiency: drive.efficiency,
+      propellant: drive.propellant,
       propellantMaterials,
       requiredProjectName: drive.requiredProjectName,
       requiredPowerPlant: drive.requiredPowerPlant,
