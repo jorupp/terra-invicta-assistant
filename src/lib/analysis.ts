@@ -2425,7 +2425,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       : "";
 
     // Step 1: Calculate total reactor power required
-    const powerRequiredGW = parseFloat(drive.thrustRating_GW) / drive.efficiency;
+    // Note: Values like "3,840.096" need comma stripping before parsing
+    const thrustRating_GW = parseFloat(drive.thrustRating_GW.replace(/,/g, ""));
+    const reqPower_GW = parseFloat(drive["req power"].replace(/,/g, ""));
+    const powerRequiredGW = reqPower_GW / drive.efficiency;
 
     // Step 2 & 3: Find eligible reactors and select the appropriate one
     let eligibleReactors = availablePowerPlants.filter((reactor) => {
@@ -2466,15 +2469,28 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     let reactorTons: number | undefined = undefined;
     let radiatorTons: number | undefined = undefined;
     let reactorAndRadiatorTons: number | undefined = undefined;
+    let reactorName: string | undefined = undefined;
+    let reactorGW: number | undefined = undefined;
+    let reactorGWperTon: number | undefined = undefined;
+    let wasteHeatGW: number | undefined = undefined;
+    let radiatorName: string | undefined = undefined;
+    let radiatorGWperTon: number | undefined = undefined;
 
     if (bestReactor) {
+      reactorName = bestReactor.friendlyName;
+      reactorGW = powerRequiredGW;
+      reactorGWperTon = bestReactor.specificPower_tGW;
+      
       // Reactor weight = power required / specific power (tons per GW)
       reactorTons = powerRequiredGW / bestReactor.specificPower_tGW;
 
       // For Calc/Closed cooling drives, add radiator weight
       if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
+        radiatorName = bestRadiator.friendlyName;
+        radiatorGWperTon = bestRadiator.gwPerTon;
+        
         // Step 4: Calculate waste heat using reactor efficiency
-        const wasteHeatGW = powerRequiredGW * (1 - bestReactor.efficiency);
+        wasteHeatGW = powerRequiredGW * (1 - bestReactor.efficiency);
         radiatorTons = wasteHeatGW / bestRadiator.gwPerTon;
       }
 
@@ -2563,6 +2579,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       thrusters: drive.thrusters,
       cooling: drive.cooling,
       powerRequiredGW,
+      thrustRating_GW,
+      reqPower_GW,
+      reactorEfficiency: bestReactor?.efficiency,
       thrustRating,
       exhaustRating,
       overallRating,
@@ -2572,6 +2591,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       reactorTons,
       radiatorTons,
       reactorAndRadiatorTons,
+      reactorName,
+      reactorGW,
+      reactorGWperTon,
+      wasteHeatGW,
+      radiatorName,
+      radiatorGWperTon,
       techResearchRemaining,
       projectResearchRemaining,
       requiredTechs,

@@ -338,18 +338,39 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   <ShowEffects {...propellantEffects} />
                 </TableCell>
                 <TableCell className="text-xs">{drive.requiredPowerPlantDisplayName || "None"}</TableCell>
-                <TableCell className="text-right">
+                <TableCell 
+                  className="text-right"
+                  title={
+                    !isNaN(drive.powerRequiredGW)
+                      ? [
+                          `Thrust Rating: ${smartRound(drive.thrustRating_GW)} GW`,
+                          `Required Power (before efficiency): ${smartRound(drive.reqPower_GW)} GW`,
+                          `Drive Efficiency: ${(drive.efficiency * 100).toFixed(1)}%`,
+                          drive.thrusters > 1 ? `Number of Thrusters: ${drive.thrusters}` : null,
+                          `Power Required: ${smartRound(drive.reqPower_GW)} GW / ${(drive.efficiency * 100).toFixed(1)}% = ${smartRound(drive.powerRequiredGW)} GW`,
+                          drive.reactorEfficiency !== undefined ? `\nReactor Efficiency: ${(drive.reactorEfficiency * 100).toFixed(1)}%` : null,
+                          drive.wasteHeatGW !== undefined ? `Waste Heat: ${smartRound(drive.powerRequiredGW)} GW × ${(100 - (drive.reactorEfficiency || 0) * 100).toFixed(1)}% = ${smartRound(drive.wasteHeatGW)} GW` : null,
+                        ].filter(Boolean).join('\n')
+                      : undefined
+                  }
+                >
                   {!isNaN(drive.powerRequiredGW) ? smartRound(drive.powerRequiredGW) : "-"}
                 </TableCell>
                 <TableCell 
                   className="text-right"
                   title={
                     drive.reactorTons !== undefined
-                      ? `Reactor: ${smartRound(drive.reactorTons)} tons${
-                          drive.radiatorTons !== undefined 
-                            ? `\nRadiator: ${smartRound(drive.radiatorTons)} tons` 
-                            : ""
-                        }`
+                      ? [
+                          drive.reactorName ? `Reactor: ${drive.reactorName}` : null,
+                          drive.reactorGW !== undefined ? `  Power Output: ${smartRound(drive.reactorGW)} GW` : null,
+                          drive.reactorGWperTon !== undefined ? `  Specific Power: ${smartRound(drive.reactorGWperTon)} GW/t` : null,
+                          drive.reactorTons !== undefined ? `  Mass: ${smartRound(drive.reactorTons)} tons` : null,
+                          drive.radiatorTons !== undefined ? '\n' : null,
+                          drive.radiatorName ? `Radiator: ${drive.radiatorName}` : null,
+                          drive.wasteHeatGW !== undefined ? `  Waste Heat: ${smartRound(drive.wasteHeatGW)} GW` : null,
+                          drive.radiatorGWperTon !== undefined ? `  Cooling: ${smartRound(drive.radiatorGWperTon)} GW/t` : null,
+                          drive.radiatorTons !== undefined ? `  Mass: ${smartRound(drive.radiatorTons)} tons` : null,
+                        ].filter(Boolean).join('\n')
                       : undefined
                   }
                 >
