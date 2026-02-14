@@ -333,7 +333,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   {Math.round(drive.EV_kps)}
                 </TableCell>
                 <TableCell className="text-right">{(drive.efficiency * 100).toFixed(1)}%</TableCell>
-                <TableCell>{drive.cooling || "None"}</TableCell>
+                <TableCell title={drive.propellant}>{drive.cooling || "None"}</TableCell>
                 <TableCell className="text-xs">
                   <ShowEffects {...propellantEffects} />
                 </TableCell>
