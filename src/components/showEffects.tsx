@@ -8,6 +8,7 @@ import {
   ControlPoint,
   Currency,
   Espionage,
+  Exotics,
   Fissiles,
   Influence,
   Investigation,
@@ -69,6 +70,7 @@ export type ShowEffectsProps = Partial<
       nobles?: number;
       fissiles?: number;
       antimatter?: number;
+      exotics?: number;
     } &
     Pick<
       TIOrgState,
@@ -209,6 +211,7 @@ export const ShowEffects = (
   const nobles = props.nobles || 0;
   const fissiles = props.fissiles || 0;
   const antimatter = props.antimatter || 0;
+  const exotics = props.exotics || 0;
   const combatScore = props.combatScore || 0;
 
   return (
@@ -537,6 +540,12 @@ export const ShowEffects = (
       {antimatter !== 0 && (
         <>
           <Antimatter /> {smartRound(antimatter)}
+          {spacer}
+        </>
+      )}
+      {exotics !== 0 && (
+        <>
+          <Exotics /> {smartRound(exotics)}
           {spacer}
         </>
       )}

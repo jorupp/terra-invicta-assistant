@@ -2497,6 +2497,31 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       reactorAndRadiatorTons = reactorTons + (radiatorTons || 0);
     }
 
+    // Calculate resources required (1 resource = 10 tons)
+    const reactorResources = reactorTons !== undefined ? reactorTons / 10 : undefined;
+    const radiatorResources = radiatorTons !== undefined ? radiatorTons / 10 : undefined;
+    const totalResources = reactorAndRadiatorTons !== undefined ? reactorAndRadiatorTons / 10 : undefined;
+
+    // Calculate material breakdown for reactor
+    const reactorMaterials = bestReactor && reactorResources !== undefined
+      ? {
+          water: bestReactor.weightedBuildMaterials.water * reactorResources,
+          volatiles: bestReactor.weightedBuildMaterials.volatiles * reactorResources,
+          metals: bestReactor.weightedBuildMaterials.metals * reactorResources,
+          nobleMetals: bestReactor.weightedBuildMaterials.nobleMetals * reactorResources,
+        }
+      : undefined;
+
+    // Calculate material breakdown for radiator
+    const radiatorMaterials = bestRadiator && radiatorResources !== undefined
+      ? {
+          volatiles: bestRadiator.weightedBuildMaterials.volatiles * radiatorResources,
+          metals: bestRadiator.weightedBuildMaterials.metals * radiatorResources,
+          nobleMetals: bestRadiator.weightedBuildMaterials.nobleMetals * radiatorResources,
+          exotics: bestRadiator.weightedBuildMaterials.exotics * radiatorResources,
+        }
+      : undefined;
+
     // Calculate hypothetical ship performance
     // Ship: 10,000 tons dry + reactor/radiator + 5,000 tons fuel (50 tanks)
     const dryMass = 10000 + (reactorAndRadiatorTons || 0); // tons
@@ -2591,6 +2616,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       reactorTons,
       radiatorTons,
       reactorAndRadiatorTons,
+      reactorResources,
+      radiatorResources,
+      totalResources,
+      reactorMaterials,
+      radiatorMaterials,
       reactorName,
       reactorGW,
       reactorGWperTon,

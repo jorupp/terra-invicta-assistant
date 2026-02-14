@@ -1,5 +1,6 @@
 import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ShowEffects } from "@/components/showEffects";
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
@@ -17,6 +18,7 @@ type SortColumn =
   | "cooling"
   | "powerRequiredGW"
   | "reactorAndRadiatorTons"
+  | "totalResources"
   | "thrustRating"
   | "exhaustRating"
   | "overallRating"
@@ -77,6 +79,9 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
         break;
       case "reactorAndRadiatorTons":
         compareValue = (a.reactorAndRadiatorTons ?? Infinity) - (b.reactorAndRadiatorTons ?? Infinity);
+        break;
+      case "totalResources":
+        compareValue = (a.totalResources ?? Infinity) - (b.totalResources ?? Infinity);
         break;
       case "thrustRating":
         compareValue = a.thrustRating - b.thrustRating;
@@ -191,6 +196,13 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
               title="Reactor + Radiator Mass (tons)"
             >
               Reactor+Rad <SortIcon column="reactorAndRadiatorTons" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleSort("totalResources")}
+              title="Resources Required (reactor + radiator)"
+            >
+              Resources <SortIcon column="totalResources" />
             </TableHead>
             <TableHead
               className="text-right cursor-pointer hover:bg-muted/50"
@@ -375,6 +387,57 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   }
                 >
                   {drive.reactorAndRadiatorTons !== undefined ? smartRound(drive.reactorAndRadiatorTons) : "-"}
+                </TableCell>
+                <TableCell className="text-xs">
+                  {drive.totalResources !== undefined ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">
+                            <ShowEffects
+                              water={drive.reactorMaterials?.water || undefined}
+                              volatiles={(drive.reactorMaterials?.volatiles || 0) + (drive.radiatorMaterials?.volatiles || 0) || undefined}
+                              metals={(drive.reactorMaterials?.metals || 0) + (drive.radiatorMaterials?.metals || 0) || undefined}
+                              nobles={(drive.reactorMaterials?.nobleMetals || 0) + (drive.radiatorMaterials?.nobleMetals || 0) || undefined}
+                              exotics={drive.radiatorMaterials?.exotics || undefined}
+                            />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="space-y-2">
+                            {drive.reactorMaterials && (
+                              <div>
+                                <div className="font-semibold mb-1">Reactor ({smartRound(drive.reactorResources!)} resources, {smartRound(drive.reactorTons!)} tons):</div>
+                                <div className="ml-2 text-xs">
+                                  <ShowEffects
+                                    water={drive.reactorMaterials.water || undefined}
+                                    volatiles={drive.reactorMaterials.volatiles || undefined}
+                                    metals={drive.reactorMaterials.metals || undefined}
+                                    nobles={drive.reactorMaterials.nobleMetals || undefined}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            {drive.radiatorMaterials && (
+                              <div>
+                                <div className="font-semibold mb-1">Radiator ({smartRound(drive.radiatorResources!)} resources, {smartRound(drive.radiatorTons!)} tons):</div>
+                                <div className="ml-2 text-xs">
+                                  <ShowEffects
+                                    volatiles={drive.radiatorMaterials.volatiles || undefined}
+                                    metals={drive.radiatorMaterials.metals || undefined}
+                                    nobles={drive.radiatorMaterials.nobleMetals || undefined}
+                                    exotics={drive.radiatorMaterials.exotics || undefined}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    "-"
+                  )}
                 </TableCell>
                 <TableCell className="text-right">{drive.thrustRating.toFixed(2)}</TableCell>
                 <TableCell className="text-right">{drive.exhaustRating.toFixed(2)}</TableCell>
