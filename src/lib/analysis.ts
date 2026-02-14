@@ -1221,18 +1221,20 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       let canUpgradeFactory = false;
 
       if (habFaction) {
-        // Get all factory modules at this hab
-        const factoryModules = moduleTemplates.filter(({ template }) =>
-          template.specialRules?.includes("CanFoundTier1Habs"),
-        );
+        // Get all constructed factory modules at this hab (not just active ones)
+        const factoryModules = nonEmpty
+          .map((m) => ({
+            module: m,
+            template: habModuleTemplates.get(m.templateName!),
+          }))
+          .filter(({ template }) => template?.specialRules?.includes("CanFoundTier1Habs"));
 
         // Count how many modules are currently under construction
         const modulesUnderConstruction = underConstruction.length;
 
         // Determine if it's safe to upgrade a factory
-        // Option A: At least one OTHER factory that is not currently being constructed/upgraded
-        const completeFactories = factoryModules.filter(({ active }) => active);
-        const safeToUpgradeWithOtherFactory = completeFactories.length >= 2;
+        // Option A: At least one OTHER constructed factory that is not currently being constructed/upgraded
+        const safeToUpgradeWithOtherFactory = factoryModules.length >= 2;
 
         // Option B: No other modules currently being constructed/upgraded
         const safeToUpgradeNoConstruction = modulesUnderConstruction === 0;
@@ -1242,11 +1244,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         if (safeToUpgrade) {
           // Get all factories that can be upgraded
           const upgradableFactories = factoryModules.filter(
-            ({ template }) => template.dataName && moduleUpgradeMap.has(template.dataName),
+            ({ template }) => template?.dataName && moduleUpgradeMap.has(template.dataName),
           );
 
           // Check if any factory has an unlocked upgrade with appropriate tier
           for (const { template } of upgradableFactories) {
+            if (!template) continue;
             const upgradeName = moduleUpgradeMap.get(template.dataName);
             if (upgradeName && habFaction.unlockedHabModules.has(upgradeName)) {
               const upgradeTemplate = habModuleTemplates.get(upgradeName);
@@ -1275,13 +1278,18 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             .map((t) => t.tier),
         );
 
-        // Find the best active factory at this hab
-        const bestActiveFactory = moduleTemplates
+        // Find the best constructed factory at this hab (not just active)
+        const bestConstructedFactory = nonEmpty
+          .map((m) => ({
+            module: m,
+            template: habModuleTemplates.get(m.templateName!),
+          }))
           .filter(
-            ({ active, template }) =>
-              active && template.specialRules?.includes("CanFoundTier1Habs") && template.tier === maxFactoryTier,
+            ({ template }) =>
+              template?.specialRules?.includes("CanFoundTier1Habs") && template.tier === maxFactoryTier,
           )
-          .map(({ template }) => template)[0];
+          .map(({ template }) => template)
+          .filter((t): t is NonNullable<typeof t> => t !== undefined)[0];
 
         // Get all mining modules that can be upgraded
         const miningModules = moduleTemplates.filter(
@@ -1298,14 +1306,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           if (upgradeName && habFaction.unlockedHabModules.has(upgradeName)) {
             const upgradeTemplate = habModuleTemplates.get(upgradeName);
             if (upgradeTemplate && upgradeTemplate.tier <= hab.tier) {
-              // For tier 3 upgrades, require max tier factory to be active
+              // For tier 3 upgrades, require max tier factory to be constructed
               if (upgradeTemplate.tier === 3) {
-                if (bestActiveFactory) {
+                if (bestConstructedFactory) {
                   canUpgradeMining = true;
                   miningUpgradeInfo = {
                     upgradeName: upgradeTemplate.friendlyName,
-                    factoryName: bestActiveFactory.friendlyName,
-                    factoryTier: bestActiveFactory.tier,
+                    factoryName: bestConstructedFactory.friendlyName,
+                    factoryTier: bestConstructedFactory.tier,
                   };
                   break;
                 }
@@ -1314,8 +1322,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
                 canUpgradeMining = true;
                 miningUpgradeInfo = {
                   upgradeName: upgradeTemplate.friendlyName,
-                  factoryName: bestActiveFactory?.friendlyName || "No factory",
-                  factoryTier: bestActiveFactory?.tier || 0,
+                  factoryName: bestConstructedFactory?.friendlyName || "No factory",
+                  factoryTier: bestConstructedFactory?.tier || 0,
                 };
                 break;
               }
@@ -1369,6 +1377,30 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const highestActiveFactoryCount = activeFactories.filter(
         ({ template }) => template.tier === highestActiveFactoryTier,
       ).length;
+
+      // Check for unnecessary factories (active factory with no construction)
+      const hasUnnecessaryFactory = activeFactories.length > 0 && underConstruction.length === 0;
+
+      // Calculate constructed factory information (for upgrades and other checks)
+      const constructedFactories = nonEmpty.filter((m) => {
+        const template = habModuleTemplates.get(m.templateName!);
+        return template?.specialRules?.includes("CanFoundTier1Habs");
+      });
+
+      const highestConstructedFactoryTier =
+        constructedFactories.length > 0
+          ? Math.max(
+              ...constructedFactories.map((m) => {
+                const template = habModuleTemplates.get(m.templateName!);
+                return template?.tier || 0;
+              }),
+            )
+          : 0;
+
+      const highestConstructedFactoryCount = constructedFactories.filter((m) => {
+        const template = habModuleTemplates.get(m.templateName!);
+        return template?.tier === highestConstructedFactoryTier;
+      }).length;
 
       // Check if hab is automated
       const isAutomated = moduleTemplates.some(({ template }) => template.automated === true);
@@ -1582,6 +1614,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         bestMineEffects,
         highestActiveFactoryTier,
         highestActiveFactoryCount,
+        highestConstructedFactoryTier,
+        highestConstructedFactoryCount,
+        hasUnnecessaryFactory,
         mineTier,
         isAutomated,
         operationsCenterTier,

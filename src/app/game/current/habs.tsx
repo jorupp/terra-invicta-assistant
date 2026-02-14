@@ -134,6 +134,11 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
       <TableCell>
         {emptyModuleCount > 0 && <>{emptyModuleCount} empty slots </>}
         {missingMine && <span className="bg-yellow-300 text-black p-1 rounded">Missing Mine </span>}
+        {hab.hasUnnecessaryFactory && (
+          <span title="Active factory with no construction - consider turning it off" className="p-1">
+            <Factory className="inline h-4 w-4 text-red-600" />
+          </span>
+        )}
         {hab.canUpgradePower && <HabPower title="Power module can be upgraded" />}
         {hab.canUpgradeCombat && <CombatScore title="Combat module can be upgraded" />}
         {hab.canUpgradeFarm && (
@@ -303,6 +308,7 @@ export function getHabsUi(analysis: Analysis) {
   const { playerHabs } = analysis;
 
   const missingMines = playerHabs.filter((h) => h.missingMine);
+  const unnecessaryFactoryHabs = playerHabs.filter((h) => h.hasUnnecessaryFactory);
   const upgradablePowerHabs = playerHabs.filter((h) => h.canUpgradePower);
   const upgradableCombatHabs = playerHabs.filter((h) => h.canUpgradeCombat);
   const upgradableFarmHabs = playerHabs.filter((h) => h.canUpgradeFarm);
@@ -319,6 +325,10 @@ export function getHabsUi(analysis: Analysis) {
   // can't use a tooltip for this because it's in the button that is the tab label, which would be nested buttons and cause hydration issues
   const missingMinesTitle =
     missingMines.length > 0 ? `Missing mines: ${missingMines.map((h) => h.displayName).join(", ")}` : "";
+  const unnecessaryFactoryTitle =
+    unnecessaryFactoryHabs.length > 0
+      ? `${unnecessaryFactoryHabs.length} hab${unnecessaryFactoryHabs.length > 1 ? "s have" : " has"} unnecessary active factories`
+      : "";
   const upgradablePowerTitle =
     upgradablePowerHabs.length > 0
       ? `${upgradablePowerHabs.length} hab${upgradablePowerHabs.length > 1 ? "s" : ""} can upgrade power modules`
@@ -356,6 +366,14 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span className="bg-yellow-300 text-black p-1 rounded" title={missingMinesTitle}>
               M
+            </span>
+          </>
+        )}
+        {unnecessaryFactoryHabs.length > 0 && (
+          <>
+            {" "}
+            <span title={unnecessaryFactoryTitle}>
+              <Factory className="inline h-4 w-4 text-red-600" />
             </span>
           </>
         )}
