@@ -8,9 +8,7 @@ export default async function StaticCurrentGamePage() {
   const saveGameDir = process.env.SAVE_GAME_DIR;
 
   if (!saveGameDir) {
-    return new Response("SAVE_GAME_DIR environment variable not set", {
-      status: 500,
-    });
+    return <div>SAVE_GAME_DIR environment variable not set</div>;
   }
 
   const files = await readdir(saveGameDir);
@@ -43,4 +41,5 @@ export default async function StaticCurrentGamePage() {
     const analysis = await analyzeData(data, lastModifiedFile, new Date(lastModifiedTime));
     return <RenderGameComponent analysis={analysis} />;
   }
+  return <div>No save files found</div>;
 }
