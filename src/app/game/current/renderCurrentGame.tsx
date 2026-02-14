@@ -7,7 +7,8 @@ import { Loader } from "lucide-react";
 import { Analysis } from "@/lib/analysis";
 import { RenderGameComponent } from "./component";
 
-export default function RenderCurrentGame() {
+// change renderKey to force re-loading the game state, useful for HMR during development when analysis.ts changes
+export default function RenderCurrentGame({ renderKey }: { renderKey?: any }) {
   const filename = useCurrent();
   // TODO: tanstackquery?
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -33,7 +34,7 @@ export default function RenderCurrentGame() {
         }
       }
     })();
-  }, [filename]);
+  }, [filename, renderKey]);
 
   if (!analysis) {
     return (

@@ -1,3 +1,4 @@
+import { analyzeData } from "@/lib/analysis";
 import RenderCurrentGame from "./renderCurrentGame";
 
 const currentGamePath = process.env.CURRENT_GAME!;
@@ -6,5 +7,11 @@ if (!currentGamePath) {
 }
 
 export default async function CurrentGamePage() {
-  return <RenderCurrentGame />;
+  // intentially-failing call to analysis so that HMR kicks in when the analysis code changes
+  try {
+    await (analyzeData as any)();
+  } catch {}
+  const rnd = Math.random();
+
+  return <RenderCurrentGame renderKey={rnd} />;
 }
