@@ -2428,9 +2428,12 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     // Note: Values like "3,840.096" need comma stripping before parsing
     const thrustRating_GW = parseFloat(drive.thrustRating_GW.replace(/,/g, ""));
     const reqPower_GW = parseFloat(drive["req power"].replace(/,/g, ""));
-    const powerRequiredGW = reqPower_GW / drive.efficiency;
+    // req power already accounts for drive efficiency, so use it directly
+    const powerRequiredGW = reqPower_GW;
 
     // Step 2 & 3: Find eligible reactors and select the appropriate one
+    let reactorDebugInfo: string | undefined = undefined;
+    
     let eligibleReactors = availablePowerPlants.filter((reactor) => {
       const powerPlantMatches =
         reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General";
@@ -2448,6 +2451,20 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         const powerSufficient = reactor.maxOutput_GW >= powerRequiredGW;
         return powerPlantMatches && powerSufficient;
       });
+    }
+    
+    // Generate debug info if no reactor found
+    if (eligibleReactors.length === 0) {
+      const matchingTypeReactors = allPowerPlants.filter((reactor) => 
+        reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General"
+      );
+      
+      if (matchingTypeReactors.length === 0) {
+        reactorDebugInfo = `No reactors of required type: ${drive.requiredPowerPlant}`;
+      } else {
+        const maxAvailablePower = Math.max(...matchingTypeReactors.map(r => r.maxOutput_GW));
+        reactorDebugInfo = `No reactors with sufficient power.\nRequired: ${powerRequiredGW.toFixed(1)} GW\nHighest available (${matchingTypeReactors.find(r => r.maxOutput_GW === maxAvailablePower)?.friendlyName}): ${maxAvailablePower.toFixed(1)} GW`;
+      }
     }
 
     const bestReactor =
@@ -2622,6 +2639,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       reactorMaterials,
       radiatorMaterials,
       reactorName,
+      reactorDebugInfo,
       reactorGW,
       reactorGWperTon,
       wasteHeatGW,
