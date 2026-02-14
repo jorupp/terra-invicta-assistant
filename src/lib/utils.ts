@@ -138,3 +138,12 @@ export function smartRound(value: number): string {
   // Only remove trailing zeros if there's a decimal point
   return formatted.includes(".") ? formatted.replace(/\.?0+$/, "") : formatted;
 }
+
+export function formatPercent(value: number): string {
+  // For values >= 100, show no decimals
+  if (value >= 100) {
+    return `${value.toFixed(0)}%`;
+  }
+  // For values < 100, show one decimal place
+  return `${value.toFixed(1)}%`;
+}

@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ShowEffects } from "@/components/showEffects";
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
-import { smartRound } from "@/lib/utils";
+import { smartRound, formatPercent } from "@/lib/utils";
 import { ResearchLink } from "./researchLink";
 import { useTechnologyGoals } from "./technologyGoals";
 import { Button } from "@/components/ui/button";
@@ -333,7 +333,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                 <TableCell className="text-right" title={`${drive.EV_kps.toFixed(1)} km/s`}>
                   {Math.round(drive.EV_kps)}
                 </TableCell>
-                <TableCell className="text-right">{(drive.efficiency * 100).toFixed(1)}%</TableCell>
+                <TableCell className="text-right">{formatPercent(drive.efficiency * 100)}</TableCell>
                 <TableCell title={drive.propellant}>{drive.cooling || "None"}</TableCell>
                 <TableCell className="text-xs">
                   <ShowEffects {...propellantEffects} />
@@ -346,10 +346,10 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                       ? [
                           `Thrust Rating: ${smartRound(drive.thrustRating_GW)} GW`,
                           `Required Power (accounts for efficiency): ${smartRound(drive.reqPower_GW)} GW`,
-                          `Drive Efficiency: ${(drive.efficiency * 100).toFixed(1)}%`,
+                          `Drive Efficiency: ${formatPercent(drive.efficiency * 100)}`,
                           drive.thrusters > 1 ? `Number of Thrusters: ${drive.thrusters}` : null,
-                          drive.reactorEfficiency !== undefined ? `\nReactor Efficiency: ${(drive.reactorEfficiency * 100).toFixed(1)}%` : null,
-                          drive.wasteHeatGW !== undefined ? `Waste Heat: ${smartRound(drive.powerRequiredGW)} GW × ${(100 - (drive.reactorEfficiency || 0) * 100).toFixed(1)}% = ${smartRound(drive.wasteHeatGW)} GW` : null,
+                          drive.reactorEfficiency !== undefined ? `\nReactor Efficiency: ${formatPercent(drive.reactorEfficiency * 100)}` : null,
+                          drive.wasteHeatGW !== undefined ? `Waste Heat: ${smartRound(drive.powerRequiredGW)} GW × ${formatPercent((1 - (drive.reactorEfficiency || 0)) * 100)} = ${smartRound(drive.wasteHeatGW)} GW` : null,
                         ].filter(Boolean).join('\n')
                       : undefined
                   }
