@@ -19,25 +19,9 @@ export function getFleetsUi(analysis: Analysis) {
   const label = [
     ...byTarget.entries().map(([target, rawFleets]) => {
       const fleets = rawFleets.filter((f) => f.deltaV > 0 && (f.daysToTarget || 0) > 0);
-      if (fleets.length === 0) {
-        return null;
-      }
-      // now that we know the arrival of the first one, find all arriving within 14 days to summarize MC
-      const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime || analysis.gameCurrentDateTime)[0];
-      const firstFleets = fleets.filter(
-        (f) =>
-          toDays(
-            diffDateTime(
-              f.arrivalTime || analysis.gameCurrentDateTime,
-              firstFleet.arrivalTime || analysis.gameCurrentDateTime
-            )
-          ) < 14
-      );
-      const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
-      const surv = firstFleets.filter((f) => f.operation === "AlienEarthSurveillanceOperation" && !f.arrivalTime);
+      const surv = rawFleets.filter((f) => f.operation === "AlienEarthSurveillanceOperation" && !f.arrivalTime);
       const survInfo = surv.length ? (
         <>
-          ,{" "}
           <span className="text-white bg-destructive rounded py-2 px-3 font-bold">
             {surv
               .map((f) => f.operationCompleteDays || 0)
@@ -46,9 +30,26 @@ export function getFleetsUi(analysis: Analysis) {
             d Surveillance
           </span>{" "}
         </>
-      ) : (
-        ""
+      ) : null;
+      if (fleets.length === 0) {
+        return (
+          <span>
+            {target}: {survInfo}
+          </span>
+        );
+      }
+      // now that we know the arrival of the first one, find all arriving within 14 days to summarize MC
+      const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime || analysis.gameCurrentDateTime)[0];
+      const firstFleets = fleets.filter(
+        (f) =>
+          toDays(
+            diffDateTime(
+              f.arrivalTime || analysis.gameCurrentDateTime,
+              firstFleet.arrivalTime || analysis.gameCurrentDateTime,
+            ),
+          ) < 14,
       );
+      const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
 
       // tier 2 hab (60d), fusion power, and defense module (90d) take a total of 150 days
       // tier 3 hab (90d), fusion power, and defense module (180d) take a total of 270 days.
@@ -63,14 +64,14 @@ export function getFleetsUi(analysis: Analysis) {
           (daysToTarget < warningNeeded + 50
             ? "bg-red-200"
             : daysToTarget < warningNeeded + 100
-            ? "bg-yellow-200"
-            : "bg-green-200")
+              ? "bg-yellow-200"
+              : "bg-green-200"),
       );
       return (
         <span
           className={className}
           title={`${fleets.length} fleet(s) targeting ${target}, arriving in ${daysToTarget.toFixed(
-            0
+            0,
           )} days, using ${firstMc.toFixed(0)} MC`}
         >
           {target}
@@ -83,7 +84,7 @@ export function getFleetsUi(analysis: Analysis) {
               {firstMc.toFixed(0)}
             </>
           )}
-          {survInfo}
+          {survInfo && <>,{survInfo}</>}
         </span>
       );
     }),
