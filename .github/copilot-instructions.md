@@ -14,6 +14,7 @@ npm run type-check  # Check TypeScript types without building - USE THIS to veri
 - Always assume `npm run dev` is running in the background on port 3002
 - Use `npm run type-check` to verify TypeScript types, NOT `npm run build`
 - No test suite is currently configured
+- Can load <http://localhost:3002/game/static-current> to view the current save file without needing SSE - useful for debugging save file parsing, analysis, and visualization.
 
 ## Architecture Overview
 

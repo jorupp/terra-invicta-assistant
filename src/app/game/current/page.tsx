@@ -1,4 +1,4 @@
-import CurrentGameComponent from "./component";
+import RenderCurrentGame from "./renderCurrentGame";
 
 const currentGamePath = process.env.CURRENT_GAME!;
 if (!currentGamePath) {
@@ -6,5 +6,5 @@ if (!currentGamePath) {
 }
 
 export default async function CurrentGamePage() {
-  return <CurrentGameComponent />;
+  return <RenderCurrentGame />;
 }
