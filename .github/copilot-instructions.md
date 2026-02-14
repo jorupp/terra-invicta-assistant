@@ -14,7 +14,7 @@ npm run type-check  # Check TypeScript types without building - USE THIS to veri
 - Always assume `npm run dev` is running in the background on port 3002
 - Use `npm run type-check` to verify TypeScript types, NOT `npm run build`
 - No test suite is currently configured
-- Can load <http://localhost:3002/game/static-current> to view the current save file without needing SSE - useful for debugging save file parsing, analysis, and visualization.
+- Can load <http://localhost:3002/game/static-current> to view the current save file without needing SSE - useful for debugging save file parsing, analysis, and visualization. This is especially helpful when changing `analysis.ts` - HMR will detect the change and reload the page since it's a direct reference. There is a hydration issue if you have any of the sorts changed via local storage, but that's not too big of a deal.
 
 ## Architecture Overview
 
