@@ -106,6 +106,33 @@ export function formatDateTime(dt: DateTime): string {
 export const noDate = "0001-01-01T00:00:00.0000000";
 
 export function smartRound(value: number): string {
+  // Handle very small numbers with SI prefixes (below 0.001)
+  if (value !== 0 && Math.abs(value) < 1e-3) {
+    const absValue = Math.abs(value);
+    const sign = value < 0 ? "-" : "";
+    
+    // SI prefixes for small numbers (descending order)
+    const prefixes = [
+      { threshold: 1e-6, symbol: "μ", divisor: 1e-6 },   // micro
+      { threshold: 1e-9, symbol: "n", divisor: 1e-9 },   // nano
+      { threshold: 1e-12, symbol: "p", divisor: 1e-12 }, // pico
+      { threshold: 1e-15, symbol: "f", divisor: 1e-15 }, // femto
+      { threshold: 1e-18, symbol: "a", divisor: 1e-18 }, // atto
+    ];
+    
+    for (const { threshold, symbol, divisor } of prefixes) {
+      if (absValue >= threshold) {
+        const scaled = absValue / divisor;
+        // Use 3 significant figures, but avoid trailing zeros after decimal
+        const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+        const formatted = scaled.toFixed(digits);
+        const trimmed = formatted.includes(".") ? formatted.replace(/\.?0+$/, "") : formatted;
+        return `${sign}${trimmed}${symbol}`;
+      }
+    }
+  }
+  
+  // Original logic for normal-sized numbers
   const digits = value === 0 || Math.round(value) === value ? 0 : Math.max(0, 3 - Math.log10(Math.abs(value)));
   const formatted = value.toFixed(digits);
   // Only remove trailing zeros if there's a decimal point
