@@ -297,6 +297,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         id: body.ID.value,
         displayName: body.displayName,
         templateName: body.templateName,
+        barycenterId: body.barycenter?.value,
         solarMirrorBonusByFactionId: new Map(body.solarMirrorBonus.map((i) => [i.Key.value, i.Value])),
       },
     ]),
@@ -369,6 +370,17 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const targetOrbit = targetOrbitId ? orbitsById.get(targetOrbitId) : null;
     const targetBody = targetOrbit ? bodiesById.get(targetOrbit.barycenterId) : null;
     const targetOrbitName = targetBody?.displayName || "Unknown";
+    
+    // For the planet name, use the parent body for moons, but stop at Sol
+    let planetBody = targetBody;
+    if (targetBody?.barycenterId) {
+      const parentBody = bodiesById.get(targetBody.barycenterId);
+      // Only use parent if it's not Sol (templateName check)
+      if (parentBody && parentBody.templateName !== "Sol") {
+        planetBody = parentBody;
+      }
+    }
+    const planetName = planetBody?.displayName || "Unknown";
 
     return {
       id: rawFleet.ID.value,
@@ -378,6 +390,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       originOrbitId: rawFleet.trajectory?.originOrbit?.value,
       targetOrbitId,
       targetOrbitName,
+      planetName,
       arrivalTime: rawFleet.trajectory?.arrivalTime,
       arrivalTimeFormatted: rawFleet.trajectory?.arrivalTime?.day
         ? formatDateTime(rawFleet.trajectory!.arrivalTime)

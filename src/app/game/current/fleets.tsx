@@ -9,7 +9,7 @@ import { twMerge } from "tailwind-merge";
 
 export function getFleetsUi(analysis: Analysis) {
   const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
-    const key = fleet.targetOrbitName || "Unknown Orbit";
+    const key = fleet.planetName || "Unknown Orbit";
     if (!acc.has(key)) {
       acc.set(key, []);
     }
@@ -131,6 +131,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
         <TableHeader>
           <TableRow>
             <TableHead>Fleet Name</TableHead>
+            <TableHead>Planet</TableHead>
             <TableHead>Target Orbit</TableHead>
             <TableHead>Arrival Date</TableHead>
             <TableHead className="text-right">Days to Arrival</TableHead>
@@ -148,6 +149,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
           {fleets.map((fleet) => (
             <TableRow key={fleet.id} className={twMerge(fleet.deltaV === 0 ? "bg-gray-500/5" : "")}>
               <TableCell className="font-medium">{fleet.displayName}</TableCell>
+              <TableCell>{fleet.planetName}</TableCell>
               <TableCell>{fleet.targetOrbitName}</TableCell>
               <TableCell>{fleet.arrivalTimeFormatted || "-"}</TableCell>
               <TableCell className="text-right">
