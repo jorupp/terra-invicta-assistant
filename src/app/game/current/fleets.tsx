@@ -159,14 +159,14 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
               <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
               {/* <TableCell className="text-right">{fleet.deltaV !== null ? fleet.deltaV.toFixed(0) : "—"}</TableCell> */}
-              <TableCell>
+              <TableCell className="whitespace-normal">
                 {fleet.shipsByHullType.length > 0
                   ? fleet.shipsByHullType
                       .map((ship) => `${ship.count} ${ship.hullName}${ship.count > 1 ? "s" : ""}`)
                       .join(" + ")
                   : "-"}
               </TableCell>
-              <TableCell>
+              <TableCell className="whitespace-normal">
                 {fleet.shipsByRole.length > 0
                   ? fleet.shipsByRole
                       .map((ship) => `${ship.count} ${ship.role}${ship.count > 1 ? "s" : ""}`)
