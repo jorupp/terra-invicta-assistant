@@ -32,11 +32,14 @@ export function getFleetsUi(analysis: Analysis) {
         </>
       ) : null;
       if (fleets.length === 0) {
-        return (
-          <span>
-            {target}: {survInfo}
-          </span>
-        );
+        if (survInfo) {
+          return (
+            <span>
+              {target}: {survInfo}
+            </span>
+          );
+        }
+        return null;
       }
       // now that we know the arrival of the first one, find all arriving within 14 days to summarize MC
       const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime || analysis.gameCurrentDateTime)[0];
