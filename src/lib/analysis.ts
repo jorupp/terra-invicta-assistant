@@ -979,6 +979,22 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const tier = hab.tier;
       const site = habSitesById.get(hab.habSite?.value || 0);
       const body = site ? bodiesById.get(site.parentBodyId) : null;
+      
+      // Determine planet name (parent body for moons, body itself for planets, but stop at Sol)
+      let planetName = body?.displayName || "Unknown";
+      if (body) {
+        let currentBody = body;
+        while (currentBody.barycenterId && currentBody.barycenterId !== 0) {
+          const parent = bodiesById.get(currentBody.barycenterId);
+          if (parent && parent.templateName !== "Sol") {
+            currentBody = parent;
+          } else {
+            break;
+          }
+        }
+        planetName = currentBody.displayName || "Unknown";
+      }
+      
       const solarMirrorBonus = body ? body.solarMirrorBonusByFactionId.get(hab.faction.value) || 0 : 0;
       const solarMultiplier = getSolarMultiplier(site?.id || hab.orbitState?.value);
       const mineMultipler = getMineMultipler(site?.parentBodyId);
@@ -1636,6 +1652,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         needsOperationsCenterUpgrade,
         adminTowerTier,
         needsAdminTowerUpgrade,
+        planetName,
       };
     })
     .toSorted((a, b) =>

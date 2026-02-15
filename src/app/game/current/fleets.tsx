@@ -2,6 +2,7 @@ import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
 import { MissionControl } from "@/components/icons";
@@ -185,6 +186,99 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
           ))}
         </TableBody>
       </Table>
+
+      {/* Planetary Defense Summary */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Planetary Defense Summary</h2>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Planet</TableHead>
+              <TableHead className="text-right">Days to Arrival</TableHead>
+              <TableHead className="text-right">Fleet MC</TableHead>
+              <TableHead>Habs (Active / Potential Combat)</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {(() => {
+              // Get all planets with fleets
+              const planetsWithFleets = new Set(
+                analysis.alienFleetsToPlayerOrbits.map((f) => f.planetName || "Unknown")
+              );
+
+              // Build defense data for each planet
+              const defenseData = Array.from(planetsWithFleets)
+                .map((planet) => {
+                  // Sum MC of all fleets at or coming to this planet
+                  const fleetsAtPlanet = analysis.alienFleetsToPlayerOrbits.filter(
+                    (f) => f.planetName === planet
+                  );
+                  const totalMC = fleetsAtPlanet.reduce((sum, f) => sum + (f.totalMC || 0), 0);
+
+                  // Get days until first fleet arrives (filter out fleets already there or with no arrival time)
+                  const incomingFleets = fleetsAtPlanet.filter((f) => f.daysToTarget !== null && f.daysToTarget > 0);
+                  const daysToArrival = incomingFleets.length > 0
+                    ? Math.min(...incomingFleets.map((f) => f.daysToTarget!))
+                    : null;
+
+                  // Get all player habs at this planet
+                  const habsAtPlanet = analysis.playerHabs.filter(
+                    (h) => h.planetName === planet
+                  );
+
+                  return {
+                    planet,
+                    totalMC,
+                    daysToArrival,
+                    habs: habsAtPlanet,
+                  };
+                })
+                .filter((d) => d.habs.length > 0) // Only show planets with habs
+                .toSorted((a, b) => {
+                  // Sort by days to arrival (soonest first), null values last
+                  if (a.daysToArrival === null && b.daysToArrival === null) return 0;
+                  if (a.daysToArrival === null) return 1;
+                  if (b.daysToArrival === null) return -1;
+                  return a.daysToArrival - b.daysToArrival;
+                });
+
+              return defenseData.map(({ planet, totalMC, daysToArrival, habs }) => (
+                <TableRow key={planet}>
+                  <TableCell className="font-medium">{planet}</TableCell>
+                  <TableCell className="text-right">
+                    {daysToArrival !== null ? daysToArrival.toFixed(0) : "—"}
+                  </TableCell>
+                  <TableCell className="text-right">{totalMC.toFixed(0)}</TableCell>
+                  <TableCell>
+                    <TooltipProvider>
+                      <div className="flex gap-2 flex-wrap">
+                        {habs.map((hab) => {
+                          const activeCombat = hab.activeEffects.combatScore || 0;
+                          const potentialCombat = hab.potentialEffects.combatScore || 0;
+                          const combatDisplay =
+                            activeCombat === potentialCombat
+                              ? activeCombat.toFixed(0)
+                              : `${activeCombat.toFixed(0)} / ${potentialCombat.toFixed(0)}`;
+                          return (
+                            <Tooltip key={hab.id}>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help">{combatDisplay}</span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div>{hab.displayName}</div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
+                    </TooltipProvider>
+                  </TableCell>
+                </TableRow>
+              ));
+            })()}
+          </TableBody>
+        </Table>
+      </div>
 
       <Collapsible>
         <CollapsibleTrigger asChild>
