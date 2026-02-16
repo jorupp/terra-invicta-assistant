@@ -106,6 +106,18 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     }
   }
 
+  // Load control points early so we can use them in faction processing
+  const controlPoints = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIControlPoint"].map(({ Value: cp }) => ({
+    id: cp.ID.value,
+    factionId: cp.faction?.value,
+    nationId: cp.nation?.value,
+    displayName: cp.displayName,
+    benefitsDisabled: cp.benefitsDisabled,
+    crackdownExpiration: cp.crackdownExpiration,
+    defended: cp.defended,
+    controlPointPriorities: cp.controlPointPriorities,
+  }));
+
   const factions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].map(({ Value: faction }) => {
     const mcMultiplier =
       (difficulty === "Cinematic"
@@ -161,6 +173,42 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         researchCost,
         dataName,
       }));
+    
+    // Get nations where this faction has at least one control point by checking controlPoints directly
+    const factionControlledNationTemplateNames = new Set(
+      saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"]
+        .filter((nationEntry) => {
+          const nationId = nationEntry.Value.ID.value;
+          // Check if this faction has any control points in this nation
+          return controlPoints.some((cp) => cp.nationId === nationId && cp.factionId === faction.ID.value);
+        })
+        .map((nationEntry) => nationEntry.Value.templateName)
+    );
+    
+    const availableExpandNationProjects = availableProjects
+      .filter((project) => {
+        // Must have AI_projectRole of "ExpandNation"
+        if (project.AI_projectRole !== "ExpandNation") return false;
+        
+        // Must have requiresNation field
+        if (!project.requiresNation) return false;
+        
+        // Faction must have at least one CP in the required nation
+        return factionControlledNationTemplateNames.has(project.requiresNation);
+      })
+      .map(({ friendlyName, techCategory, researchCost, dataName, requiresNation }) => {
+        // Find current progress for this project
+        const progress = faction.currentProjectProgress.find((p) => p.projectTemplateName === dataName);
+        
+        return {
+          friendlyName,
+          techCategory,
+          researchCost,
+          dataName,
+          requiresNation: requiresNation!,
+          currentProgress: progress?.accumulatedResearch || 0,
+        };
+      });
 
     return {
       id: faction.ID.value,
@@ -235,6 +283,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       availableBoostProjects,
       availableCPProjects,
       availableMaxOrgProjects,
+      availableExpandNationProjects,
       availableProjectNames: faction.availableProjectNames,
       missedProjects: faction.missedProjects || [],
       potentialProjects: (faction.activeProjectTriggers || []).map((i) => i.projectTemplateName),
@@ -518,16 +567,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     return acc;
   }, new Map<number, typeof regions>());
 
-  const controlPoints = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIControlPoint"].map(({ Value: cp }) => ({
-    id: cp.ID.value,
-    factionId: cp.faction?.value,
-    nationId: cp.nation?.value,
-    displayName: cp.displayName,
-    benefitsDisabled: cp.benefitsDisabled,
-    crackdownExpiration: cp.crackdownExpiration,
-    defended: cp.defended,
-    controlPointPriorities: cp.controlPointPriorities,
-  }));
   const controlPointsByNationId = controlPoints.reduce((acc, cp) => {
     if (!cp.nationId) return acc;
     if (!acc.has(cp.nationId)) {

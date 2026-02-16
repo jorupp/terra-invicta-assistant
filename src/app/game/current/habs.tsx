@@ -440,7 +440,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
 
   const {
     playerHabs,
-    playerFaction: { availableBoostProjects, availableCPProjects, availableMaxOrgProjects },
+    playerFaction: { availableBoostProjects, availableCPProjects, availableMaxOrgProjects, availableExpandNationProjects },
     playerStealableProjects,
   } = analysis;
   const time = formatDateTime(analysis.gameCurrentDateTime);
@@ -747,6 +747,33 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                       <li key={ix}>
                         <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
                         {project.researchCost})
+                      </li>
+                    );
+                  })}
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+        {availableExpandNationProjects.length > 0 && (
+          <AccordionItem value="available-expand-nation-projects">
+            <AccordionTrigger>
+              <span>Available Expand Nations</span>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul>
+                {availableExpandNationProjects
+                  .toSorted((a, b) => {
+                    // Sort by progress (most complete first)
+                    const aRemaining = a.researchCost - a.currentProgress;
+                    const bRemaining = b.researchCost - b.currentProgress;
+                    return aRemaining - bRemaining;
+                  })
+                  .map((project, ix) => {
+                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                    return (
+                      <li key={ix}>
+                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                        {project.currentProgress.toFixed(0)}/{project.researchCost}, {project.requiresNation})
                       </li>
                     );
                   })}

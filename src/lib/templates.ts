@@ -990,6 +990,7 @@ export interface Project {
   dataName: string;
   techCategory: TechCategory;
   AI_techRole: string;
+  AI_projectRole?: string;
   researchCost: number;
   oneTimeGlobally: boolean;
   repeatable: boolean;
@@ -1005,6 +1006,7 @@ export interface Project {
   effects?: string[];
   prereqs?: string[];
   requiredMilestone?: string;
+  requiresNation?: string;
 }
 
 export interface Radiator {
