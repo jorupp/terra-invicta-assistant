@@ -173,7 +173,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         researchCost,
         dataName,
       }));
-    
+
     // Get nations where this faction has at least one control point by checking controlPoints directly
     const factionControlledNationTemplateNames = new Set(
       saveFile.gamestates["PavonisInteractive.TerraInvicta.TINationState"]
@@ -182,24 +182,24 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           // Check if this faction has any control points in this nation
           return controlPoints.some((cp) => cp.nationId === nationId && cp.factionId === faction.ID.value);
         })
-        .map((nationEntry) => nationEntry.Value.templateName)
+        .map((nationEntry) => nationEntry.Value.templateName),
     );
-    
+
     const availableExpandNationProjects = availableProjects
       .filter((project) => {
         // Must have AI_projectRole of "ExpandNation"
         if (project.AI_projectRole !== "ExpandNation") return false;
-        
+
         // Must have requiresNation field
         if (!project.requiresNation) return false;
-        
+
         // Faction must have at least one CP in the required nation
         return factionControlledNationTemplateNames.has(project.requiresNation);
       })
       .map(({ friendlyName, techCategory, researchCost, dataName, requiresNation }) => {
         // Find current progress for this project
         const progress = faction.currentProjectProgress.find((p) => p.projectTemplateName === dataName);
-        
+
         return {
           friendlyName,
           techCategory,
@@ -257,19 +257,19 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           .filter((t) => toDays(diffDateTime(lastMonth, t.date)) < 0)
           .reduce((acc, t) => {
             const key = `${t.source}||${t.resource}`;
-            const existing = acc.get(key) || { 
-              source: t.source, 
-              resource: t.resource, 
+            const existing = acc.get(key) || {
+              source: t.source,
+              resource: t.resource,
               amount: 0,
               transactions: [] as { date: string; amount: number }[],
             };
             existing.amount += t.amount;
-            
+
             // Track individual transactions for Exotics and Antimatter
             if ((t.resource === "Exotics" || t.resource === "Antimatter") && t.amount > 0) {
               existing.transactions.push({ date: formatDateTime(t.date), amount: t.amount });
             }
-            
+
             acc.set(key, existing);
             return acc;
           }, new Map<string, { source: string; resource: string; amount: number; transactions: { date: string; amount: number }[] }>())
@@ -430,7 +430,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const targetOrbit = targetOrbitId ? orbitsById.get(targetOrbitId) : null;
     const targetBody = targetOrbit ? bodiesById.get(targetOrbit.barycenterId) : null;
     const targetOrbitName = targetBody?.displayName || "Unknown";
-    
+
     // For the planet name, use the parent body for moons, but stop at Sol
     let planetBody = targetBody;
     if (targetBody?.barycenterId) {
@@ -1029,7 +1029,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const tier = hab.tier;
       const site = habSitesById.get(hab.habSite?.value || 0);
       const body = site ? bodiesById.get(site.parentBodyId) : null;
-      
+
       // Determine planet name (parent body for moons, body itself for planets, but stop at Sol)
       let planetName = body?.displayName || "Unknown";
       if (body) {
@@ -1044,7 +1044,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
         planetName = currentBody.displayName || "Unknown";
       }
-      
+
       const solarMirrorBonus = body ? body.solarMirrorBonusByFactionId.get(hab.faction.value) || 0 : 0;
       const solarMultiplier = getSolarMultiplier(site?.id || hab.orbitState?.value);
       const mineMultipler = getMineMultipler(site?.parentBodyId);
@@ -1364,8 +1364,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
             template: habModuleTemplates.get(m.templateName!),
           }))
           .filter(
-            ({ template }) =>
-              template?.specialRules?.includes("CanFoundTier1Habs") && template.tier === maxFactoryTier,
+            ({ template }) => template?.specialRules?.includes("CanFoundTier1Habs") && template.tier === maxFactoryTier,
           )
           .map(({ template }) => template)
           .filter((t): t is NonNullable<typeof t> => t !== undefined)[0];
@@ -2513,7 +2512,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
 
     // Step 2 & 3: Find eligible reactors and select the appropriate one
     let reactorDebugInfo: string | undefined = undefined;
-    
+
     let eligibleReactors = availablePowerPlants.filter((reactor) => {
       const powerPlantMatches =
         reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General";
@@ -2532,18 +2531,18 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         return powerPlantMatches && powerSufficient;
       });
     }
-    
+
     // Generate debug info if no reactor found
     if (eligibleReactors.length === 0) {
-      const matchingTypeReactors = allPowerPlants.filter((reactor) => 
-        reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General"
+      const matchingTypeReactors = allPowerPlants.filter(
+        (reactor) => reactor.powerPlantClass === drive.requiredPowerPlant || drive.requiredPowerPlant === "Any_General",
       );
-      
+
       if (matchingTypeReactors.length === 0) {
         reactorDebugInfo = `No reactors of required type: ${drive.requiredPowerPlant}`;
       } else {
-        const maxAvailablePower = Math.max(...matchingTypeReactors.map(r => r.maxOutput_GW));
-        reactorDebugInfo = `No reactors with sufficient power.\nRequired: ${powerRequiredGW.toFixed(1)} GW\nHighest available (${matchingTypeReactors.find(r => r.maxOutput_GW === maxAvailablePower)?.friendlyName}): ${maxAvailablePower.toFixed(1)} GW`;
+        const maxAvailablePower = Math.max(...matchingTypeReactors.map((r) => r.maxOutput_GW));
+        reactorDebugInfo = `No reactors with sufficient power.\nRequired: ${powerRequiredGW.toFixed(1)} GW\nHighest available (${matchingTypeReactors.find((r) => r.maxOutput_GW === maxAvailablePower)?.friendlyName}): ${maxAvailablePower.toFixed(1)} GW`;
       }
     }
 
@@ -2577,7 +2576,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       reactorName = bestReactor.friendlyName;
       reactorGW = powerRequiredGW;
       reactorGWperTon = bestReactor.specificPower_tGW;
-      
+
       // Reactor weight = power required / specific power (tons per GW)
       reactorTons = powerRequiredGW / bestReactor.specificPower_tGW;
 
@@ -2585,7 +2584,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
         radiatorName = bestRadiator.friendlyName;
         radiatorGWperTon = bestRadiator.gwPerTon;
-        
+
         // Step 4: Calculate waste heat using reactor efficiency
         wasteHeatGW = powerRequiredGW * (1 - bestReactor.efficiency);
         radiatorTons = wasteHeatGW / bestRadiator.gwPerTon;
@@ -2600,24 +2599,26 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     const totalResources = reactorAndRadiatorTons !== undefined ? reactorAndRadiatorTons / 10 : undefined;
 
     // Calculate material breakdown for reactor
-    const reactorMaterials = bestReactor && reactorResources !== undefined
-      ? {
-          water: bestReactor.weightedBuildMaterials.water * reactorResources,
-          volatiles: bestReactor.weightedBuildMaterials.volatiles * reactorResources,
-          metals: bestReactor.weightedBuildMaterials.metals * reactorResources,
-          nobleMetals: bestReactor.weightedBuildMaterials.nobleMetals * reactorResources,
-        }
-      : undefined;
+    const reactorMaterials =
+      bestReactor && reactorResources !== undefined
+        ? {
+            water: bestReactor.weightedBuildMaterials.water * reactorResources,
+            volatiles: bestReactor.weightedBuildMaterials.volatiles * reactorResources,
+            metals: bestReactor.weightedBuildMaterials.metals * reactorResources,
+            nobleMetals: bestReactor.weightedBuildMaterials.nobleMetals * reactorResources,
+          }
+        : undefined;
 
     // Calculate material breakdown for radiator
-    const radiatorMaterials = bestRadiator && radiatorResources !== undefined
-      ? {
-          volatiles: bestRadiator.weightedBuildMaterials.volatiles * radiatorResources,
-          metals: bestRadiator.weightedBuildMaterials.metals * radiatorResources,
-          nobleMetals: bestRadiator.weightedBuildMaterials.nobleMetals * radiatorResources,
-          exotics: bestRadiator.weightedBuildMaterials.exotics * radiatorResources,
-        }
-      : undefined;
+    const radiatorMaterials =
+      bestRadiator && radiatorResources !== undefined
+        ? {
+            volatiles: bestRadiator.weightedBuildMaterials.volatiles * radiatorResources,
+            metals: bestRadiator.weightedBuildMaterials.metals * radiatorResources,
+            nobleMetals: bestRadiator.weightedBuildMaterials.nobleMetals * radiatorResources,
+            exotics: bestRadiator.weightedBuildMaterials.exotics * radiatorResources,
+          }
+        : undefined;
 
     // Calculate hypothetical ship performance
     // Ship: 10,000 tons dry + reactor/radiator + 5,000 tons fuel (50 tanks)
@@ -2812,6 +2813,11 @@ function getSolarMultiplier(id: number | undefined): number | undefined {
     case 4895:
     case 4882:
     case 4879:
+    case 4874:
+    case 4876:
+    case 4837:
+    case 4836:
+    case 4839:
       return 0.162; // all the mars surface ones
     case 4830:
       return 6.04; // Low Mercury
