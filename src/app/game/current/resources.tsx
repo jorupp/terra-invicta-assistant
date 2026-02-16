@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Analysis } from "@/lib/analysis";
 import { diffDateTime, smartRound, sortByDateTime, toDays } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
@@ -89,12 +90,17 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
 
   const bySourceByResource = monthlyTransactionSummary.reduce((acc, curr) => {
     if (!acc.has(curr.source)) {
-      acc.set(curr.source, new Map<string, number>());
+      acc.set(curr.source, new Map<string, { amount: number; transactions: { date: string; amount: number }[] }>());
     }
     const resourceMap = acc.get(curr.source)!;
-    resourceMap.set(curr.resource, (resourceMap.get(curr.resource) || 0) + curr.amount);
+    const existing = resourceMap.get(curr.resource) || { amount: 0, transactions: [] };
+    existing.amount += curr.amount;
+    if (curr.transactions && curr.transactions.length > 0) {
+      existing.transactions.push(...curr.transactions);
+    }
+    resourceMap.set(curr.resource, existing);
     return acc;
-  }, new Map<string, Map<string, number>>());
+  }, new Map<string, Map<string, { amount: number; transactions: { date: string; amount: number }[] }>>());
 
   const byResource = monthlyTransactionSummary.reduce((acc, curr) => {
     if (!acc.has(curr.resource)) {
@@ -115,6 +121,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
     "Metals",
     "NobleMetals",
     "Fissiles",
+    "Antimatter",
     "Exotics",
     ...byResource.keys(),
   ]);
@@ -150,11 +157,36 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                 {[...bySourceByResource.entries()].map(([source, resourceMap]) => (
                   <TableRow key={source}>
                     <TableCell>{source}</TableCell>
-                    {resources.map((resource) => (
-                      <TableCell key={resource}>
-                        {resourceMap.has(resource) ? smartRound(resourceMap.get(resource)!) : null}
-                      </TableCell>
-                    ))}
+                    {resources.map((resource) => {
+                      const data = resourceMap.get(resource);
+                      if (!data) return <TableCell key={resource}></TableCell>;
+                      
+                      const hasTooltip = (resource === "Exotics" || resource === "Antimatter") && data.transactions.length > 0;
+                      const content = smartRound(data.amount);
+                      
+                      return (
+                        <TableCell key={resource}>
+                          {hasTooltip ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="cursor-help">{content}</span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div className="space-y-1">
+                                    {data.transactions.map((txn, i) => (
+                                      <div key={i}>{txn.date}: {smartRound(txn.amount)}</div>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            content
+                          )}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 ))}
               </TableBody>

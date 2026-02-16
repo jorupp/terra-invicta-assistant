@@ -209,11 +209,22 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           .filter((t) => toDays(diffDateTime(lastMonth, t.date)) < 0)
           .reduce((acc, t) => {
             const key = `${t.source}||${t.resource}`;
-            const resourceMap = acc.get(key) || { source: t.source, resource: t.resource, amount: 0 };
-            resourceMap.amount += t.amount;
-            acc.set(key, resourceMap);
+            const existing = acc.get(key) || { 
+              source: t.source, 
+              resource: t.resource, 
+              amount: 0,
+              transactions: [] as { date: string; amount: number }[],
+            };
+            existing.amount += t.amount;
+            
+            // Track individual transactions for Exotics and Antimatter
+            if ((t.resource === "Exotics" || t.resource === "Antimatter") && t.amount > 0) {
+              existing.transactions.push({ date: formatDateTime(t.date), amount: t.amount });
+            }
+            
+            acc.set(key, existing);
             return acc;
-          }, new Map<string, { source: string; resource: string; amount: number }>())
+          }, new Map<string, { source: string; resource: string; amount: number; transactions: { date: string; amount: number }[] }>())
           .values(),
       ],
       permaAbandonedNationIds: faction.permaAbandonedNations.map((i) => i.value),
