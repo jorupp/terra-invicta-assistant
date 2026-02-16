@@ -195,7 +195,8 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
             <TableRow>
               <TableHead>Planet</TableHead>
               <TableHead className="text-right">Days to Arrival</TableHead>
-              <TableHead className="text-right">Fleet MC</TableHead>
+              <TableHead className="text-right">Alien Fleet MC</TableHead>
+              <TableHead className="text-right">Player Fleet MC</TableHead>
               <TableHead>Habs (Active / Potential Combat)</TableHead>
             </TableRow>
           </TableHeader>
@@ -209,17 +210,38 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               // Build defense data for each planet
               const defenseData = Array.from(planetsWithFleets)
                 .map((planet) => {
-                  // Sum MC of all fleets at or coming to this planet
+                  // Sum MC of all alien fleets at or coming to this planet
                   const fleetsAtPlanet = analysis.alienFleetsToPlayerOrbits.filter(
                     (f) => f.planetName === planet
                   );
-                  const totalMC = fleetsAtPlanet.reduce((sum, f) => sum + (f.totalMC || 0), 0);
+                  const totalAlienMC = fleetsAtPlanet.reduce((sum, f) => sum + (f.totalMC || 0), 0);
 
-                  // Get days until first fleet arrives (filter out fleets already there or with no arrival time)
+                  // Get days until first alien fleet arrives (filter out fleets already there or with no arrival time)
                   const incomingFleets = fleetsAtPlanet.filter((f) => f.daysToTarget !== null && f.daysToTarget > 0);
                   const daysToArrival = incomingFleets.length > 0
                     ? Math.min(...incomingFleets.map((f) => f.daysToTarget!))
                     : null;
+
+                  // Get player fleets at or coming to this planet
+                  const playerFleetsAtPlanet = analysis.playerFleets.filter(
+                    (f) => f.planetName === planet
+                  );
+                  
+                  // Filter player fleets that are:
+                  // 1. Already at the planet (no arrival time or daysToTarget <= 0)
+                  // 2. Will arrive before the first alien fleet
+                  const relevantPlayerFleets = playerFleetsAtPlanet.filter((f) => {
+                    // If fleet is already there or has no target (stationed)
+                    if (f.daysToTarget === null || f.daysToTarget <= 0) return true;
+                    
+                    // If there's no incoming alien fleet, don't count player fleets in transit
+                    if (daysToArrival === null) return false;
+                    
+                    // Fleet will arrive before first alien fleet
+                    return f.daysToTarget < daysToArrival;
+                  });
+                  
+                  const totalPlayerMC = relevantPlayerFleets.reduce((sum, f) => sum + (f.totalMC || 0), 0);
 
                   // Get all player habs at this planet
                   const habsAtPlanet = analysis.playerHabs.filter(
@@ -228,7 +250,8 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
 
                   return {
                     planet,
-                    totalMC,
+                    totalAlienMC,
+                    totalPlayerMC,
                     daysToArrival,
                     habs: habsAtPlanet,
                   };
@@ -242,34 +265,47 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                   return a.daysToArrival - b.daysToArrival;
                 });
 
-              return defenseData.map(({ planet, totalMC, daysToArrival, habs }) => (
+              return defenseData.map(({ planet, totalAlienMC, totalPlayerMC, daysToArrival, habs }) => (
                 <TableRow key={planet}>
                   <TableCell className="font-medium">{planet}</TableCell>
                   <TableCell className="text-right">
                     {daysToArrival !== null ? daysToArrival.toFixed(0) : "—"}
                   </TableCell>
-                  <TableCell className="text-right">{totalMC.toFixed(0)}</TableCell>
+                  <TableCell className="text-right">{totalAlienMC.toFixed(0)}</TableCell>
+                  <TableCell className="text-right">{totalPlayerMC.toFixed(0)}</TableCell>
                   <TableCell>
                     <TooltipProvider>
                       <div className="flex gap-2 flex-wrap">
-                        {habs.map((hab) => {
-                          const activeCombat = hab.activeEffects.combatScore || 0;
-                          const potentialCombat = hab.potentialEffects.combatScore || 0;
-                          const combatDisplay =
-                            activeCombat === potentialCombat
-                              ? activeCombat.toFixed(0)
-                              : `${activeCombat.toFixed(0)} / ${potentialCombat.toFixed(0)}`;
-                          return (
-                            <Tooltip key={hab.id}>
-                              <TooltipTrigger asChild>
-                                <span className="cursor-help">{combatDisplay}</span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <div>{hab.displayName}</div>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        })}
+                        {habs
+                          .toSorted((a, b) => {
+                            // Stations first (Station type), then Bases
+                            if (a.habType === "Station" && b.habType !== "Station") return -1;
+                            if (a.habType !== "Station" && b.habType === "Station") return 1;
+                            return 0;
+                          })
+                          .map((hab) => {
+                            const activeCombat = hab.activeEffects.combatScore || 0;
+                            const potentialCombat = hab.potentialEffects.combatScore || 0;
+                            const combatDisplay =
+                              activeCombat === potentialCombat
+                                ? activeCombat.toFixed(0)
+                                : `${activeCombat.toFixed(0)} / ${potentialCombat.toFixed(0)}`;
+                            
+                            const bgColor = hab.habType === "Station" ? "bg-yellow-100" : "bg-green-100";
+                            
+                            return (
+                              <Tooltip key={hab.id}>
+                                <TooltipTrigger asChild>
+                                  <span className={`cursor-help ${bgColor} px-1.5 py-0.5 rounded`}>
+                                    {combatDisplay}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div>{hab.displayName}</div>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })}
                       </div>
                     </TooltipProvider>
                   </TableCell>
