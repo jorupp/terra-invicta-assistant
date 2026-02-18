@@ -35,5 +35,19 @@ export async function analyzeResearch(saveFile: SaveFile) {
     return map;
   }, Promise.resolve(new Map<string, Awaited<ReturnType<typeof templates.techs>>[0] & { displayName?: string; summary?: string; description?: string; quote?: string }>()));
 
-  return { projects, techs };
+  const globalTechState = (() => {
+    const globalTechState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIGlobalResearchState"][0].Value;
+    return {
+      ...globalTechState,
+      techProgress: globalTechState.techProgress.map((tp) => ({
+        ...tp,
+        factionContributions: tp.factionContributions.reduce((acc, curr) => {
+          acc.set(curr.Key.value, curr.Value);
+          return acc;
+        }, new Map<number, number>()),
+      })),
+    };
+  })();
+
+  return { projects, techs, globalTechState };
 }
