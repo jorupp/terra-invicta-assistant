@@ -20,6 +20,13 @@ import { analyzeFleets, loadShipData, loadSpaceData } from "./analysis/fleets";
 import { analyzeRegions, analyzeNations, aggregateFactionNationHistory } from "./analysis/nations";
 import { calculatePlayerStealableOrgs, calculatePlayerStealableProjects } from "./analysis/resources";
 import { expandAlienGoals } from "./analysis/alien-goals";
+import {
+  calculatePlayerPlanetsAndBodies,
+  calculateAlienFleetsToPlayerOrbits,
+  calculatePlayerNationIds,
+  calculatePlayerMissionCounts,
+  calculateFactionAdminById,
+} from "./analysis/player-context";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const {
@@ -1164,8 +1171,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     );
 
   const expandedAlienGoals = expandAlienGoals(saveFile, alienFaction, nationsById, habs, fleets, factionsById);
-  // Sort by importance descending
-  expandedAlienGoals.sort((a, b) => b.importance - a.importance);
 
   const playerHabs = habs.filter((hab) => hab.faction === playerFaction.id);
   const playerFleets = fleets.filter((fleet) => fleet.faction === playerFaction.id);
