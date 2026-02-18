@@ -1,5 +1,6 @@
 import { SaveFile } from "../savefile";
 import { sortByDateTime, diffDateTime, toDays, formatDateTime } from "../utils";
+import { aggregateFactionNationHistory } from "./nations";
 
 export function processFactions(
   saveFile: SaveFile,
@@ -232,3 +233,89 @@ export function processFactions(
 
   return { factions, factionsById, shipDesignsByDataName };
 }
+
+export function finalizeFactions(
+  saveFile: SaveFile,
+  factions: any[],
+  controlPointsByNationId: Map<number, any[]>,
+  councilors: any[],
+) {
+  // Aggregate faction nation history
+  aggregateFactionNationHistory(saveFile, factions, controlPointsByNationId);
+
+  // Calculate mining bonuses for each faction
+  calculateMiningMultipliers(saveFile, factions, councilors);
+}
+
+function calculateMiningMultipliers(saveFile: SaveFile, factions: any[], councilors: any[]) {
+  const effectsState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIEffectsState"][0]?.Value;
+
+  factions.forEach((faction) => {
+    // Start with base 1% multiplier for each resource
+    let waterMultiplier = 1;
+    let volatilesMultiplier = 1;
+    let metalsMultiplier = 1;
+    let noblesMultiplier = 1;
+    let fissilesMultiplier = 1;
+
+    // 1. Add councilor mining bonuses (applies to all resources)
+    const factionCouncilors = councilors.filter((c: any) => c.factionId === faction.id);
+    let spaceMiningMultiplier =
+      factionCouncilors.reduce((sum: number, c: any) => sum + (c.effectsWithOrgsAndAugments.miningBonus || 0), 0) + 1;
+
+    // 2. Add faction effects from TIEffectsState
+    if (effectsState?.factionEffectsNames) {
+      const factionEffects = effectsState.factionEffectsNames.find((kv: any) => kv.Key.value === faction.id)?.Value;
+
+      if (factionEffects) {
+        // SpaceMiningBonus is additive with councilor bonuses and can appear multiple times, so we need to loop through all of them
+        const spaceMiningEffects = factionEffects.SpaceMiningBonus || [];
+        spaceMiningEffects.forEach((effect: string) => {
+          // Extract percentage from effect name like "Effect_SpaceMiningBonus5" = 5%
+          const match = effect.match(/Effect_SpaceMiningBonus(\d+)/);
+          if (match) {
+            spaceMiningMultiplier += parseInt(match[1], 10) / 100;
+          }
+        });
+
+        // Resource-specific bonuses (15% each), can appear multiple times, and are multiplicative, not additive
+        waterMultiplier *= Math.pow(
+          1.15,
+          factionEffects.MiningWaterBonus?.filter((e: string) => e === "Effect_MiningWaterBonus").length || 0,
+        );
+        volatilesMultiplier *= Math.pow(
+          1.15,
+          factionEffects.MiningVolatilesBonus?.filter((e: string) => e === "Effect_MiningVolatilesBonus").length || 0,
+        );
+        metalsMultiplier *= Math.pow(
+          1.15,
+          factionEffects.MiningMetalsBonus?.filter((e: string) => e === "Effect_MiningMetalsBonus").length || 0,
+        );
+        noblesMultiplier *= Math.pow(
+          1.15,
+          factionEffects.MiningNoblesBonus?.filter((e: string) => e === "Effect_MiningNoblesBonus").length || 0,
+        );
+        fissilesMultiplier *= Math.pow(
+          1.15,
+          factionEffects.MiningFissilesBonus?.filter((e: string) => e === "Effect_MiningFissilesBonus").length || 0,
+        );
+      }
+    }
+
+    // now apply the all-resources modifier
+    waterMultiplier *= spaceMiningMultiplier;
+    volatilesMultiplier *= spaceMiningMultiplier;
+    metalsMultiplier *= spaceMiningMultiplier;
+    noblesMultiplier *= spaceMiningMultiplier;
+    fissilesMultiplier *= spaceMiningMultiplier;
+
+    faction.miningMultipliers = {
+      water: waterMultiplier,
+      volatiles: volatilesMultiplier,
+      metals: metalsMultiplier,
+      nobles: noblesMultiplier,
+      fissiles: fissilesMultiplier,
+    };
+  });
+}
+

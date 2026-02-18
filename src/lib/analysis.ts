@@ -17,7 +17,7 @@ import { extractCoreData } from "./analysis/core";
 import { analyzeCouncilors, loadCouncilorTemplates } from "./analysis/councilors";
 import { analyzeOrgs, loadOrgTemplates } from "./analysis/orgs";
 import { analyzeFleets, loadShipData, loadSpaceData } from "./analysis/fleets";
-import { analyzeRegions, analyzeNations, aggregateFactionNationHistory } from "./analysis/nations";
+import { analyzeRegions, analyzeNations } from "./analysis/nations";
 import { calculatePlayerStealableOrgs, calculatePlayerStealableProjects } from "./analysis/resources";
 import { expandAlienGoals } from "./analysis/alien-goals";
 import {
@@ -29,7 +29,7 @@ import {
 } from "./analysis/player-context";
 import { createBuildingSummary } from "./analysis/building-summary";
 import { getSolarMultiplier, getMineMultiplier } from "./analysis/hab-utils";
-import { processFactions } from "./analysis/factions";
+import { processFactions, finalizeFactions } from "./analysis/factions";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const {
@@ -186,8 +186,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     return acc;
   }, new Map<number, typeof controlPoints>());
 
-  aggregateFactionNationHistory(saveFile, factions, controlPointsByNationId);
-
   const orgTemplates = await loadOrgTemplates();
   const orgs = analyzeOrgs(saveFile, orgTemplates, regionsById, nationsById);
   const orgsById = new Map<number, (typeof orgs)[0]>(orgs.map((org) => [org.id, org]));
@@ -209,77 +207,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   );
   const playerCouncilors = councilors.filter((councilor) => playerFaction?.councilorIds.includes(councilor.id));
 
-  // Calculate mining bonuses for each faction
-  const effectsState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIEffectsState"][0]?.Value;
+  // Finalize faction data with nation history and mining multipliers
+  finalizeFactions(saveFile, factions, controlPointsByNationId, councilors);
 
-  factions.forEach((faction) => {
-    if (faction.id !== playerFaction.id) return;
-    // Start with base 1% multiplier for each resource
-    let waterMultiplier = 1;
-    let volatilesMultiplier = 1;
-    let metalsMultiplier = 1;
-    let noblesMultiplier = 1;
-    let fissilesMultiplier = 1;
-
-    // 1. Add councilor mining bonuses (applies to all resources)
-    const factionCouncilors = councilors.filter((c) => c.factionId === faction.id);
-    let spaceMiningMultiplier =
-      factionCouncilors.reduce((sum, c) => sum + (c.effectsWithOrgsAndAugments.miningBonus || 0), 0) + 1;
-
-    // 2. Add faction effects from TIEffectsState
-    if (effectsState?.factionEffectsNames) {
-      const factionEffects = effectsState.factionEffectsNames.find((kv) => kv.Key.value === faction.id)?.Value;
-
-      if (factionEffects) {
-        // SpaceMiningBonus is additive with councilor bonuses and can appear multiple times, so we need to loop through all of them
-        const spaceMiningEffects = factionEffects.SpaceMiningBonus || [];
-        spaceMiningEffects.forEach((effect) => {
-          // Extract percentage from effect name like "Effect_SpaceMiningBonus5" = 5%
-          const match = effect.match(/Effect_SpaceMiningBonus(\d+)/);
-          if (match) {
-            spaceMiningMultiplier += parseInt(match[1], 10) / 100;
-          }
-        });
-
-        // Resource-specific bonuses (15% each), can appear multiple times, and are multiplicative, not additive
-        waterMultiplier *= Math.pow(
-          1.15,
-          factionEffects.MiningWaterBonus?.filter((e) => e === "Effect_MiningWaterBonus").length || 0,
-        );
-        volatilesMultiplier *= Math.pow(
-          1.15,
-          factionEffects.MiningVolatilesBonus?.filter((e) => e === "Effect_MiningVolatilesBonus").length || 0,
-        );
-        metalsMultiplier *= Math.pow(
-          1.15,
-          factionEffects.MiningMetalsBonus?.filter((e) => e === "Effect_MiningMetalsBonus").length || 0,
-        );
-        noblesMultiplier *= Math.pow(
-          1.15,
-          factionEffects.MiningNoblesBonus?.filter((e) => e === "Effect_MiningNoblesBonus").length || 0,
-        );
-        fissilesMultiplier *= Math.pow(
-          1.15,
-          factionEffects.MiningFissilesBonus?.filter((e) => e === "Effect_MiningFissilesBonus").length || 0,
-        );
-      }
-    }
-
-    // now apply the all-resources modifier
-    waterMultiplier *= spaceMiningMultiplier;
-    volatilesMultiplier *= spaceMiningMultiplier;
-    metalsMultiplier *= spaceMiningMultiplier;
-    noblesMultiplier *= spaceMiningMultiplier;
-    fissilesMultiplier *= spaceMiningMultiplier;
-
-    faction.miningMultipliers = {
-      water: waterMultiplier,
-      volatiles: volatilesMultiplier,
-      metals: metalsMultiplier,
-      nobles: noblesMultiplier,
-      fissiles: fissilesMultiplier,
-    };
-  });
   const habs = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"]
     .map(({ Value: hab }) => {
       const tier = hab.tier;
