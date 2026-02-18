@@ -9,11 +9,11 @@ import {
   FactionGoal_InvadeEarth,
   FactionGoal_BuildFullStation,
   FactionGoal_BuildFullBase,
-} from "./savefile";
-import { MissionDataName, templates } from "./templates";
+} from "../savefile";
+import { MissionDataName, templates } from "../templates";
 import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
-import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "./utils";
-import { localizations } from "./localization";
+import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "../utils";
+import { localizations } from "../localization";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const mcMaskingTechs = new Set(
@@ -1029,7 +1029,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       const tier = hab.tier;
       const site = habSitesById.get(hab.habSite?.value || 0);
       const body = site ? bodiesById.get(site.parentBodyId) : null;
-      
+
       // For orbital stations, get the body from the orbit's barycenter
       let orbitBody = null;
       if (!body && hab.orbitState?.value) {
@@ -1038,7 +1038,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           orbitBody = bodiesById.get(orbit.barycenterId);
         }
       }
-      
+
       const effectiveBody = body || orbitBody;
 
       // Determine planet name (parent body for moons, body itself for planets, but stop at Sol)
@@ -1056,7 +1056,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         planetName = currentBody.displayName || "Unknown";
       }
 
-      const solarMirrorBonus = effectiveBody ? effectiveBody.solarMirrorBonusByFactionId.get(hab.faction.value) || 0 : 0;
+      const solarMirrorBonus = effectiveBody
+        ? effectiveBody.solarMirrorBonusByFactionId.get(hab.faction.value) || 0
+        : 0;
       const solarMultiplier = getSolarMultiplier(site?.id || hab.orbitState?.value);
       const mineMultipler = getMineMultipler(site?.parentBodyId);
 
