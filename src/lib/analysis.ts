@@ -27,6 +27,7 @@ import {
   calculatePlayerMissionCounts,
   calculateFactionAdminById,
 } from "./analysis/player-context";
+import { createBuildingSummary } from "./analysis/building-summary";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const {
