@@ -238,8 +238,11 @@ export async function analyzeFactions(
   if (!playerFaction) {
     throw new Error("Player faction data not found in save file.");
   }
-  const shipDesignsByDataName = new Map<string, (typeof factions)[0]["shipDesigns"][0]>(
-    factions.flatMap((faction) => faction.shipDesigns).map((design) => [design.dataName, design]),
-  );
-  return { factions, factionsById, playerFaction, shipDesignsByDataName };
+
+  const alienFaction = factions.find((faction) => faction.templateName === "AlienCouncil");
+  if (!alienFaction) {
+    throw new Error("Alien faction data not found in save file.");
+  }
+
+  return { factions, factionsById, playerFaction, alienFaction };
 }
