@@ -52,6 +52,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     controlPoints,
     habModuleTemplates,
     playerFactionId,
+    allNationStates,
+    controlPointsByNationId,
   });
   const { habSites, habSitesById } = analyzeHabSites(saveFile);
   const { habs } = analyzeHabs(saveFile, {
@@ -77,71 +79,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     fleets,
   });
   const { drives, bestRadiator } = await analyzeDrives(saveFile, { playerFaction, techs, projects, globalTechState });
-
-  for (const faction of factions) {
-    // Find all nations where this faction has at least one control point
-    const controlledNationsWithCPs: Array<{
-      nation: (typeof allNationStates)[0];
-      factionCPs: number;
-      totalCPs: number;
-    }> = [];
-
-    for (const nationState of allNationStates) {
-      const nationId = nationState.ID.value;
-      const controlPoints = controlPointsByNationId.get(nationId) || [];
-
-      // Count how many CPs this faction has in this nation
-      const factionCPCount = controlPoints.filter((cp) => cp.factionId === faction.id).length;
-
-      if (factionCPCount > 0) {
-        controlledNationsWithCPs.push({
-          nation: nationState,
-          factionCPs: factionCPCount,
-          totalCPs: controlPoints.length,
-        });
-      }
-    }
-
-    // Aggregate histories across all controlled nations
-    if (controlledNationsWithCPs.length > 0) {
-      // Find the maximum history length
-      const maxMCLength = Math.max(
-        ...controlledNationsWithCPs.map((n) => (n.nation.historyMissionControl || []).length),
-      );
-      const maxBoostLength = Math.max(...controlledNationsWithCPs.map((n) => (n.nation.historyBoost || []).length));
-
-      // Sum up histories across all nations, weighted by faction's share of CPs
-      faction.nationHistory.historyMissionControl = Array.from({ length: maxMCLength }, (_, index) => {
-        return controlledNationsWithCPs.reduce((sum, { nation, factionCPs, totalCPs }) => {
-          const history = nation.historyMissionControl || [];
-          const value = history[index] || 0;
-          // Divide by total CPs and multiply by faction's CPs to get this faction's share
-          return sum + (value / totalCPs) * factionCPs;
-        }, 0);
-      });
-
-      faction.nationHistory.historyBoost = Array.from({ length: maxBoostLength }, (_, index) => {
-        return controlledNationsWithCPs.reduce((sum, { nation, factionCPs, totalCPs }) => {
-          const history = nation.historyBoost || [];
-          const value = history[index] || 0;
-          // Divide by total CPs and multiply by faction's CPs to get this faction's share
-          return sum + (value / totalCPs) * factionCPs;
-        }, 0);
-      });
-
-      // Calculate summary statistics
-      const historyBoost = faction.nationHistory.historyBoost;
-      const historyMC = faction.nationHistory.historyMissionControl;
-
-      faction.nationHistory.currentBoost = historyBoost.length > 0 ? historyBoost[0] : 0;
-      faction.nationHistory.currentMC = historyMC.length > 0 ? historyMC[0] : 0;
-
-      faction.nationHistory.boostMonthlyChange =
-        historyBoost.length > 0 ? historyBoost[0] - (historyBoost[historyBoost.length - 1] || 0) : 0;
-      faction.nationHistory.mcMonthlyChange =
-        historyMC.length > 0 ? historyMC[0] - (historyMC[historyMC.length - 1] || 0) : 0;
-    }
-  }
 
   // Calculate mining bonuses for each faction
   const effectsState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIEffectsState"][0]?.Value;
