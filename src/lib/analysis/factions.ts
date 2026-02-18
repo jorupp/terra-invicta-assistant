@@ -1,6 +1,7 @@
 import { SaveFile } from "../savefile";
 import { sortByDateTime, diffDateTime, toDays, formatDateTime } from "../utils";
 import { aggregateFactionNationHistory } from "./nations";
+import type { TechCategory } from "../template-types-generated";
 
 export function processFactions(
   saveFile: SaveFile,
@@ -32,7 +33,7 @@ export function processFactions(
       .filter((i): i is NonNullable<typeof i> => !!i);
     const availableBoostProjects = availableProjects
       .filter((i: any) => i.effects?.some((ii: string) => ii.startsWith("Effect_LaunchFacilitiesPriorityBonus")) && !i.repeatable)
-      .map(({ friendlyName, techCategory, researchCost, dataName }) => ({
+      .map(({ friendlyName, techCategory, researchCost, dataName }): { friendlyName: string; techCategory: TechCategory; researchCost: number; dataName: string } => ({
         friendlyName,
         techCategory,
         researchCost,
@@ -40,7 +41,7 @@ export function processFactions(
       }));
     const availableCPProjects = availableProjects
       .filter((i: any) => i.effects?.some((ii: string) => ii.startsWith("Effect_ControlPointMaintenanceBonus")) && !i.repeatable)
-      .map(({ friendlyName, techCategory, researchCost, dataName, effects }) => {
+      .map(({ friendlyName, techCategory, researchCost, dataName, effects }): { friendlyName: string; techCategory: TechCategory; researchCost: number; dataName: string; cpBonus: number; currentProgress: number } => {
         // Extract the CP bonus from the effect string (e.g., "Effect_ControlPointMaintenanceBonus10" -> 10)
         const cpEffect = effects?.find((e: string) => e.startsWith("Effect_ControlPointMaintenanceBonus"));
         const cpBonus = cpEffect ? parseInt(cpEffect.replace("Effect_ControlPointMaintenanceBonus", "") || "0") : 0;
@@ -59,7 +60,7 @@ export function processFactions(
       });
     const availableMaxOrgProjects = availableProjects
       .filter((i: any) => i.effects?.some((ii: string) => ii.startsWith("Effect_MaxOrgBonus")) && !i.repeatable)
-      .map(({ friendlyName, techCategory, researchCost, dataName, effects }) => {
+      .map(({ friendlyName, techCategory, researchCost, dataName, effects }): { friendlyName: string; techCategory: TechCategory; researchCost: number; dataName: string; orgBonus: number } => {
         // Extract the org bonus from the effect string (e.g., "Effect_MaxOrgBonus1" -> 1)
         const orgEffect = effects?.find((e: string) => e.startsWith("Effect_MaxOrgBonus"));
         const orgBonus = orgEffect ? parseInt(orgEffect.replace("Effect_MaxOrgBonus", "") || "0") : 0;
@@ -84,7 +85,7 @@ export function processFactions(
               ii.startsWith("Effect_UnlockExpandUnityTier"),
           ) && !i.repeatable,
       )
-      .map(({ friendlyName, techCategory, researchCost, dataName, requiredNationTier }: any) => {
+      .map(({ friendlyName, techCategory, researchCost, dataName, requiredNationTier }: any): { friendlyName: string; techCategory: TechCategory; researchCost: number; dataName: string; currentProgress: number; requiresNation: string } => {
         // Find current progress for this project
         const progress = faction.currentProjectProgress.find((p: any) => p.projectTemplateName === dataName);
 

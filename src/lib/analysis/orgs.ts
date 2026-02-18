@@ -1,5 +1,5 @@
 import { SaveFile } from "../savefile";
-import { templates, TechCategory, MissionDataName } from "../templates";
+import { templates, TechCategory, MissionDataName, TraitDataName } from "../templates";
 
 interface Region {
   id: number;
@@ -18,8 +18,8 @@ export interface OrgTemplate {
   orgType: string;
   requiresNationality: boolean;
   allowedOnMarket: boolean;
-  requiredOwnerTraits: string[];
-  prohibitedOwnerTraits: string[];
+  requiredOwnerTraits: TraitDataName[];
+  prohibitedOwnerTraits: TraitDataName[];
   missionsGrantedNames: MissionDataName[];
   grantsMarked: boolean;
   techBonuses: Array<{
