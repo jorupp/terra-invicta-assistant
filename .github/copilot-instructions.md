@@ -88,3 +88,131 @@ DUMP_JSON_ERROR=debug.json      # Write failed JSON parses to file - mainly usef
 1. Add type to `src/lib/template-types-generated.ts` (or generate it)
 2. Add filename mapping to `templateMap` in `src/lib/templates.ts`
 3. Use `await templates.yourTemplate()` to load data
+
+## Code Organization
+
+### Server-Side Analysis (`src/lib/analysis/`)
+
+The analysis layer is the heart of the application—it processes raw save file data and game templates into meaningful insights. Currently consolidated in `src/lib/analysis.ts` (~2600 lines), this should be refactored into a modular structure:
+
+```
+src/lib/
+  analysis/
+    index.ts              # Main analyzeData() orchestration, exports Analysis type
+    core.ts               # Shared utilities, player data, time/date processing
+    councilors.ts         # Councilor analysis (traits, missions, attributes, threats)
+    research.ts           # Technology research progress, projects, goals
+    fleets.ts             # Space fleet analysis (ships, locations, missions)
+    habs.ts               # Space habitats and bases (modules, effects, production)
+    factions.ts           # Faction goals, priorities, relations
+    nations.ts            # Nation control points, priorities, military
+    resources.ts          # Resource tracking (money, influence, boost, materials)
+    [other domains...]    # Additional analysis domains as needed
+```
+
+**Principles:**
+
+- **Server-side first**: All game logic, calculations, and data transformations belong in analysis. The UI should be a pure view layer.
+- **Domain separation**: Each file focuses on one major game system (e.g., all hab-related calculations in `habs.ts`).
+- **Shared utilities**: Common patterns (localization lookups, effect combination, template resolution) live in `core.ts`.
+- **Type exports**: Each analysis module exports its own types alongside functions. The main `Analysis` type in `index.ts` composes these domain types.
+- **Single source of truth**: Analysis output should be complete—UI components shouldn't recalculate, only display and format.
+
+**Refactoring approach:**
+
+1. Create `src/lib/analysis/` directory
+2. Move domain-specific logic into separate files
+3. Export domain-specific types and analysis functions from each file
+4. Update `index.ts` to orchestrate by calling domain analysis functions
+5. Ensure no circular dependencies between analysis modules
+
+### UI Components (`src/app/game/current/` and `src/components/`)
+
+The UI is split between page-specific components and shared components:
+
+**Page Components (`src/app/game/current/`):**
+
+Current structure that works well:
+
+- `page.tsx` - Route entry point
+- `component.tsx` - Main orchestration component
+- `useCurrent.ts` - SSE hook for live save file updates
+- `actions.ts` - Server actions for data loading
+- `renderCurrentGame.tsx` - Main render logic
+- Domain components: `councilors.tsx`, `fleets.tsx`, `habs.tsx`, `resources.tsx`, etc.
+
+**Principles:**
+
+- **One component per major section**: Each major game domain (councilors, fleets, habs) gets its own file.
+- **Keep components focused**: If a component file grows beyond ~300-400 lines, consider splitting into sub-components.
+- **Sub-components**: When splitting is needed, create a subdirectory:
+  ```
+  councilors/
+    index.tsx            # Main Councilors component
+    councilorCard.tsx    # Individual councilor display
+    missionStatus.tsx    # Mission status indicators
+  ```
+- **Props from analysis**: Components receive fully-processed data from analysis, never raw save file data.
+- **Minimal client-side logic**: Sorting, filtering, and basic UI state only. No game calculations.
+
+**Shared Components (`src/components/`):**
+
+- **UI primitives** (`src/components/ui/`): shadcn/ui components (buttons, cards, etc.)—don't modify these directly unless necessary.
+- **App-specific shared** (`src/components/`): Reusable Terra Invicta components
+  - `showEffects.tsx` - Effect display logic used across multiple domains
+  - `icons.tsx` - Game-specific icons
+  - `infoTooltip.tsx` - Standardized tooltip pattern
+
+**When to create a shared component:**
+
+- Used in 2+ different domain components
+- Represents a Terra Invicta-specific pattern (not a generic UI element)
+- Has complex logic worth isolating
+
+**When to keep inline:**
+
+- Used in only one place
+- Trivial JSX (<20 lines)
+- Tightly coupled to parent's state
+
+### File Size Guidelines
+
+- **Analysis modules**: 200-400 lines ideal, 600 max before splitting
+- **Page components**: 200-400 lines ideal, 500 max before splitting  
+- **Shared components**: 100-200 lines ideal, 300 max
+
+When a file exceeds these guidelines, consider:
+
+1. Can this be split into logical sub-domains?
+2. Are there reusable pieces that should be extracted?
+3. Is there complex logic that should move to analysis layer?
+
+### Import Organization
+
+Standard import order:
+
+1. React and Next.js imports
+2. Third-party libraries
+3. Internal lib imports (`@/lib/*`)
+4. Internal component imports (`@/components/*`)
+5. Relative imports
+6. Type-only imports (group at end with `import type`)
+
+Example:
+
+```typescript
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { analyzeData } from "@/lib/analysis";
+import { formatDateTime } from "@/lib/utils";
+import { showEffects } from "@/components/showEffects";
+import type { Analysis } from "@/lib/analysis";
+```
+
+### Naming Conventions
+
+- **Files**: kebab-case for UI primitives (`button.tsx`), camelCase for app code (`councilors.tsx`)
+- **Components**: PascalCase (`CouncilorCard`)
+- **Functions**: camelCase (`analyzeCouncilors`, `formatDateTime`)
+- **Types**: PascalCase (`Analysis`, `CouncilorData`)
+- **Constants**: UPPER_SNAKE_CASE for true constants, camelCase for config objects
