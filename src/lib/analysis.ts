@@ -13,84 +13,23 @@ import {
 import { MissionDataName, templates } from "./templates";
 import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
 import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "./utils";
-import { localizations } from "./localization";
+import { extractCoreData } from "./analysis/core";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
-  const mcMaskingTechs = new Set(
-    (await templates.projects())
-      .filter((i) => i.effects?.some((e) => e === "Effect_MCUsageMasking"))
-      .map((i) => i.dataName),
-  );
-  const metadata = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIMetadataState"][0].Value;
-  const { difficulty } = metadata;
-  const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
-  const lastMonth = {
-    ...time.currentDateTime,
-    month: time.currentDateTime.month === 1 ? 12 : time.currentDateTime.month - 1,
-    year: time.currentDateTime.month === 1 ? time.currentDateTime.year - 1 : time.currentDateTime.year,
-  };
-  const gameCurrentDateTimeFormatted = formatDateTime(time.currentDateTime);
-  const globalTechState = (() => {
-    const globalTechState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIGlobalResearchState"][0].Value;
-    return {
-      ...globalTechState,
-      techProgress: globalTechState.techProgress.map((tp) => ({
-        ...tp,
-        factionContributions: tp.factionContributions.reduce((acc, curr) => {
-          acc.set(curr.Key.value, curr.Value);
-          return acc;
-        }, new Map<number, number>()),
-      })),
-    };
-  })();
+  const {
+    player,
+    time,
+    difficulty,
+    mcMaskingTechs,
+    projects,
+    techs,
+    driveLocalization,
+    powerPlantLocalization,
+    globalTechState,
+  } = await extractCoreData(saveFile);
 
-  const playerState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIPlayerState"].find(
-    (i) => !i.Value.isAI,
-  )?.Value;
-  if (!playerState) {
-    throw new Error("Player data not found in save file.");
-  }
-  const player = {
-    id: playerState.ID.value,
-    faction: playerState.faction.value,
-    templateName: playerState.templateName,
-    displayName: playerState.displayName,
-  };
-
-  const projectLocalization = await localizations.project();
-  async function getProjectLocalization(name: string) {
-    return {
-      displayName: projectLocalization.get(`TIProjectTemplate.displayName.${name}`),
-      summary: projectLocalization.get(`TIProjectTemplate.summary.${name}`),
-      description: projectLocalization.get(`TIProjectTemplate.description.${name}`),
-    };
-  }
-  const projects = await (
-    await templates.projects()
-  ).reduce(async (acc, project) => {
-    const map = await acc;
-    map.set(project.dataName, { ...project, ...(await getProjectLocalization(project.dataName)) });
-    return map;
-  }, Promise.resolve(new Map<string, Awaited<ReturnType<typeof templates.projects>>[0] & { displayName?: string; summary?: string; description?: string }>()));
-  const techLocalization = await localizations.tech();
-  async function getTechLocalization(name: string) {
-    return {
-      displayName: techLocalization.get(`TITechTemplate.displayName.${name}`),
-      summary: techLocalization.get(`TITechTemplate.summary.${name}`),
-      description: techLocalization.get(`TITechTemplate.description.${name}`),
-      quote: techLocalization.get(`TITechTemplate.quote.${name}`),
-    };
-  }
-  const techs = await (
-    await templates.techs()
-  ).reduce(async (acc, tech) => {
-    const map = await acc;
-    map.set(tech.dataName, { ...tech, ...(await getTechLocalization(tech.dataName)) });
-    return map;
-  }, Promise.resolve(new Map<string, Awaited<ReturnType<typeof templates.techs>>[0] & { displayName?: string; summary?: string; description?: string; quote?: string }>()));
-
-  const driveLocalization = await localizations.drive();
-  const powerPlantLocalization = await localizations.powerPlant();
+  const gameCurrentDateTimeFormatted = time.formatted;
+  const lastMonth = time.lastMonth;
 
   // Load hab module templates early so we can use them in faction processing
   const habModuleTemplates = (await templates.habModules()).reduce((acc, mod) => {
