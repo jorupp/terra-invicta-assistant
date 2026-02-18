@@ -14,8 +14,6 @@ import { analyzeDrives } from "./drives";
 import { analyzePlayerInterests } from "./player-interest";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
-  const metadata = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIMetadataState"][0].Value;
-  const { difficulty } = metadata;
   const time = saveFile.gamestates["PavonisInteractive.TerraInvicta.TITimeState"][0].Value;
   const gameCurrentDateTimeFormatted = formatDateTime(time.currentDateTime);
 
@@ -44,8 +42,10 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   // TODO: can I use an expanding state thing?
 
   const { sol, earth, orbitsById, bodiesById, planets } = analyzePlanets(saveFile);
-  const { nations, nationsById, regions, regionsById, controlPoints, controlPointsByNationId, allNationStates } =
-    analyzeNations(saveFile, { playerFactionId });
+  const { nations, nationsById, regionsById, controlPoints, controlPointsByNationId, allNationStates } = analyzeNations(
+    saveFile,
+    { playerFactionId },
+  );
   const { factions, factionsById, playerFaction, alienFaction } = await analyzeFactions(saveFile, {
     projects,
     controlPoints,
@@ -54,7 +54,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     allNationStates,
     controlPointsByNationId,
   });
-  const { habSites, habSitesById } = analyzeHabSites(saveFile);
+  const { habSitesById } = analyzeHabSites(saveFile);
   const { habs } = analyzeHabs(saveFile, {
     habSitesById,
     bodiesById,
@@ -63,8 +63,8 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     gameCurrentDateTimeFormatted,
     factionsById,
   });
-  const { fleets, fleetsById } = await analyzeFleets(saveFile, { factions, playerFactionId, orbitsById, bodiesById });
-  const { orgs, orgsById, playerUnassignedOrgs, playerAvailableOrgs, councilors, playerCouncilors } = await analyzeOrgs(
+  const { fleets } = await analyzeFleets(saveFile, { factions, playerFactionId, orbitsById, bodiesById });
+  const { orgs, playerUnassignedOrgs, playerAvailableOrgs, councilors, playerCouncilors } = await analyzeOrgs(
     saveFile,
     { regionsById, nationsById, playerFaction },
   );

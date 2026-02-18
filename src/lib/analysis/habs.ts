@@ -4,7 +4,6 @@ import { templates } from "../templates";
 import { noDate } from "../utils";
 import { analyzeHabSites } from "./habSites";
 import { analyzePlanets } from "./planets";
-import { analyzeNations } from "./nations";
 import { analyzeFactions } from "./factions";
 
 export interface AnalyzeHabArgs {

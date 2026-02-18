@@ -13,7 +13,6 @@ import {
 import { analyzeFactions } from "./factions";
 import { analyzeFleets } from "./fleets";
 import { analyzeHabs } from "./habs";
-import { analyzeHabSites } from "./habSites";
 import { analyzeNations } from "./nations";
 import { analyzePlanets } from "./planets";
 
