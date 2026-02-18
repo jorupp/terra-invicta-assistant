@@ -18,6 +18,7 @@ import { analyzeCouncilors, loadCouncilorTemplates } from "./analysis/councilors
 import { analyzeOrgs, loadOrgTemplates } from "./analysis/orgs";
 import { analyzeFleets, loadShipData, loadSpaceData } from "./analysis/fleets";
 import { analyzeRegions, analyzeNations, aggregateFactionNationHistory } from "./analysis/nations";
+import { calculatePlayerStealableOrgs, calculatePlayerStealableProjects } from "./analysis/resources";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const {
@@ -1692,74 +1693,24 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   const playerVisibleFactionIds = new Set<number>(
     playerVisibleCouncilors.map((c) => c.factionId).filter((id): id is number => !!id),
   );
-  const playerStealableOrgs = playerVisibleCouncilors
-    .filter((c) => c.playerIntel >= 0.5) // TODO: figure out exact intel threshold for stealing
-    .map((c) => [
-      ...c.orgs.map((o) => {
-        const faction = factionsById.get(c.factionId || -1);
-        return {
-          ...o,
-          councilorId: c.id as number | undefined,
-          councilor: c.displayName as string | undefined,
-          admin: Math.max(
-            0,
-            (c.effectsWithOrgsAndAugments.administration || 0) + (c.effectsWithOrgsAndAugments.Administration || 0),
-          ) as number | undefined,
-          faction: faction && {
-            id: faction.id,
-            displayName: faction.displayName,
-            templateName: faction.templateName,
-          },
-        };
-      }),
-    ])
-    .flat()
-    .concat(
-      factions
-        .filter((i) => i.id !== playerFaction.id)
-        .filter((faction) => playerVisibleFactionIds.has(faction.id))
-        .flatMap((faction) => {
-          const factionOrgs = orgs.filter((org) => faction.unassignedOrgIds.includes(org.id));
-          return factionOrgs.map((o) => {
-            return {
-              ...o,
-              councilorId: undefined,
-              councilor: undefined,
-              admin: faction && factionAdminById.get(faction.id),
-              faction: faction && {
-                id: faction.id,
-                displayName: faction.displayName,
-                templateName: faction.templateName,
-              },
-            };
-          });
-        }),
-    )
-    .filter((o) => o.template?.allowedOnMarket);
 
-  const playerStealableProjects = factions
-    .filter((i) => i.id !== alienFaction.id)
-    .filter((i) => playerVisibleFactionIds.has(i.id))
-    .flatMap((faction) => {
-      return faction.finishedProjectNames.map((projectName) => ({ projectName, factionId: faction.id }));
-    })
-    .filter(
-      (i) =>
-        !playerFaction.availableProjectNames.includes(i.projectName) &&
-        !playerFaction.finishedProjectNames.includes(i.projectName),
-    )
-    .filter((i) => {
-      const project = projects.get(i.projectName);
-      if (!project) return true;
-      if (project.oneTimeGlobally) return false;
-      if (project.requiredMilestone && !playerFaction.milestones.includes(project.requiredMilestone)) return false;
-      const prereqs = project.prereqs || [];
-      if (!prereqs.every((i) => !i.startsWith("Project_") || playerFaction.finishedProjectNames.includes(i)))
-        return false;
-      const factionPrereq = project.factionPrereq || [];
-      if (factionPrereq.length === 0) return true;
-      return factionPrereq.includes(playerFaction.templateName!);
-    });
+  const playerStealableOrgs = calculatePlayerStealableOrgs(
+    councilors,
+    orgs,
+    factions,
+    factionsById,
+    factionAdminById,
+    playerFaction.id,
+    playerVisibleFactionIds,
+  );
+
+  const playerStealableProjects = calculatePlayerStealableProjects(
+    factions,
+    projects,
+    playerFaction,
+    alienFaction,
+    playerVisibleFactionIds,
+  );
 
   const allDrives = await templates.drives();
   const drivesByBaseName = new Map<string, (typeof allDrives)[0] & { baseName: string }>();
