@@ -130,9 +130,8 @@ export async function processFleets(
       deltaV,
     };
   });
-  const fleetsById = new Map<number, (typeof fleets)[0]>(fleets.map((fleet) => [fleet.id, fleet]));
 
-  return { shipHulls, ships, shipsById, fleets, fleetsById };
+  return { fleets };
 }
 
 export type FleetEntry = Awaited<ReturnType<typeof processFleets>>["fleets"][0];

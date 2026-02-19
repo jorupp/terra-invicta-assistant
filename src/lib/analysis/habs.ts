@@ -92,7 +92,7 @@ export function processHabInfrastructure(saveFile: SaveFile) {
   );
   const habSitesById = new Map<number, (typeof habSites)[0]>(habSites.map((site) => [site.id, site]));
 
-  return { habModules, habSectorsByHabId, habSitesById };
+  return { habSectorsByHabId, habSitesById };
 }
 
 export function calculateMiningBonuses(

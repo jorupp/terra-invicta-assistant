@@ -134,9 +134,9 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
   }
 
   const spaceBodies = processSpaceBodies(saveFile);
-  const { planets, sol, earth, orbitsById, bodiesById } = spaceBodies;
+  const { orbitsById, bodiesById } = spaceBodies;
 
-  const { shipHulls, ships, shipsById, fleets, fleetsById } = await processFleets(
+  const { fleets } = await processFleets(
     saveFile,
     shipDesignsByDataName,
     orbitsById,
@@ -151,14 +151,14 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     throw new Error("Alien faction data not found in save file.");
   }
 
-  const { regions, regionsById, regionsByNationId, controlPointsByNationId, nations, nationsById } = processNations(
+  const { regionsById, nations, nationsById } = processNations(
     saveFile,
     controlPoints,
     playerFaction.id,
     factions,
   );
 
-  const { orgTemplates, orgs, orgsById, playerUnassignedOrgs, playerAvailableOrgs } = await processOrgs(
+  const { orgs, playerUnassignedOrgs, playerAvailableOrgs } = await processOrgs(
     saveFile,
     regionsById,
     nationsById,

@@ -79,11 +79,10 @@ export async function processOrgs(
       isAdminOrg: (org.tier || 0) < (org.administration || 0),
     };
   });
-  const orgsById = new Map<number, (typeof orgs)[0]>(orgs.map((org) => [org.id, org]));
   const playerUnassignedOrgs = orgs.filter((org) => playerFaction.unassignedOrgIds.includes(org.id));
   const playerAvailableOrgs = orgs.filter((org) => playerFaction.availableOrgIds.includes(org.id));
 
-  return { orgTemplates, orgs, orgsById, playerUnassignedOrgs, playerAvailableOrgs };
+  return { orgs, playerUnassignedOrgs, playerAvailableOrgs };
 }
 
 export type OrgEntry = Awaited<ReturnType<typeof processOrgs>>["orgs"][0];

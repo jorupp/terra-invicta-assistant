@@ -200,7 +200,7 @@ export function processNations(
     }
   }
 
-  return { regions, regionsById, regionsByNationId, controlPointsByNationId, nations, nationsById };
+  return { regions, regionsById, nations, nationsById };
 }
 
 export type NationEntry = ReturnType<typeof processNations>["nations"][0];
