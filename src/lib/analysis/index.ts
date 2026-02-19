@@ -16,6 +16,7 @@ import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "..
 import { localizations } from "../localization";
 import { getSolarMultiplier, getMineMultipler } from "./hab-helpers";
 import { calculateRemainingResearch } from "./research";
+import { computeCouncilorEffects } from "./councilors";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const mcMaskingTechs = new Set(
@@ -832,78 +833,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     missionNames: type.missionNames,
   }));
   const councilorTypesByDataName = new Map(councilorTypes.map((type) => [type.dataName, type]));
-
-  function computeCouncilorEffects(
-    attributes: ShowEffectsProps,
-    traitTemplates: typeof councilorTraitTemplates,
-    councilorOrgs: typeof orgs,
-  ): { effectsBaseAndUnaugmentedTraits: ShowEffectsProps; effectsWithOrgsAndAugments: ShowEffectsProps } {
-    function addTraits(effects: ShowEffectsProps, traits: typeof councilorTraitTemplates): ShowEffectsProps {
-      // Add trait effects
-      let finalEffects = traits.reduce<ShowEffectsProps>(
-        (acc, trait) => {
-          return combineEffects(acc, {
-            incomeMoney_month: trait?.incomeMoney,
-            incomeBoost_month: trait?.incomeBoost,
-            incomeInfluence_month: trait?.incomeInfluence,
-            incomeResearch_month: trait?.incomeResearch,
-            councilorTechBonus: trait?.techBonuses,
-            missionsGrantedNames: trait?.missionsGrantedNames,
-            xpModifier: trait?.xpModifier,
-          });
-        },
-        { ...effects },
-      );
-
-      // Apply trait statMods and priorityBonuses
-      for (const trait of traits) {
-        for (const { stat, operation, strValue, condition } of trait.statMods || []) {
-          if (stat && strValue && !condition && operation === "Additive") {
-            (finalEffects as any)[stat] = ((finalEffects as any)[stat] || 0) + Number(strValue);
-          }
-          if (stat === "Loyalty" && strValue && !condition && operation === "Additive") {
-            (finalEffects as any)["maxLoyalty"] = ((finalEffects as any)["maxLoyalty"] || 0) + Number(strValue);
-          }
-        }
-        for (const { priority, bonus } of trait.priorityBonuses || []) {
-          if (priority && bonus) {
-            const key = `${priority[0].toLowerCase()}${priority.substring(1)}Bonus` as keyof ShowEffectsProps;
-            (finalEffects as any)[key] = ((finalEffects as any)[key] || 0) + bonus;
-          }
-        }
-      }
-      for (const trait of traits) {
-        for (const { stat, operation, strValue, condition } of trait.statMods || []) {
-          if (stat && strValue && !condition && operation === "SetToAnotherAttribute") {
-            (finalEffects as any)[stat] = (finalEffects as any)[strValue] || 0;
-          }
-        }
-      }
-      return finalEffects;
-    }
-
-    // Start with base attributes
-    const effectsBaseAndUnaugmentedTraits = addTraits(
-      { ...attributes, maxLoyalty: 25 },
-      traitTemplates.filter((t) => !(t.tags || []).includes("Augmented")),
-    );
-
-    const effectsWithAugments = addTraits(
-      effectsBaseAndUnaugmentedTraits,
-      traitTemplates.filter((t) => (t.tags || []).includes("Augmented")),
-    );
-
-    // Add org effects to create the full effects value
-    const effectsWithOrgsAndAugments = councilorOrgs.reduce<ShowEffectsProps>((acc, org) => {
-      return combineEffects(acc, {
-        ...org,
-        techBonuses: org.template?.techBonuses,
-        missionsGrantedNames: org.template?.missionsGrantedNames,
-      });
-    }, effectsWithAugments);
-
-    return { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments };
-  }
 
   const councilors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TICouncilorState"].map(
     ({ Value: councilor }) => {
