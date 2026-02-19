@@ -4,7 +4,7 @@ import {
 import { MissionDataName, templates } from "../templates";
 import { diffDateTime, formatDateTime, sortByDateTime, toDays } from "../utils";
 import { localizations } from "../localization";
-import { computeCouncilorEffects } from "./councilors";
+import { processCouncilors } from "./councilors";
 import { expandAlienGoals } from "./factions";
 import { analyzeDrives } from "./drives";
 import { processSpaceBodies } from "./space";
@@ -163,82 +163,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     playerFaction,
   );
 
-  const councilorTraitTemplates = (await templates.traits()).map((trait) => ({
-    dataName: trait.dataName,
-    friendlyName: trait.friendlyName,
-    xpCost: trait.XPCost,
-    xpModifier: trait.XPModifier,
-    upgradesFrom: trait.upgradesFrom,
-    boostCost: trait.boostCost,
-    opsCost: trait.opsCost,
-    detectionEspBonus: trait.detectionEspBonus,
-    incomeBoost: trait.incomeBoost,
-    incomeInfluence: trait.incomeInfluence,
-    incomeMoney: trait.incomeMoney,
-    incomeResearch: trait.incomeResearch,
-    priorityBonuses: trait.priorityBonuses,
-    statMods: trait.statMods,
-    techBonuses: trait.techBonuses,
-    missionsGrantedNames: trait.missionsGrantedNames,
-    tags: trait.tags,
-  }));
-  const councilorTraitTemplatesByDataName = new Map(councilorTraitTemplates.map((trait) => [trait.dataName, trait]));
-  const councilorTypes = (await templates.councilorTypes()).map((type) => ({
-    dataName: type.dataName,
-    friendlyName: type.friendlyName,
-    missionNames: type.missionNames,
-  }));
-  const councilorTypesByDataName = new Map(councilorTypes.map((type) => [type.dataName, type]));
-
-  const councilors = saveFile.gamestates["PavonisInteractive.TerraInvicta.TICouncilorState"].map(
-    ({ Value: councilor }) => {
-      const orgIds = new Set(councilor.orgs.map((i) => i.value));
-      const councilorOrgs = orgs.filter((org) => orgIds.has(org.id));
-      const traitTemplates = councilor.traitTemplateNames
-        .map((name) => councilorTraitTemplatesByDataName.get(name))
-        .filter((t): t is (typeof councilorTraitTemplates)[0] => !!t);
-      const councilorType = councilorTypesByDataName.get(councilor.typeTemplateName);
-      const playerIntel = playerFaction.intel.get(councilor.ID.value) || 0;
-      const playerMaxIntel = playerFaction.highestIntel.get(councilor.ID.value) || 0;
-      const lastRecordedLoyalty = playerFaction.lastRecordedLoyalty.get(councilor.ID.value) || 0;
-
-      const { effectsBaseAndUnaugmentedTraits, effectsWithOrgsAndAugments } = computeCouncilorEffects(
-        {
-          ...councilor.attributes,
-          missionsGrantedNames: councilorType?.missionNames,
-          xp: councilor.XP,
-          traitTemplateNames: councilor.traitTemplateNames,
-          typeTemplateName: councilor.typeTemplateName,
-          playerIntel,
-          playerMaxIntel,
-          lastRecordedLoyalty,
-        },
-        traitTemplates,
-        councilorOrgs,
-      );
-
-      // councilor.learnedMissionsTemplateNames is always [] - ignoring
-
-      return {
-        id: councilor.ID.value,
-        displayName: councilor.displayName!,
-        factionId: councilor.faction?.value,
-        councilorType,
-        traitTemplateNames: councilor.traitTemplateNames,
-        traitTemplates,
-        attributes: councilor.attributes,
-        orgs: councilorOrgs,
-        homeRegionId: councilor.homeRegion?.value,
-        homeNationId: regionsById.get(councilor.homeRegion?.value || -1)?.nationId,
-        typeTemplateName: councilor.typeTemplateName,
-        xp: councilor.XP,
-        effectsBaseAndUnaugmentedTraits,
-        effectsWithOrgsAndAugments,
-        playerIntel,
-      };
-    },
-  );
-  const playerCouncilors = councilors.filter((councilor) => playerFaction?.councilorIds.includes(councilor.id));
+  const { councilors, playerCouncilors } = await processCouncilors(saveFile, orgs, playerFaction, regionsById);
 
   // Calculate mining bonuses for each faction
   calculateMiningBonuses(saveFile, factions, councilors, playerFaction.id);
