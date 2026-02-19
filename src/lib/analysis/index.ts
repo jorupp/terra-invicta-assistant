@@ -54,6 +54,11 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     allNationStates,
     controlPointsByNationId,
   });
+  const { orgs, playerUnassignedOrgs, playerAvailableOrgs, councilors, playerCouncilors } = await analyzeOrgs(
+    saveFile,
+    { regionsById, nationsById, playerFaction },
+  );
+  postProcessFactions(saveFile, { factions, playerFaction, councilors });
   const { habSitesById } = analyzeHabSites(saveFile);
   const { habs } = analyzeHabs(saveFile, {
     habSitesById,
@@ -64,10 +69,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     factionsById,
   });
   const { fleets } = await analyzeFleets(saveFile, { factions, playerFactionId, orbitsById, bodiesById });
-  const { orgs, playerUnassignedOrgs, playerAvailableOrgs, councilors, playerCouncilors } = await analyzeOrgs(
-    saveFile,
-    { regionsById, nationsById, playerFaction },
-  );
   const { expandedAlienGoals } = analyzeAlienGoals(saveFile, {
     factionsById,
     alienFaction,
@@ -78,7 +79,6 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     fleets,
   });
   const { drives, bestRadiator } = await analyzeDrives(saveFile, { playerFaction, techs, projects, globalTechState });
-  postProcessFactions(saveFile, { factions, playerFaction, councilors });
 
   const {
     playerStealableOrgs,
