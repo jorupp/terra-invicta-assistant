@@ -9,6 +9,7 @@ import { getSolarMultiplier, getMineMultipler } from "./hab-helpers";
 import { computeCouncilorEffects } from "./councilors";
 import { expandAlienGoals } from "./factions";
 import { analyzeDrives } from "./drives";
+import { processSpaceBodies } from "./space";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const mcMaskingTechs = new Set(
@@ -325,38 +326,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     throw new Error("Player faction data not found in save file.");
   }
 
-  const planets = saveFile.gamestates["PavonisInteractive.TerraInvicta.TISpaceBodyState"];
-  const sol = planets.find((i) => i.Value.templateName === "Sol")?.Key.value;
-  const earth = planets.find((i) => i.Value.templateName === "Earth")?.Key.value;
-  if (!sol) {
-    throw new Error("Sol planet data not found in save file.");
-  }
-  if (!earth) {
-    throw new Error("Earth planet data not found in save file.");
-  }
-  const orbitsById = new Map(
-    saveFile.gamestates["PavonisInteractive.TerraInvicta.TIOrbitState"].map(({ Value: orbit }) => [
-      orbit.ID.value,
-      {
-        id: orbit.ID.value,
-        displayName: orbit.displayName,
-        templateName: orbit.templateName,
-        barycenterId: orbit.barycenter.value,
-      },
-    ]),
-  );
-  const bodiesById = new Map(
-    planets.map(({ Value: body }) => [
-      body.ID.value,
-      {
-        id: body.ID.value,
-        displayName: body.displayName,
-        templateName: body.templateName,
-        barycenterId: body.barycenter?.value,
-        solarMirrorBonusByFactionId: new Map(body.solarMirrorBonus.map((i) => [i.Key.value, i.Value])),
-      },
-    ]),
-  );
+  const { planets, sol, earth, orbitsById, bodiesById } = processSpaceBodies(saveFile);
 
   const shipHulls = (await templates.shipHulls()).map((h) => ({
     dataName: h.dataName,
