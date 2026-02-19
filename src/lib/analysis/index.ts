@@ -9,11 +9,11 @@ import {
   FactionGoal_InvadeEarth,
   FactionGoal_BuildFullStation,
   FactionGoal_BuildFullBase,
-} from "./savefile";
-import { MissionDataName, templates } from "./templates";
+} from "../savefile";
+import { MissionDataName, templates } from "../templates";
 import { combineEffects, ShowEffectsProps } from "@/components/showEffects";
-import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "./utils";
-import { localizations } from "./localization";
+import { diffDateTime, formatDateTime, noDate, sortByDateTime, toDays } from "../utils";
+import { localizations } from "../localization";
 
 export async function analyzeData(saveFile: SaveFile, fileName: string, lastModified: Date) {
   const mcMaskingTechs = new Set(
