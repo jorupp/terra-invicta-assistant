@@ -2,7 +2,7 @@ import {
   SaveFile,
 } from "../savefile";
 import { MissionDataName, templates } from "../templates";
-import { diffDateTime, formatDateTime, sortByDateTime, toDays } from "../utils";
+import { formatDateTime, sortByDateTime } from "../utils";
 import { localizations } from "../localization";
 import { processCouncilors } from "./councilors";
 import { expandAlienGoals } from "./factions";
