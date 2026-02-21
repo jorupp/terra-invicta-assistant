@@ -516,7 +516,10 @@ type CalcSortColumn =
   | "totalCost"
   | "deltaV"
   | "acceleration"
-  | "travelDays";
+  | "travelDays"
+  | "techResearchRemaining"
+  | "projectResearchRemaining"
+  | "unlockChance";
 
 interface CalcParams {
   dryMassTons: number;
@@ -627,6 +630,11 @@ function computeCalcRow(
     driveName: drive.friendlyName,
     driveEfficiency: drive.efficiency,
     reactorEfficiency: drive.reactorEfficiency,
+    techResearchRemaining: drive.techResearchRemaining,
+    projectResearchRemaining: drive.projectResearchRemaining,
+    unlockChance: drive.unlockChance,
+    requiredTechs: drive.requiredTechs,
+    requiredProjects: drive.requiredProjects,
     reactorName: drive.reactorName,
     reactorTonsPerGW: drive.reactorTonsPerGW,
     powerRequiredGW: drive.powerRequiredGW,
@@ -749,6 +757,15 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
           break;
         case "travelDays":
           cmp = a.travelDays - b.travelDays;
+          break;
+        case "techResearchRemaining":
+          cmp = a.techResearchRemaining - b.techResearchRemaining;
+          break;
+        case "projectResearchRemaining":
+          cmp = a.projectResearchRemaining - b.projectResearchRemaining;
+          break;
+        case "unlockChance":
+          cmp = (a.unlockChance ?? 100) - (b.unlockChance ?? 100);
           break;
       }
       return calcSortDirection === "asc" ? cmp : -cmp;
@@ -912,6 +929,27 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
             >
               Travel Days <CalcSortIcon col="travelDays" />
             </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("unlockChance")}
+              title="Base Unlock Chance (%)"
+            >
+              Unlock <CalcSortIcon col="unlockChance" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("techResearchRemaining")}
+              title="Tech Research Remaining (thousands)"
+            >
+              Tech Res <CalcSortIcon col="techResearchRemaining" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("projectResearchRemaining")}
+              title="Project Research Remaining (thousands)"
+            >
+              Proj Res <CalcSortIcon col="projectResearchRemaining" />
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -1054,6 +1092,33 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
               <TableCell className="text-right">{smartRound(row.deltaV)}</TableCell>
               <TableCell className="text-right">{smartRound(row.acceleration)}</TableCell>
               <TableCell className="text-right">{smartRound(row.travelDays)}</TableCell>
+              <TableCell className="text-right">
+                {row.unlockChance !== undefined ? `${row.unlockChance}%` : ""}
+              </TableCell>
+              <TableCell
+                className="text-right"
+                title={
+                  row.requiredTechs.length > 0
+                    ? row.requiredTechs
+                        .map((name: string) => analysis.techs.get(name)?.displayName || name)
+                        .join("\n")
+                    : undefined
+                }
+              >
+                {row.techResearchRemaining > 0 ? smartRound(row.techResearchRemaining / 1000) : "-"}
+              </TableCell>
+              <TableCell
+                className="text-right"
+                title={
+                  row.requiredProjects.length > 0
+                    ? row.requiredProjects
+                        .map((name: string) => analysis.projects.get(name)?.displayName || name)
+                        .join("\n")
+                    : undefined
+                }
+              >
+                {row.projectResearchRemaining > 0 ? smartRound(row.projectResearchRemaining / 1000) : "-"}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
