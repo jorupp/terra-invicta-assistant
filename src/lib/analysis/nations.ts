@@ -167,6 +167,7 @@ export interface NationClaimTarget {
   executiveFactionName: string | null;
   executiveFactionTemplateName: string | null;
   isCapitalClaim: boolean;
+  otherPlayerCapitalClaimants: { nationId: number; nationName: string }[];
 }
 
 export interface NationClaimsEntry {
@@ -188,6 +189,28 @@ export function analyzeNationClaims({
   const nationStateById = new Map(allNationStates.map((n) => [n.ID.value, n]));
 
   const playerNationIdSet = new Set(playerNationIds);
+
+  // Pre-pass: build map of targetNationId → player nations that have a capital claim on it
+  const capitalClaimantsByTarget = new Map<number, { nationId: number; nationName: string }[]>();
+  for (const pNationId of playerNationIdSet) {
+    const pState = nationStateById.get(pNationId);
+    const pNation = nationsById.get(pNationId);
+    if (!pState || !pNation) continue;
+    for (const claimRef of pState.claims) {
+      const region = regionsById.get(claimRef.value);
+      if (!region || !region.nationId || region.nationId === pNationId) continue;
+      const targetState = nationStateById.get(region.nationId);
+      if (targetState?.capital?.value === claimRef.value) {
+        if (!capitalClaimantsByTarget.has(region.nationId)) {
+          capitalClaimantsByTarget.set(region.nationId, []);
+        }
+        capitalClaimantsByTarget.get(region.nationId)!.push({
+          nationId: pNationId,
+          nationName: pNation.displayName ?? pNation.templateName ?? "",
+        });
+      }
+    }
+  }
 
   const result: NationClaimsEntry[] = [];
 
@@ -276,6 +299,9 @@ export function analyzeNationClaims({
         executiveFactionName: execFaction?.displayName ?? null,
         executiveFactionTemplateName: execFaction?.templateName ?? null,
         isCapitalClaim,
+        otherPlayerCapitalClaimants: (capitalClaimantsByTarget.get(targetId) ?? []).filter(
+          (c) => c.nationId !== nationId,
+        ),
       });
     }
 

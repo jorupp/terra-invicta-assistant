@@ -464,6 +464,7 @@ function NationClaimsSection({ analysis }: { analysis: Analysis }) {
                   <TableHead title="Earliest date relations can improve (cooldown active if shown)">Relations After</TableHead>
                   <TableHead title="Earliest date war/rivalry action available (cooldown active if shown)">War After</TableHead>
                   <TableHead title="Faction controlling the Executive control point">Executive Faction</TableHead>
+                  <TableHead title="Other player-controlled nations with a capital claim on this nation">Co-claimants</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -493,6 +494,11 @@ function NationClaimsSection({ analysis }: { analysis: Analysis }) {
                       <TableCell className="flex items-center gap-1">
                         {FactionIcon && <FactionIcon className="p-1 rounded" />}
                         {target.executiveFactionName ?? <span className="text-muted-foreground">Uncontrolled</span>}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {target.otherPlayerCapitalClaimants.length > 0
+                          ? target.otherPlayerCapitalClaimants.map((c) => c.nationName).join(", ")
+                          : <span className="text-muted-foreground">–</span>}
                       </TableCell>
                     </TableRow>
                   );
