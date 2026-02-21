@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Materials } from "@/lib/templates";
+import { twMerge } from "tailwind-merge";
 
 type SortColumn =
   | "friendlyName"
@@ -600,6 +601,7 @@ function computeCalcRow(
     dataName: drive.dataName,
     driveName: drive.friendlyName,
     driveEfficiency: drive.efficiency,
+    propellant: drive.propellant,
     reactorEfficiency: drive.reactorEfficiency,
     techResearchRemaining: drive.techResearchRemaining,
     projectResearchRemaining: drive.projectResearchRemaining,
@@ -952,10 +954,21 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <TableCell className="text-right cursor-help">{smartRound(row.fuelMassTons)}</TableCell>
+                    <TableCell className="text-right cursor-help">
+                      <span
+                        className={twMerge(
+                          row.propellant === "Hydrogen" && "bg-blue-100 py-0.5 px-1 -mx-1 rounded",
+                          row.propellant === "NobleGases" && "bg-green-100 py-0.5 px-1 -mx-1 rounded",
+                        )}
+                      >
+                        {smartRound(row.fuelMassTons)}
+                      </span>
+                    </TableCell>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <div className="text-xs font-semibold mb-1">Fuel materials ({row.tanks} tanks)</div>
+                    <div className="text-xs font-semibold mb-1">
+                      Fuel materials ({row.tanks} tanks, {row.propellant})
+                    </div>
                     <ShowEffects {...row.fuelCost} />
                   </TooltipContent>
                 </Tooltip>
