@@ -68,11 +68,11 @@ export type ShowEffectsProps = Partial<
       volatiles?: number;
       metals?: number;
       nobles?: number;
+      nobleMetals?: number;
       fissiles?: number;
       antimatter?: number;
       exotics?: number;
-    } &
-    Pick<
+    } & Pick<
       TIOrgState,
       | "tier"
       | "takeoverDefense"
@@ -130,7 +130,7 @@ const Skill = ({
             overflow > 0 && "p-1 -mb-1.5",
             overflow === 1 && "bg-red-200",
             overflow === 2 && "bg-red-400",
-            overflow > 2 && "bg-red-600"
+            overflow > 2 && "bg-red-600",
           )}
         />{" "}
         <span title={baseValue.toFixed(0)}>{value}</span>
@@ -144,7 +144,7 @@ export const ShowEffects = (
   props: ShowEffectsProps & {
     highlightMissionClassName?: (missionName: MissionDataName) => string | undefined;
     highlightTier?: boolean;
-  }
+  },
 ) => {
   const maxLoyalty = props.maxLoyalty || 25;
   const tier = props.tier || 0;
@@ -208,7 +208,7 @@ export const ShowEffects = (
   const water = props.water || 0;
   const volatiles = props.volatiles || 0;
   const metals = props.metals || 0;
-  const nobles = props.nobles || 0;
+  const nobles = props.nobles || props.nobleMetals || 0;
   const fissiles = props.fissiles || 0;
   const antimatter = props.antimatter || 0;
   const exotics = props.exotics || 0;
@@ -610,6 +610,6 @@ export function pct(value: number) {
 
 export const techBonusesOrder = new Map<string, number>(
   ["Energy", "InformationScience", "LifeScience", "Materials", "MilitaryScience", "SocialScience", "SpaceScience"].map(
-    (i, ix) => [i, ix]
-  )
+    (i, ix) => [i, ix],
+  ),
 );

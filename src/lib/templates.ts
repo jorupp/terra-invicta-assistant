@@ -32,7 +32,7 @@ if (!templateDir) {
 const cachedTemplates: { [K in keyof templateMap]?: templateMap[K] } = {};
 export async function getTemplate<
   TemplateName extends keyof templateMap,
-  TemplateData extends templateMap[TemplateName]
+  TemplateData extends templateMap[TemplateName],
 >(filename: TemplateName): Promise<TemplateData> {
   if (cachedTemplates[filename]) {
     return cachedTemplates[filename] as TemplateData;
@@ -981,6 +981,7 @@ export interface PowerPlant {
     volatiles: number;
     metals: number;
     nobleMetals: number;
+    exotics: number;
   };
   iconResource: string;
 }
@@ -1458,4 +1459,14 @@ export interface SpaceShip {
 export interface TimeEvent {
   dataName: string;
   [key: string]: any;
+}
+
+export interface Materials {
+  water?: number;
+  volatiles?: number;
+  metals?: number;
+  nobleMetals?: number;
+  fissiles?: number;
+  antimatter?: number;
+  exotics?: number;
 }

@@ -1,6 +1,7 @@
 import { localizations } from "../localization";
 import { SaveFile } from "../savefile";
 import { templates } from "../templates";
+import { addMaterials } from "../utils";
 import { analyzeFactions } from "./factions";
 import { analyzeResearch } from "./research";
 
@@ -159,52 +160,41 @@ export async function analyzeDrives(
     const isProjectComplete = playerFaction!.finishedProjectNames.includes(drive.requiredProjectName);
 
     // Multiply propellant materials by 10 for per-tank values
-    const propellantMaterials = {
-      water: drive.perTankPropellantMaterials.water * 10,
-      volatiles: drive.perTankPropellantMaterials.volatiles * 10,
-      metals: drive.perTankPropellantMaterials.metals * 10,
-      nobleMetals: drive.perTankPropellantMaterials.nobleMetals * 10,
-      fissiles: drive.perTankPropellantMaterials.fissiles * 10,
-      antimatter: drive.perTankPropellantMaterials.antimatter * 10,
-    };
+    const propellantMaterials = addMaterials(drive.perTankPropellantMaterials, undefined, 10);
 
     // Calculate how many tanks the player can afford with current resources
     const resourceAmounts = [
       {
         name: "Water",
-        tanks: propellantMaterials.water > 0 ? playerFaction!.resources.Water / propellantMaterials.water : Infinity,
+        tanks: propellantMaterials.water ? playerFaction!.resources.Water / propellantMaterials.water : Infinity,
       },
       {
         name: "Volatiles",
-        tanks:
-          propellantMaterials.volatiles > 0
-            ? playerFaction!.resources.Volatiles / propellantMaterials.volatiles
-            : Infinity,
+        tanks: propellantMaterials.volatiles
+          ? playerFaction!.resources.Volatiles / propellantMaterials.volatiles
+          : Infinity,
       },
       {
         name: "Metals",
-        tanks: propellantMaterials.metals > 0 ? playerFaction!.resources.Metals / propellantMaterials.metals : Infinity,
+        tanks: propellantMaterials.metals ? playerFaction!.resources.Metals / propellantMaterials.metals : Infinity,
       },
       {
         name: "NobleMetals",
-        tanks:
-          propellantMaterials.nobleMetals > 0
-            ? playerFaction!.resources.NobleMetals / propellantMaterials.nobleMetals
-            : Infinity,
+        tanks: propellantMaterials.nobleMetals
+          ? playerFaction!.resources.NobleMetals / propellantMaterials.nobleMetals
+          : Infinity,
       },
       {
         name: "Fissiles",
-        tanks:
-          propellantMaterials.fissiles > 0
-            ? playerFaction!.resources.Fissiles / propellantMaterials.fissiles
-            : Infinity,
+        tanks: propellantMaterials.fissiles
+          ? playerFaction!.resources.Fissiles / propellantMaterials.fissiles
+          : Infinity,
       },
       {
         name: "Antimatter",
-        tanks:
-          propellantMaterials.antimatter > 0
-            ? playerFaction!.resources.Antimatter / propellantMaterials.antimatter
-            : Infinity,
+        tanks: propellantMaterials.antimatter
+          ? playerFaction!.resources.Antimatter / propellantMaterials.antimatter
+          : Infinity,
       },
     ];
 
@@ -322,23 +312,13 @@ export async function analyzeDrives(
     // Calculate material breakdown for reactor
     const reactorMaterials =
       bestReactor && reactorResources !== undefined
-        ? {
-            water: bestReactor.weightedBuildMaterials.water * reactorResources,
-            volatiles: bestReactor.weightedBuildMaterials.volatiles * reactorResources,
-            metals: bestReactor.weightedBuildMaterials.metals * reactorResources,
-            nobleMetals: bestReactor.weightedBuildMaterials.nobleMetals * reactorResources,
-          }
+        ? addMaterials(bestReactor.weightedBuildMaterials, undefined, reactorResources)
         : undefined;
 
     // Calculate material breakdown for radiator
     const radiatorMaterials =
       bestRadiator && radiatorResources !== undefined
-        ? {
-            volatiles: bestRadiator.weightedBuildMaterials.volatiles * radiatorResources,
-            metals: bestRadiator.weightedBuildMaterials.metals * radiatorResources,
-            nobleMetals: bestRadiator.weightedBuildMaterials.nobleMetals * radiatorResources,
-            exotics: bestRadiator.weightedBuildMaterials.exotics * radiatorResources,
-          }
+        ? addMaterials(bestRadiator.weightedBuildMaterials, undefined, radiatorResources)
         : undefined;
 
     // Calculate hypothetical ship performance

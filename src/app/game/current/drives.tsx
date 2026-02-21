@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ShowEffects } from "@/components/showEffects";
 import { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
-import { smartRound, formatPercent } from "@/lib/utils";
+import { smartRound, formatPercent, addMaterials } from "@/lib/utils";
 import { ResearchLink } from "./researchLink";
 import { useTechnologyGoals } from "./technologyGoals";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Materials } from "@/lib/templates";
 
 type SortColumn =
   | "friendlyName"
@@ -580,45 +581,15 @@ function computeCalcRow(
   // Material costs
   const radiatorResources = radiatorTons / 10;
   const radiatorCost =
-    radiator && needsRadiator
-      ? {
-          volatiles: (radiator.weightedBuildMaterials.volatiles || 0) * radiatorResources,
-          metals: (radiator.weightedBuildMaterials.metals || 0) * radiatorResources,
-          nobleMetals: (radiator.weightedBuildMaterials.nobleMetals || 0) * radiatorResources,
-          exotics: (radiator.weightedBuildMaterials.exotics || 0) * radiatorResources,
-        }
-      : { volatiles: 0, metals: 0, nobleMetals: 0, exotics: 0 };
+    radiator && needsRadiator ? addMaterials(radiator.weightedBuildMaterials, undefined, radiatorResources) : {};
 
-  const fuelCost = {
-    water: drive.propellantMaterials.water * tanksNeeded,
-    volatiles: drive.propellantMaterials.volatiles * tanksNeeded,
-    metals: drive.propellantMaterials.metals * tanksNeeded,
-    nobleMetals: drive.propellantMaterials.nobleMetals * tanksNeeded,
-    fissiles: drive.propellantMaterials.fissiles * tanksNeeded,
-    antimatter: drive.propellantMaterials.antimatter * tanksNeeded,
-  };
+  const fuelCost = addMaterials(drive.propellantMaterials, undefined, tanksNeeded);
 
-  const rc = drive.reactorMaterials || { water: 0, volatiles: 0, metals: 0, nobleMetals: 0 };
+  const rc: Materials = drive.reactorMaterials || {};
   const driveRes = (drive.flatMass_tons || 0) / 10;
-  const driveCost = drive.driveBuildMaterials
-    ? {
-        water: (drive.driveBuildMaterials.water || 0) * driveRes,
-        volatiles: (drive.driveBuildMaterials.volatiles || 0) * driveRes,
-        metals: (drive.driveBuildMaterials.metals || 0) * driveRes,
-        exotics: (drive.driveBuildMaterials.exotics || 0) * driveRes,
-      }
-    : { water: 0, volatiles: 0, metals: 0, exotics: 0 };
+  const driveCost = drive.driveBuildMaterials ? addMaterials(drive.driveBuildMaterials, undefined, driveRes) : {};
 
-  const totalCost = {
-    water: (rc.water || 0) + (fuelCost.water || 0) + (driveCost.water || 0),
-    volatiles:
-      (rc.volatiles || 0) + (radiatorCost.volatiles || 0) + (fuelCost.volatiles || 0) + (driveCost.volatiles || 0),
-    metals: (rc.metals || 0) + (radiatorCost.metals || 0) + (fuelCost.metals || 0) + (driveCost.metals || 0),
-    nobleMetals: (rc.nobleMetals || 0) + (radiatorCost.nobleMetals || 0) + (fuelCost.nobleMetals || 0),
-    fissiles: fuelCost.fissiles,
-    antimatter: fuelCost.antimatter,
-    exotics: (radiatorCost.exotics || 0) + (driveCost.exotics || 0),
-  };
+  const totalCost = addMaterials(rc, addMaterials(radiatorCost, addMaterials(fuelCost, driveCost)));
 
   const totalCostResources = Object.values(totalCost).reduce((a, b) => a + b, 0);
   const hardwareMass = (drive.reactorTons || 0) + radiatorTons + (drive.flatMass_tons || 0);
@@ -974,12 +945,7 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="text-xs font-semibold mb-1">Drive materials</div>
-                    <ShowEffects
-                      water={row.driveCost.water || undefined}
-                      volatiles={row.driveCost.volatiles || undefined}
-                      metals={row.driveCost.metals || undefined}
-                      exotics={row.driveCost.exotics || undefined}
-                    />
+                    <ShowEffects {...row.driveCost} />
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -990,14 +956,7 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="text-xs font-semibold mb-1">Fuel materials ({row.tanks} tanks)</div>
-                    <ShowEffects
-                      water={row.fuelCost.water || undefined}
-                      volatiles={row.fuelCost.volatiles || undefined}
-                      metals={row.fuelCost.metals || undefined}
-                      nobles={row.fuelCost.nobleMetals || undefined}
-                      fissiles={row.fuelCost.fissiles || undefined}
-                      antimatter={row.fuelCost.antimatter || undefined}
-                    />
+                    <ShowEffects {...row.fuelCost} />
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -1030,12 +989,7 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
                         <div className="text-xs">Mass: {smartRound(row.reactorMassTons)} t</div>
                       )}
                       <div className="text-xs font-semibold mt-1">Materials</div>
-                      <ShowEffects
-                        water={row.reactorCost.water || undefined}
-                        volatiles={row.reactorCost.volatiles || undefined}
-                        metals={row.reactorCost.metals || undefined}
-                        nobles={row.reactorCost.nobleMetals || undefined}
-                      />
+                      <ShowEffects {...row.reactorCost} />
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -1062,12 +1016,7 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
                         <div className="text-xs">Mass: {smartRound(row.radiatorMassTons)} t</div>
                       )}
                       <div className="text-xs font-semibold mt-1">Materials</div>
-                      <ShowEffects
-                        volatiles={row.radiatorCost.volatiles || undefined}
-                        metals={row.radiatorCost.metals || undefined}
-                        nobles={row.radiatorCost.nobleMetals || undefined}
-                        exotics={row.radiatorCost.exotics || undefined}
-                      />
+                      <ShowEffects {...row.radiatorCost} />
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -1079,15 +1028,7 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
                 {smartRound(row.totalTons)}
               </TableCell>
               <TableCell>
-                <ShowEffects
-                  water={row.totalCost.water || undefined}
-                  volatiles={row.totalCost.volatiles || undefined}
-                  metals={row.totalCost.metals || undefined}
-                  nobles={row.totalCost.nobleMetals || undefined}
-                  fissiles={row.totalCost.fissiles || undefined}
-                  antimatter={row.totalCost.antimatter || undefined}
-                  exotics={row.totalCost.exotics || undefined}
-                />
+                <ShowEffects {...row.totalCost} />
               </TableCell>
               <TableCell className="text-right">{smartRound(row.deltaV)}</TableCell>
               <TableCell className="text-right">{smartRound(row.acceleration)}</TableCell>
@@ -1099,9 +1040,7 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
                 className="text-right"
                 title={
                   row.requiredTechs.length > 0
-                    ? row.requiredTechs
-                        .map((name: string) => analysis.techs.get(name)?.displayName || name)
-                        .join("\n")
+                    ? row.requiredTechs.map((name: string) => analysis.techs.get(name)?.displayName || name).join("\n")
                     : undefined
                 }
               >
