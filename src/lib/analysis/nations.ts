@@ -1,4 +1,4 @@
-import { SaveFile } from "../savefile";
+import { DateTime, SaveFile } from "../savefile";
 
 export interface AnalyzeNationsArgs {
   playerFactionId: number;
@@ -15,6 +15,7 @@ export function analyzeNations(saveFile: SaveFile, { playerFactionId }: AnalyzeN
     crackdownExpiration: cp.crackdownExpiration,
     defended: cp.defended,
     controlPointPriorities: cp.controlPointPriorities,
+    controlPointType: cp.controlPointType,
   }));
 
   const regions = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIRegionState"].map(({ Value: region }) => ({
@@ -131,4 +132,148 @@ export function analyzeNations(saveFile: SaveFile, { playerFactionId }: AnalyzeN
     .map((i) => i.Value);
 
   return { nations, nationsById, regions, regionsById, controlPoints, controlPointsByNationId, allNationStates };
+}
+
+export type NationRelationship = "federation" | "ally" | "neutral" | "rival";
+
+function isDateInFuture(date: DateTime, current: DateTime): boolean {
+  if (date.year !== current.year) return date.year > current.year;
+  if (date.month !== current.month) return date.month > current.month;
+  return date.day > current.day;
+}
+
+function formatDateShort(dt: DateTime): string {
+  return `${dt.year}-${String(dt.month).padStart(2, "0")}-${String(dt.day).padStart(2, "0")}`;
+}
+
+export interface AnalyzeNationClaimsArgs {
+  allNationStates: ReturnType<typeof analyzeNations>["allNationStates"];
+  nationsById: ReturnType<typeof analyzeNations>["nationsById"];
+  regionsById: ReturnType<typeof analyzeNations>["regionsById"];
+  controlPointsByNationId: ReturnType<typeof analyzeNations>["controlPointsByNationId"];
+  playerNationIds: number[];
+  playerFactionId: number;
+  factionsById: Map<number, { id: number; displayName: string | null; templateName: string | null }>;
+  gameCurrentDateTime: DateTime;
+}
+
+export interface NationClaimTarget {
+  targetNationId: number;
+  targetNationName: string;
+  relationship: NationRelationship;
+  relationsCanImproveAfter: string | null;
+  warActionAfter: string | null;
+  executiveFactionId: number | null;
+  executiveFactionName: string | null;
+  executiveFactionTemplateName: string | null;
+}
+
+export interface NationClaimsEntry {
+  nationId: number;
+  nationName: string;
+  targets: NationClaimTarget[];
+}
+
+export function analyzeNationClaims({
+  allNationStates,
+  nationsById,
+  regionsById,
+  controlPointsByNationId,
+  playerNationIds,
+  playerFactionId,
+  factionsById,
+  gameCurrentDateTime,
+}: AnalyzeNationClaimsArgs): NationClaimsEntry[] {
+  const nationStateById = new Map(allNationStates.map((n) => [n.ID.value, n]));
+
+  const playerNationIdSet = new Set(playerNationIds);
+
+  const result: NationClaimsEntry[] = [];
+
+  for (const nationId of playerNationIdSet) {
+    const nationState = nationStateById.get(nationId);
+    const nation = nationsById.get(nationId);
+    if (!nationState || !nation) continue;
+
+    // Map claims (region IDs) to target nation IDs (excluding self-claims)
+    const targetNationIds = new Set<number>();
+    for (const claimRef of nationState.claims) {
+      const region = regionsById.get(claimRef.value);
+      if (region && region.nationId && region.nationId !== nationId) {
+        targetNationIds.add(region.nationId);
+      }
+    }
+
+    if (targetNationIds.size === 0) continue;
+
+    // Build cooldown lookups for this nation
+    const improveCooldowns = new Map<number, DateTime>(
+      (nationState.improveRelationsCooldowns || []).map((kv) => [kv.Key.value, kv.Value]),
+    );
+    const rivalryCooldowns = new Map<number, DateTime>(
+      (nationState.rivalryCooldowns || []).map((kv) => [kv.Key.value, kv.Value]),
+    );
+
+    const targets: NationClaimTarget[] = [];
+
+    for (const targetId of targetNationIds) {
+      const targetNation = nationsById.get(targetId);
+      const targetState = nationStateById.get(targetId);
+      if (!targetNation || !targetState) continue;
+
+      // Determine relationship
+      let relationship: NationRelationship = "neutral";
+      if (
+        nationState.federation &&
+        targetState.federation &&
+        nationState.federation.value === targetState.federation.value
+      ) {
+        relationship = "federation";
+      } else if (nationState.allies.some((a) => a.value === targetId)) {
+        relationship = "ally";
+      } else if (nationState.rivals.some((r) => r.value === targetId)) {
+        relationship = "rival";
+      }
+
+      // Cooldown dates (only show if in the future)
+      const improveDate = improveCooldowns.get(targetId);
+      const rivalryDate = rivalryCooldowns.get(targetId);
+      const relationsCanImproveAfter =
+        improveDate && isDateInFuture(improveDate, gameCurrentDateTime) ? formatDateShort(improveDate) : null;
+      const warActionAfter =
+        rivalryDate && isDateInFuture(rivalryDate, gameCurrentDateTime) ? formatDateShort(rivalryDate) : null;
+
+      // Executive CP faction in target nation
+      const targetCPs = controlPointsByNationId.get(targetId) || [];
+      const executiveCP = targetCPs.find((cp) => cp.controlPointType === "Executive");
+      const execFaction = executiveCP?.factionId ? factionsById.get(executiveCP.factionId) : null;
+
+      targets.push({
+        targetNationId: targetId,
+        targetNationName: targetNation.displayName ?? targetNation.templateName ?? "",
+        relationship,
+        relationsCanImproveAfter,
+        warActionAfter,
+        executiveFactionId: execFaction?.id ?? null,
+        executiveFactionName: execFaction?.displayName ?? null,
+        executiveFactionTemplateName: execFaction?.templateName ?? null,
+      });
+    }
+
+    // Sort targets by relationship priority then name
+    const relationOrder: Record<NationRelationship, number> = { federation: 0, ally: 1, neutral: 2, rival: 3 };
+    targets.sort((a, b) => {
+      const ro = relationOrder[a.relationship] - relationOrder[b.relationship];
+      return ro !== 0 ? ro : a.targetNationName.localeCompare(b.targetNationName);
+    });
+
+    result.push({
+      nationId,
+      nationName: nation.displayName ?? nation.templateName ?? "",
+      targets,
+    });
+  }
+
+  result.sort((a, b) => a.nationName.localeCompare(b.nationName));
+  return result;
 }

@@ -236,6 +236,11 @@ export interface TINationState extends BaseState {
   allies: IDValue[];
   rivals: IDValue[];
   claims: IDValue[];
+  hostileClaims: IDValue[];
+  wars: IDValue[];
+  federation: IDValue | null;
+  improveRelationsCooldowns: KeyValuePair<IDValue, DateTime>[];
+  rivalryCooldowns: KeyValuePair<IDValue, DateTime>[];
   numOilRegions_dailyCache: number;
   numMiningRegions_dailyCache: number;
   numCoreEconomicRegions_dailyCache: number;

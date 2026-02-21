@@ -352,6 +352,12 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
             </Table>
           </AccordionContent>
         </AccordionItem>
+        <AccordionItem value="nation-claims">
+          <AccordionTrigger>Nation Claims</AccordionTrigger>
+          <AccordionContent>
+            <NationClaimsSection analysis={analysis} />
+          </AccordionContent>
+        </AccordionItem>
       </SmartAccordion>
 
       <Collapsible>
@@ -419,3 +425,76 @@ const NationCPDetails = ({ analysis, nation }: { nation: Analysis["nations"][0];
     </>
   );
 };
+
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  federation: "Federation",
+  ally: "Ally",
+  neutral: "Neutral",
+  rival: "Rival",
+};
+
+const RELATIONSHIP_COLORS: Record<string, string> = {
+  federation: "text-blue-700 font-medium",
+  ally: "text-green-700 font-medium",
+  neutral: "",
+  rival: "text-red-700 font-medium",
+};
+
+function NationClaimsSection({ analysis }: { analysis: Analysis }) {
+  const { nationClaims } = analysis;
+
+  if (nationClaims.length === 0) {
+    return <p className="text-sm text-muted-foreground">No claims found on nations you control.</p>;
+  }
+
+  return (
+    <SmartAccordion type="multiple" storageKey="nation-claims-accordion">
+      {nationClaims.map((entry) => (
+        <AccordionItem key={entry.nationId} value={String(entry.nationId)}>
+          <AccordionTrigger>
+            {entry.nationName}{" "}
+            <span className="text-xs text-muted-foreground ml-1">({entry.targets.length} claim targets)</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Target Nation</TableHead>
+                  <TableHead>Relationship</TableHead>
+                  <TableHead title="Earliest date relations can improve (cooldown active if shown)">Relations After</TableHead>
+                  <TableHead title="Earliest date war/rivalry action available (cooldown active if shown)">War After</TableHead>
+                  <TableHead title="Faction controlling the Executive control point">Executive Faction</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entry.targets.map((target) => {
+                  const FactionIcon = target.executiveFactionTemplateName
+                    ? FactionIcons[target.executiveFactionTemplateName as keyof typeof FactionIcons]
+                    : null;
+                  return (
+                    <TableRow key={target.targetNationId}>
+                      <TableCell>{target.targetNationName}</TableCell>
+                      <TableCell className={RELATIONSHIP_COLORS[target.relationship]}>
+                        {RELATIONSHIP_LABELS[target.relationship]}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {target.relationsCanImproveAfter ?? <span className="text-muted-foreground">–</span>}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {target.warActionAfter ?? <span className="text-muted-foreground">–</span>}
+                      </TableCell>
+                      <TableCell className="flex items-center gap-1">
+                        {FactionIcon && <FactionIcon className="p-1 rounded" />}
+                        {target.executiveFactionName ?? <span className="text-muted-foreground">Uncontrolled</span>}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </SmartAccordion>
+  );
+}

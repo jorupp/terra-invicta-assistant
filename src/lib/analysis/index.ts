@@ -5,7 +5,7 @@ import { analyzeHabSites } from "./habSites";
 import { analyzePlanets } from "./planets";
 import { analyzeResearch } from "./research";
 import { analyzeFactions, postProcessFactions } from "./factions";
-import { analyzeNations } from "./nations";
+import { analyzeNations, analyzeNationClaims } from "./nations";
 import { analyzeHabs } from "./habs";
 import { analyzeFleets } from "./fleets";
 import { analyzeOrgs } from "./orgs";
@@ -111,6 +111,17 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     playerCouncilors,
   });
 
+  const nationClaims = analyzeNationClaims({
+    allNationStates,
+    nationsById,
+    regionsById,
+    controlPointsByNationId,
+    playerNationIds,
+    playerFactionId,
+    factionsById,
+    gameCurrentDateTime: time.currentDateTime,
+  });
+
   return {
     fileName,
     lastModified,
@@ -148,6 +159,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
         }
       : undefined,
     radiators: allRadiatorsWithMeta,
+    nationClaims,
   };
 }
 
