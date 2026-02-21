@@ -78,7 +78,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     orbitsById,
     fleets,
   });
-  const { drives, bestRadiator } = await analyzeDrives(saveFile, { playerFaction, techs, projects, globalTechState });
+  const { drives, bestRadiator, allRadiatorsWithMeta } = await analyzeDrives(saveFile, { playerFaction, techs, projects, globalTechState });
 
   const {
     playerStealableOrgs,
@@ -147,6 +147,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
           gwPerTon: bestRadiator.gwPerTon,
         }
       : undefined,
+    radiators: allRadiatorsWithMeta,
   };
 }
 

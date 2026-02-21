@@ -110,6 +110,8 @@ export async function analyzeDrives(
     return playerFaction!.finishedProjectNames.includes(radiator.requiredProjectName);
   });
 
+  const availableRadiatorNames = new Set(availableRadiators.map((r) => r.dataName));
+
   // note: this was completely made up by claude-sonnet-4.5 - I told it to guess since I didn't know the formula and I know TI likes to model real-world physics.
   // Calculate GW per ton for each radiator
   // Power dissipated (W) = specificPower_2s_KWkg * 1000 (to convert kW to W) * mass (kg)
@@ -118,6 +120,15 @@ export async function analyzeDrives(
   const radiatorsWithEfficiency = availableRadiators.map((radiator) => ({
     ...radiator,
     gwPerTon: radiator.specificPower_2s_KWkg / 1000,
+  }));
+
+  // All radiators (including locked) with unlock status, for the dynamic drive calculator
+  const allRadiatorsWithMeta = allRadiators.map((radiator) => ({
+    dataName: radiator.dataName,
+    friendlyName: radiator.friendlyName,
+    gwPerTon: radiator.specificPower_2s_KWkg / 1000,
+    isUnlocked: availableRadiatorNames.has(radiator.dataName),
+    weightedBuildMaterials: radiator.weightedBuildMaterials,
   }));
 
   // Find the best radiator (highest GW per ton)
@@ -277,7 +288,7 @@ export async function analyzeDrives(
     let reactorAndRadiatorTons: number | undefined = undefined;
     let reactorName: string | undefined = undefined;
     let reactorGW: number | undefined = undefined;
-    let reactorGWperTon: number | undefined = undefined;
+    let reactorTonsPerGW: number | undefined = undefined;
     let wasteHeatGW: number | undefined = undefined;
     let radiatorName: string | undefined = undefined;
     let radiatorGWperTon: number | undefined = undefined;
@@ -285,10 +296,10 @@ export async function analyzeDrives(
     if (bestReactor) {
       reactorName = bestReactor.friendlyName;
       reactorGW = powerRequiredGW;
-      reactorGWperTon = bestReactor.specificPower_tGW;
+      reactorTonsPerGW = bestReactor.specificPower_tGW;
 
-      // Reactor weight = power required / specific power (tons per GW)
-      reactorTons = powerRequiredGW / bestReactor.specificPower_tGW;
+      // Reactor weight = power required * specific mass (tons per GW)
+      reactorTons = powerRequiredGW * bestReactor.specificPower_tGW;
 
       // For Calc/Closed cooling drives, add radiator weight
       if ((drive.cooling === "Calc" || drive.cooling === "Closed") && bestRadiator) {
@@ -432,7 +443,7 @@ export async function analyzeDrives(
       reactorName,
       reactorDebugInfo,
       reactorGW,
-      reactorGWperTon,
+      reactorTonsPerGW,
       wasteHeatGW,
       radiatorName,
       radiatorGWperTon,
@@ -445,8 +456,10 @@ export async function analyzeDrives(
       tripTime,
       tripType,
       remainingDeltaV,
+      flatMass_tons: drive.flatMass_tons,
+      driveBuildMaterials: drive.weightedBuildMaterials,
     };
   });
 
-  return { drives, bestRadiator };
+  return { drives, bestRadiator, allRadiatorsWithMeta };
 }

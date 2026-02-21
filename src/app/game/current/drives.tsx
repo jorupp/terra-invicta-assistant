@@ -2,13 +2,18 @@ import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ShowEffects } from "@/components/showEffects";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { smartRound, formatPercent } from "@/lib/utils";
 import { ResearchLink } from "./researchLink";
 import { useTechnologyGoals } from "./technologyGoals";
 import { Button } from "@/components/ui/button";
 import { Water, Volatiles, Metals, Nobles, Fissiles, Antimatter } from "@/components/icons";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SmartAccordion } from "@/components/ui/smart-accordion";
+import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 type SortColumn =
   | "friendlyName"
@@ -126,14 +131,13 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold">Drive Systems</h3>
         {analysis.bestRadiator && (
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground">
             Best available radiator: <span className="font-medium">{analysis.bestRadiator.friendlyName}</span> (
             {smartRound(1 / analysis.bestRadiator.gwPerTon)} ton/GW)
           </p>
         )}
-        {!analysis.bestRadiator && <p className="text-sm text-muted-foreground mt-1">No radiators available yet</p>}
+        {!analysis.bestRadiator && <p className="text-sm text-muted-foreground">No radiators available yet</p>}
       </div>
       <Table>
         <TableHeader>
@@ -291,12 +295,12 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
             const rowClassName = isInGoals
               ? "bg-green-50"
               : drive.tanksAffordable < 10
-              ? "bg-red-50"
-              : drive.tanksAffordable < 100
-              ? "bg-orange-50"
-              : drive.tanksAffordable < 500
-              ? "bg-yellow-50"
-              : "";
+                ? "bg-red-50"
+                : drive.tanksAffordable < 100
+                  ? "bg-orange-50"
+                  : drive.tanksAffordable < 500
+                    ? "bg-yellow-50"
+                    : "";
 
             return (
               <TableRow key={drive.dataName} className={rowClassName}>
@@ -339,7 +343,7 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   <ShowEffects {...propellantEffects} />
                 </TableCell>
                 <TableCell className="text-xs">{drive.requiredPowerPlantDisplayName || "None"}</TableCell>
-                <TableCell 
+                <TableCell
                   className="text-right"
                   title={
                     !isNaN(drive.powerRequiredGW)
@@ -348,17 +352,21 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                           `Required Power (accounts for efficiency): ${smartRound(drive.reqPower_GW)} GW`,
                           `Drive Efficiency: ${formatPercent(drive.efficiency * 100)}`,
                           drive.thrusters > 1 ? `Number of Thrusters: ${drive.thrusters}` : null,
-                          drive.reactorEfficiency !== undefined ? `\nReactor Efficiency: ${formatPercent(drive.reactorEfficiency * 100)}` : null,
-                          drive.wasteHeatGW !== undefined ? `Waste Heat: ${smartRound(drive.powerRequiredGW)} GW × ${formatPercent((1 - (drive.reactorEfficiency || 0)) * 100)} = ${smartRound(drive.wasteHeatGW)} GW` : null,
-                        ].filter(Boolean).join('\n')
+                          drive.reactorEfficiency !== undefined
+                            ? `\nReactor Efficiency: ${formatPercent(drive.reactorEfficiency * 100)}`
+                            : null,
+                          drive.wasteHeatGW !== undefined
+                            ? `Waste Heat: ${smartRound(drive.powerRequiredGW)} GW × ${formatPercent((1 - (drive.reactorEfficiency || 0)) * 100)} = ${smartRound(drive.wasteHeatGW)} GW`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join("\n")
                       : undefined
                   }
                 >
                   {!isNaN(drive.powerRequiredGW) ? smartRound(drive.powerRequiredGW) : "-"}
                 </TableCell>
-                <TableCell 
-                  className="text-right"
-                >
+                <TableCell className="text-right">
                   {drive.reactorAndRadiatorTons !== undefined ? (
                     <TooltipProvider>
                       <Tooltip>
@@ -371,10 +379,18 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                               <div>
                                 <div className="font-semibold mb-1">Reactor: {drive.reactorName}</div>
                                 <div className="ml-2 text-xs space-y-1">
-                                  {drive.reactorGW !== undefined && <div>Power Output: {smartRound(drive.reactorGW)} GW</div>}
-                                  {drive.reactorGWperTon !== undefined && <div>Specific Power: {smartRound(drive.reactorGWperTon)} GW/t</div>}
-                                  {drive.reactorTons !== undefined && <div>Mass: {smartRound(drive.reactorTons)} tons</div>}
-                                  {drive.reactorResources !== undefined && <div>Resources: {smartRound(drive.reactorResources)}</div>}
+                                  {drive.reactorGW !== undefined && (
+                                    <div>Power Output: {smartRound(drive.reactorGW)} GW</div>
+                                  )}
+                                  {drive.reactorTonsPerGW !== undefined && (
+                                    <div>Specific Power: {smartRound(drive.reactorTonsPerGW)} t/GW</div>
+                                  )}
+                                  {drive.reactorTons !== undefined && (
+                                    <div>Mass: {smartRound(drive.reactorTons)} tons</div>
+                                  )}
+                                  {drive.reactorResources !== undefined && (
+                                    <div>Resources: {smartRound(drive.reactorResources)}</div>
+                                  )}
                                   {drive.reactorMaterials && (
                                     <div className="flex items-center gap-1">
                                       <ShowEffects
@@ -392,10 +408,18 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                               <div>
                                 <div className="font-semibold mb-1">Radiator: {drive.radiatorName}</div>
                                 <div className="ml-2 text-xs space-y-1">
-                                  {drive.wasteHeatGW !== undefined && <div>Waste Heat: {smartRound(drive.wasteHeatGW)} GW</div>}
-                                  {drive.radiatorGWperTon !== undefined && <div>Cooling: {smartRound(drive.radiatorGWperTon)} GW/t</div>}
-                                  {drive.radiatorTons !== undefined && <div>Mass: {smartRound(drive.radiatorTons)} tons</div>}
-                                  {drive.radiatorResources !== undefined && <div>Resources: {smartRound(drive.radiatorResources)}</div>}
+                                  {drive.wasteHeatGW !== undefined && (
+                                    <div>Waste Heat: {smartRound(drive.wasteHeatGW)} GW</div>
+                                  )}
+                                  {drive.radiatorGWperTon !== undefined && (
+                                    <div>Cooling: {smartRound(drive.radiatorGWperTon)} GW/t</div>
+                                  )}
+                                  {drive.radiatorTons !== undefined && (
+                                    <div>Mass: {smartRound(drive.radiatorTons)} tons</div>
+                                  )}
+                                  {drive.radiatorResources !== undefined && (
+                                    <div>Resources: {smartRound(drive.radiatorResources)}</div>
+                                  )}
                                   {drive.radiatorMaterials && (
                                     <div className="flex items-center gap-1">
                                       <ShowEffects
@@ -424,32 +448,40 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
                   {drive.unlockChance !== undefined ? `${drive.unlockChance}%` : ""}
                 </TableCell>
                 <TableCell className="text-right">
-                  {drive.tanksAffordable} {drive.limitingResourceName && (() => {
-                    const ResourceIcon = {
-                      Water,
-                      Volatiles,
-                      Metals,
-                      NobleMetals: Nobles,
-                      Fissiles,
-                      Antimatter,
-                    }[drive.limitingResourceName];
-                    return ResourceIcon ? <ResourceIcon /> : null;
-                  })()}
+                  {drive.tanksAffordable}{" "}
+                  {drive.limitingResourceName &&
+                    (() => {
+                      const ResourceIcon = {
+                        Water,
+                        Volatiles,
+                        Metals,
+                        NobleMetals: Nobles,
+                        Fissiles,
+                        Antimatter,
+                      }[drive.limitingResourceName];
+                      return ResourceIcon ? <ResourceIcon /> : null;
+                    })()}
                 </TableCell>
-                <TableCell 
+                <TableCell
                   className="text-right"
-                  title={drive.requiredTechs.length > 0 
-                    ? drive.requiredTechs.map((name: string) => analysis.techs.get(name)?.displayName || name).join('\n')
-                    : undefined
+                  title={
+                    drive.requiredTechs.length > 0
+                      ? drive.requiredTechs
+                          .map((name: string) => analysis.techs.get(name)?.displayName || name)
+                          .join("\n")
+                      : undefined
                   }
                 >
                   {drive.techResearchRemaining > 0 ? smartRound(drive.techResearchRemaining / 1000) : "-"}
                 </TableCell>
-                <TableCell 
+                <TableCell
                   className="text-right"
-                  title={drive.requiredProjects.length > 0 
-                    ? drive.requiredProjects.map((name: string) => analysis.projects.get(name)?.displayName || name).join('\n')
-                    : undefined
+                  title={
+                    drive.requiredProjects.length > 0
+                      ? drive.requiredProjects
+                          .map((name: string) => analysis.projects.get(name)?.displayName || name)
+                          .join("\n")
+                      : undefined
                   }
                 >
                   {drive.projectResearchRemaining > 0 ? smartRound(drive.projectResearchRemaining / 1000) : "-"}
@@ -471,10 +503,584 @@ function DrivesTable({ analysis }: { analysis: Analysis }) {
   );
 }
 
+type CalcSortColumn =
+  | "driveName"
+  | "driveEfficiency"
+  | "reactorEfficiency"
+  | "tanks"
+  | "driveMass"
+  | "fuelMass"
+  | "reactorMass"
+  | "radiatorMass"
+  | "totalTons"
+  | "totalCost"
+  | "deltaV"
+  | "acceleration"
+  | "travelDays";
+
+interface CalcParams {
+  dryMassTons: number;
+  radiatorDataName: string;
+  targetDeltaVKps: number;
+  targetDistanceAU: number;
+}
+
+function computeCalcRow(
+  drive: Analysis["drives"][0],
+  radiator: Analysis["radiators"][0] | undefined,
+  params: CalcParams,
+) {
+  if (drive.reactorTons === undefined) return null;
+
+  const needsRadiator = drive.cooling === "Calc" || drive.cooling === "Closed";
+  const radiatorTons = needsRadiator && radiator ? (drive.wasteHeatGW || 0) / radiator.gwPerTon : 0;
+
+  const fixedMassTons = params.dryMassTons + (drive.reactorTons || 0) + radiatorTons;
+
+  const EV_ms = drive.EV_kps * 1000;
+  const targetDV_ms = params.targetDeltaVKps * 1000;
+  const massRatio = Math.exp(targetDV_ms / EV_ms);
+  const requiredFuelMassTons = fixedMassTons * (massRatio - 1);
+  const requiredTanks = Math.ceil(requiredFuelMassTons / 100);
+  if (requiredTanks > 1000) return null; // can't reach target deltaV within 1000-tank limit
+  const tanksNeeded = Math.max(1, requiredTanks);
+
+  const fuelMassTons = tanksNeeded * 100;
+  const totalMassTons = fixedMassTons + fuelMassTons;
+
+  const actualDeltaVMs = EV_ms * Math.log(totalMassTons / fixedMassTons);
+  const actualDeltaVKps = actualDeltaVMs / 1000;
+
+  const totalMassKg = totalMassTons * 1000;
+  const accelerationMs2 = drive.thrust_N / totalMassKg;
+  const accelerationMilliGs = (accelerationMs2 / 9.81) * 1000;
+
+  const targetDistanceM = params.targetDistanceAU * 149597870700;
+  const midpointDistance = targetDistanceM / 2;
+  const avgMassKg = ((totalMassTons + fixedMassTons) / 2) * 1000;
+  const avgAcceleration = drive.thrust_N / avgMassKg;
+  const timeToMidpoint = Math.sqrt((2 * midpointDistance) / avgAcceleration);
+  const velocityAtMidpoint = avgAcceleration * timeToMidpoint;
+  const deltaVNeeded = 2 * velocityAtMidpoint;
+
+  let travelDays: number;
+  if (deltaVNeeded <= actualDeltaVMs) {
+    travelDays = (timeToMidpoint * 2) / 86400;
+  } else {
+    const maxVelocity = actualDeltaVMs / 2;
+    const accelDistance = (maxVelocity * maxVelocity) / (2 * avgAcceleration);
+    const coastDistance = targetDistanceM - 2 * accelDistance;
+    const accelTime = maxVelocity / avgAcceleration;
+    travelDays = coastDistance > 0 ? (2 * accelTime + coastDistance / maxVelocity) / 86400 : (2 * accelTime) / 86400;
+  }
+
+  // Material costs
+  const radiatorResources = radiatorTons / 10;
+  const radiatorCost =
+    radiator && needsRadiator
+      ? {
+          volatiles: (radiator.weightedBuildMaterials.volatiles || 0) * radiatorResources,
+          metals: (radiator.weightedBuildMaterials.metals || 0) * radiatorResources,
+          nobleMetals: (radiator.weightedBuildMaterials.nobleMetals || 0) * radiatorResources,
+          exotics: (radiator.weightedBuildMaterials.exotics || 0) * radiatorResources,
+        }
+      : { volatiles: 0, metals: 0, nobleMetals: 0, exotics: 0 };
+
+  const fuelCost = {
+    water: drive.propellantMaterials.water * tanksNeeded,
+    volatiles: drive.propellantMaterials.volatiles * tanksNeeded,
+    metals: drive.propellantMaterials.metals * tanksNeeded,
+    nobleMetals: drive.propellantMaterials.nobleMetals * tanksNeeded,
+    fissiles: drive.propellantMaterials.fissiles * tanksNeeded,
+    antimatter: drive.propellantMaterials.antimatter * tanksNeeded,
+  };
+
+  const rc = drive.reactorMaterials || { water: 0, volatiles: 0, metals: 0, nobleMetals: 0 };
+  const driveRes = (drive.flatMass_tons || 0) / 10;
+  const driveCost = drive.driveBuildMaterials
+    ? {
+        water: (drive.driveBuildMaterials.water || 0) * driveRes,
+        volatiles: (drive.driveBuildMaterials.volatiles || 0) * driveRes,
+        metals: (drive.driveBuildMaterials.metals || 0) * driveRes,
+        exotics: (drive.driveBuildMaterials.exotics || 0) * driveRes,
+      }
+    : { water: 0, volatiles: 0, metals: 0, exotics: 0 };
+
+  const totalCost = {
+    water: (rc.water || 0) + (fuelCost.water || 0) + (driveCost.water || 0),
+    volatiles:
+      (rc.volatiles || 0) + (radiatorCost.volatiles || 0) + (fuelCost.volatiles || 0) + (driveCost.volatiles || 0),
+    metals: (rc.metals || 0) + (radiatorCost.metals || 0) + (fuelCost.metals || 0) + (driveCost.metals || 0),
+    nobleMetals: (rc.nobleMetals || 0) + (radiatorCost.nobleMetals || 0) + (fuelCost.nobleMetals || 0),
+    fissiles: fuelCost.fissiles,
+    antimatter: fuelCost.antimatter,
+    exotics: (radiatorCost.exotics || 0) + (driveCost.exotics || 0),
+  };
+
+  const totalCostResources = Object.values(totalCost).reduce((a, b) => a + b, 0);
+  const hardwareMass = (drive.reactorTons || 0) + radiatorTons + (drive.flatMass_tons || 0);
+  const totalTons =
+    params.dryMassTons + (drive.flatMass_tons || 0) + (drive.reactorTons || 0) + radiatorTons + fuelMassTons;
+
+  return {
+    dataName: drive.dataName,
+    driveName: drive.friendlyName,
+    driveEfficiency: drive.efficiency,
+    reactorEfficiency: drive.reactorEfficiency,
+    reactorName: drive.reactorName,
+    reactorTonsPerGW: drive.reactorTonsPerGW,
+    powerRequiredGW: drive.powerRequiredGW,
+    wasteHeatGW: drive.wasteHeatGW,
+    radiatorName: needsRadiator && radiator ? radiator.friendlyName : undefined,
+    radiatorGWperTon: needsRadiator && radiator ? radiator.gwPerTon : undefined,
+    tanks: tanksNeeded,
+    hardwareMass,
+    totalTons,
+    driveMassTons: drive.flatMass_tons || 0,
+    fuelMassTons,
+    reactorMassTons: drive.reactorTons || 0,
+    radiatorMassTons: radiatorTons,
+    driveCost,
+    fuelCost,
+    reactorCost: rc,
+    radiatorCost,
+    totalCost,
+    totalCostResources,
+    deltaV: actualDeltaVKps,
+    acceleration: accelerationMilliGs,
+    travelDays,
+    isUnlocked: false, // filled below
+  };
+}
+
+function DriveCalculator({ analysis }: { analysis: Analysis }) {
+  const bestUnlockedRadiator = analysis.radiators
+    .filter((r) => r.isUnlocked)
+    .reduce((best, r) => (!best || r.gwPerTon > best.gwPerTon ? r : best), null as Analysis["radiators"][0] | null);
+
+  const [dryMassInput, setDryMassInput] = useState("10000");
+  const [radiatorDataName, setRadiatorDataName] = useState(bestUnlockedRadiator?.dataName ?? "");
+  const [targetDeltaVInput, setTargetDeltaVInput] = useState("250");
+  const [targetDistanceInput, setTargetDistanceInput] = useState("5");
+  const [params, setParams] = useState<CalcParams>({
+    dryMassTons: 10000,
+    radiatorDataName: bestUnlockedRadiator?.dataName ?? "",
+    targetDeltaVKps: 250,
+    targetDistanceAU: 5,
+  });
+  const [calcSortColumn, setCalcSortColumn] = useState<CalcSortColumn>("driveName");
+  const [calcSortDirection, setCalcSortDirection] = useState<"asc" | "desc">("asc");
+
+  const unlockedProjectNames = new Set(analysis.playerFaction.finishedProjectNames);
+
+  const handleUpdate = () => {
+    const dryMass = parseFloat(dryMassInput);
+    const targetDV = parseFloat(targetDeltaVInput);
+    const targetDist = parseFloat(targetDistanceInput);
+    if (!isNaN(dryMass) && !isNaN(targetDV) && !isNaN(targetDist)) {
+      setParams({ dryMassTons: dryMass, radiatorDataName, targetDeltaVKps: targetDV, targetDistanceAU: targetDist });
+    }
+  };
+
+  const selectedRadiator = useMemo(
+    () => analysis.radiators.find((r) => r.dataName === params.radiatorDataName),
+    [analysis.radiators, params.radiatorDataName],
+  );
+
+  const rows = useMemo(() => {
+    return analysis.drives
+      .map((drive) => {
+        const row = computeCalcRow(drive, selectedRadiator, params);
+        if (!row) return null;
+        return { ...row, isUnlocked: unlockedProjectNames.has(drive.requiredProjectName) };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysis.drives, params, selectedRadiator]);
+
+  const handleCalcSort = (col: CalcSortColumn) => {
+    if (calcSortColumn === col) {
+      setCalcSortDirection(calcSortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setCalcSortColumn(col);
+      setCalcSortDirection("asc");
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    return rows.toSorted((a, b) => {
+      let cmp = 0;
+      switch (calcSortColumn) {
+        case "driveName":
+          cmp = a.driveName.localeCompare(b.driveName);
+          break;
+        case "driveEfficiency":
+          cmp = a.driveEfficiency - b.driveEfficiency;
+          break;
+        case "reactorEfficiency":
+          cmp = (a.reactorEfficiency ?? 0) - (b.reactorEfficiency ?? 0);
+          break;
+        case "tanks":
+          cmp = a.tanks - b.tanks;
+          break;
+        case "driveMass":
+          cmp = a.driveMassTons - b.driveMassTons;
+          break;
+        case "fuelMass":
+          cmp = a.fuelMassTons - b.fuelMassTons;
+          break;
+        case "reactorMass":
+          cmp = a.reactorMassTons - b.reactorMassTons;
+          break;
+        case "radiatorMass":
+          cmp = a.radiatorMassTons - b.radiatorMassTons;
+          break;
+        case "totalTons":
+          cmp = a.totalTons - b.totalTons;
+          break;
+        case "totalCost":
+          cmp = a.totalCostResources - b.totalCostResources;
+          break;
+        case "deltaV":
+          cmp = a.deltaV - b.deltaV;
+          break;
+        case "acceleration":
+          cmp = a.acceleration - b.acceleration;
+          break;
+        case "travelDays":
+          cmp = a.travelDays - b.travelDays;
+          break;
+      }
+      return calcSortDirection === "asc" ? cmp : -cmp;
+    });
+  }, [rows, calcSortColumn, calcSortDirection]);
+
+  const CalcSortIcon = ({ col }: { col: CalcSortColumn }) => {
+    if (calcSortColumn !== col) return null;
+    return calcSortDirection === "asc" ? (
+      <ChevronUp className="inline h-4 w-4" />
+    ) : (
+      <ChevronDown className="inline h-4 w-4" />
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-4 items-end p-4 bg-muted/30 rounded-lg">
+        <div className="space-y-1">
+          <Label htmlFor="calc-dry-mass">Dry Mass (tons)</Label>
+          <Input
+            id="calc-dry-mass"
+            type="number"
+            className="w-32"
+            value={dryMassInput}
+            onChange={(e) => setDryMassInput(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="calc-radiator">Radiator</Label>
+          <Select value={radiatorDataName} onValueChange={setRadiatorDataName}>
+            <SelectTrigger id="calc-radiator" className="w-56">
+              <SelectValue placeholder="Select radiator" />
+            </SelectTrigger>
+            <SelectContent>
+              {analysis.radiators
+                .filter((r) => !r.dataName.toLowerCase().includes("collector"))
+                .toSorted((a, b) => b.gwPerTon - a.gwPerTon)
+                .map((r) => (
+                  <SelectItem key={r.dataName} value={r.dataName}>
+                    {r.friendlyName}
+                    {r.isUnlocked ? "" : " 🔒"} ({smartRound(1 / r.gwPerTon)} t/GW)
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="calc-deltav">Target ΔV (km/s)</Label>
+          <Input
+            id="calc-deltav"
+            type="number"
+            className="w-28"
+            value={targetDeltaVInput}
+            onChange={(e) => setTargetDeltaVInput(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="calc-distance">Target Distance (AU)</Label>
+          <Input
+            id="calc-distance"
+            type="number"
+            className="w-28"
+            value={targetDistanceInput}
+            onChange={(e) => setTargetDistanceInput(e.target.value)}
+          />
+        </div>
+        <Button onClick={handleUpdate}>Update</Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Dry mass is hull/payload (drive + reactor + radiator added on top). Tanks clamped to [1, 1000]. 🔒 = locked
+        radiator.
+      </p>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleCalcSort("driveName")}>
+              Drive <CalcSortIcon col="driveName" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("driveEfficiency")}
+              title="Drive efficiency"
+            >
+              Drive Eff <CalcSortIcon col="driveEfficiency" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("reactorEfficiency")}
+              title="Reactor efficiency"
+            >
+              React Eff <CalcSortIcon col="reactorEfficiency" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("tanks")}
+              title="Propellant tanks needed"
+            >
+              Tanks <CalcSortIcon col="tanks" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("driveMass")}
+              title="Drive hardware mass (tons)"
+            >
+              Drive t <CalcSortIcon col="driveMass" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("fuelMass")}
+              title="Fuel/propellant mass (tons)"
+            >
+              Fuel t <CalcSortIcon col="fuelMass" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("reactorMass")}
+              title="Reactor mass (tons)"
+            >
+              Reactor t <CalcSortIcon col="reactorMass" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("radiatorMass")}
+              title="Radiator mass (tons)"
+            >
+              Radiator t <CalcSortIcon col="radiatorMass" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("totalTons")}
+              title="Total ship mass: dry + drive + reactor + radiator + fuel (tons)"
+            >
+              Total t <CalcSortIcon col="totalTons" />
+            </TableHead>
+            <TableHead
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("totalCost")}
+              title="Total material cost (sortable by total resources)"
+            >
+              Total Cost <CalcSortIcon col="totalCost" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("deltaV")}
+              title="Actual delta-V achieved (km/s)"
+            >
+              ΔV (km/s) <CalcSortIcon col="deltaV" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("acceleration")}
+              title="Acceleration at full fuel (milli-g)"
+            >
+              Accel (mg) <CalcSortIcon col="acceleration" />
+            </TableHead>
+            <TableHead
+              className="text-right cursor-pointer hover:bg-muted/50"
+              onClick={() => handleCalcSort("travelDays")}
+              title={`Days to travel ${params.targetDistanceAU} AU`}
+            >
+              Travel Days <CalcSortIcon col="travelDays" />
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedRows.map((row) => (
+            <TableRow key={row.dataName} className={row.isUnlocked ? "" : "opacity-60"}>
+              <TableCell className="font-medium">
+                {row.driveName}
+                {!row.isUnlocked && <span className="ml-1 text-muted-foreground text-xs">(locked)</span>}
+                {row.reactorName && <div className="text-xs text-muted-foreground">{row.reactorName}</div>}
+              </TableCell>
+              <TableCell className="text-right">{formatPercent(row.driveEfficiency * 100)}</TableCell>
+              <TableCell className="text-right">
+                {row.reactorEfficiency !== undefined ? formatPercent(row.reactorEfficiency * 100) : "-"}
+              </TableCell>
+              <TableCell className="text-right">{row.tanks}</TableCell>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TableCell className="text-right cursor-help">
+                      {row.driveMassTons > 0 ? smartRound(row.driveMassTons) : "-"}
+                    </TableCell>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="text-xs font-semibold mb-1">Drive materials</div>
+                    <ShowEffects
+                      water={row.driveCost.water || undefined}
+                      volatiles={row.driveCost.volatiles || undefined}
+                      metals={row.driveCost.metals || undefined}
+                      exotics={row.driveCost.exotics || undefined}
+                    />
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TableCell className="text-right cursor-help">{smartRound(row.fuelMassTons)}</TableCell>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="text-xs font-semibold mb-1">Fuel materials ({row.tanks} tanks)</div>
+                    <ShowEffects
+                      water={row.fuelCost.water || undefined}
+                      volatiles={row.fuelCost.volatiles || undefined}
+                      metals={row.fuelCost.metals || undefined}
+                      nobles={row.fuelCost.nobleMetals || undefined}
+                      fissiles={row.fuelCost.fissiles || undefined}
+                      antimatter={row.fuelCost.antimatter || undefined}
+                    />
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TableCell className="text-right cursor-help">
+                      {row.reactorMassTons > 0 ? smartRound(row.reactorMassTons) : "-"}
+                    </TableCell>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold">{row.reactorName ?? "Reactor"}</div>
+                      {row.powerRequiredGW !== undefined && !isNaN(row.powerRequiredGW) && (
+                        <div className="text-xs">Power required: {smartRound(row.powerRequiredGW)} GW</div>
+                      )}
+                      {row.reactorEfficiency !== undefined && (
+                        <div className="text-xs">Efficiency: {formatPercent(row.reactorEfficiency * 100)}</div>
+                      )}
+                      {row.wasteHeatGW !== undefined && (
+                        <div className="text-xs">Waste heat: {smartRound(row.wasteHeatGW)} GW</div>
+                      )}
+                      {row.reactorTonsPerGW !== undefined && (
+                        <div className="text-xs">
+                          Specific power: {smartRound(row.reactorTonsPerGW)} t/GW (
+                          {smartRound(1 / row.reactorTonsPerGW)} GW/t)
+                        </div>
+                      )}
+                      {row.reactorMassTons > 0 && (
+                        <div className="text-xs">Mass: {smartRound(row.reactorMassTons)} t</div>
+                      )}
+                      <div className="text-xs font-semibold mt-1">Materials</div>
+                      <ShowEffects
+                        water={row.reactorCost.water || undefined}
+                        volatiles={row.reactorCost.volatiles || undefined}
+                        metals={row.reactorCost.metals || undefined}
+                        nobles={row.reactorCost.nobleMetals || undefined}
+                      />
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TableCell className="text-right cursor-help">
+                      {row.radiatorMassTons > 0 ? smartRound(row.radiatorMassTons) : "-"}
+                    </TableCell>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold">{row.radiatorName ?? "Radiator"}</div>
+                      {row.wasteHeatGW !== undefined && (
+                        <div className="text-xs">Waste heat to dissipate: {smartRound(row.wasteHeatGW)} GW</div>
+                      )}
+                      {row.radiatorGWperTon !== undefined && (
+                        <div className="text-xs">
+                          Cooling: {smartRound(row.radiatorGWperTon)} GW/t ({smartRound(1 / row.radiatorGWperTon)} t/GW)
+                        </div>
+                      )}
+                      {row.radiatorMassTons > 0 && (
+                        <div className="text-xs">Mass: {smartRound(row.radiatorMassTons)} t</div>
+                      )}
+                      <div className="text-xs font-semibold mt-1">Materials</div>
+                      <ShowEffects
+                        volatiles={row.radiatorCost.volatiles || undefined}
+                        metals={row.radiatorCost.metals || undefined}
+                        nobles={row.radiatorCost.nobleMetals || undefined}
+                        exotics={row.radiatorCost.exotics || undefined}
+                      />
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TableCell
+                className="text-right"
+                title={`Dry ${smartRound(params.dryMassTons)} + Drive ${smartRound(row.driveMassTons)} + Reactor ${smartRound(row.reactorMassTons)} + Radiator ${smartRound(row.radiatorMassTons)} + Fuel ${smartRound(row.fuelMassTons)}`}
+              >
+                {smartRound(row.totalTons)}
+              </TableCell>
+              <TableCell>
+                <ShowEffects
+                  water={row.totalCost.water || undefined}
+                  volatiles={row.totalCost.volatiles || undefined}
+                  metals={row.totalCost.metals || undefined}
+                  nobles={row.totalCost.nobleMetals || undefined}
+                  fissiles={row.totalCost.fissiles || undefined}
+                  antimatter={row.totalCost.antimatter || undefined}
+                  exotics={row.totalCost.exotics || undefined}
+                />
+              </TableCell>
+              <TableCell className="text-right">{smartRound(row.deltaV)}</TableCell>
+              <TableCell className="text-right">{smartRound(row.acceleration)}</TableCell>
+              <TableCell className="text-right">{smartRound(row.travelDays)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 export function getDrivesUi(analysis: Analysis) {
   return {
     key: "drives",
     tab: "Drives",
-    content: <DrivesTable analysis={analysis} />,
+    content: (
+      <SmartAccordion type="multiple" storageKey="drives-accordion" defaultValue={["drive-table", "drive-calculator"]}>
+        <AccordionItem value="drive-table">
+          <AccordionTrigger>Drive Systems</AccordionTrigger>
+          <AccordionContent>
+            <DrivesTable analysis={analysis} />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="drive-calculator">
+          <AccordionTrigger>Drive Calculator</AccordionTrigger>
+          <AccordionContent>
+            <DriveCalculator analysis={analysis} />
+          </AccordionContent>
+        </AccordionItem>
+      </SmartAccordion>
+    ),
   };
 }
