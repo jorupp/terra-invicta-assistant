@@ -166,6 +166,7 @@ export interface NationClaimTarget {
   executiveFactionId: number | null;
   executiveFactionName: string | null;
   executiveFactionTemplateName: string | null;
+  isCapitalClaim: boolean;
 }
 
 export interface NationClaimsEntry {
@@ -196,15 +197,21 @@ export function analyzeNationClaims({
     if (!nationState || !nation) continue;
 
     // Map claims (region IDs) to target nation IDs (excluding self-claims)
-    const targetNationIds = new Set<number>();
+    // Track which region IDs are claimed per target nation
+    const claimedRegionsByTargetNation = new Map<number, Set<number>>();
     for (const claimRef of nationState.claims) {
       const region = regionsById.get(claimRef.value);
       if (region && region.nationId && region.nationId !== nationId) {
-        targetNationIds.add(region.nationId);
+        if (!claimedRegionsByTargetNation.has(region.nationId)) {
+          claimedRegionsByTargetNation.set(region.nationId, new Set());
+        }
+        claimedRegionsByTargetNation.get(region.nationId)!.add(claimRef.value);
       }
     }
 
-    if (targetNationIds.size === 0) continue;
+    const targetNationIds = claimedRegionsByTargetNation.keys();
+
+    if (claimedRegionsByTargetNation.size === 0) continue;
 
     // Build cooldown lookups for this nation
     const improveCooldowns = new Map<number, DateTime>(
@@ -248,6 +255,17 @@ export function analyzeNationClaims({
       const executiveCP = targetCPs.find((cp) => cp.controlPointType === "Executive");
       const execFaction = executiveCP?.factionId ? factionsById.get(executiveCP.factionId) : null;
 
+      // Check if the player already controls the executive of the target nation
+      const playerOwnsExec = executiveCP?.factionId === playerFactionId;
+
+      // Check if any claim is on the target nation's capital region
+      const targetCapitalId = targetState.capital?.value;
+      const claimedRegions = claimedRegionsByTargetNation.get(targetId)!;
+      const isCapitalClaim = !!targetCapitalId && claimedRegions.has(targetCapitalId);
+
+      // Skip if player owns exec AND this is not a capital claim
+      if (playerOwnsExec && !isCapitalClaim) continue;
+
       targets.push({
         targetNationId: targetId,
         targetNationName: targetNation.displayName ?? targetNation.templateName ?? "",
@@ -257,14 +275,19 @@ export function analyzeNationClaims({
         executiveFactionId: execFaction?.id ?? null,
         executiveFactionName: execFaction?.displayName ?? null,
         executiveFactionTemplateName: execFaction?.templateName ?? null,
+        isCapitalClaim,
       });
     }
 
-    // Sort targets by relationship priority then name
+    // Sort targets by executive faction name (uncontrolled last), relationship, then target nation name
     const relationOrder: Record<NationRelationship, number> = { federation: 0, ally: 1, neutral: 2, rival: 3 };
     targets.sort((a, b) => {
-      const ro = relationOrder[a.relationship] - relationOrder[b.relationship];
-      return ro !== 0 ? ro : a.targetNationName.localeCompare(b.targetNationName);
+      const aFac = a.executiveFactionName ?? "\uFFFF";
+      const bFac = b.executiveFactionName ?? "\uFFFF";
+      const fc = aFac.localeCompare(bFac);
+      if (fc !== 0) return fc;
+      const rc = relationOrder[a.relationship] - relationOrder[b.relationship];
+      return rc !== 0 ? rc : a.targetNationName.localeCompare(b.targetNationName);
     });
 
     result.push({

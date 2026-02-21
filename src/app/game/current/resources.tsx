@@ -473,7 +473,14 @@ function NationClaimsSection({ analysis }: { analysis: Analysis }) {
                     : null;
                   return (
                     <TableRow key={target.targetNationId}>
-                      <TableCell>{target.targetNationName}</TableCell>
+                      <TableCell>
+                        {target.targetNationName}
+                        {target.isCapitalClaim && (
+                          <span className="ml-1 text-xs font-medium text-amber-700" title="Claim on capital region">
+                            ★ capital
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className={RELATIONSHIP_COLORS[target.relationship]}>
                         {RELATIONSHIP_LABELS[target.relationship]}
                       </TableCell>
