@@ -32,8 +32,8 @@ const buildIcon = (name: string, src: string, showLightBg?: boolean) => {
   return Icon;
 };
 
-export const UnknownIcon = (props: ComponentProps<"span">) => 
-  <span className={twMerge('inline-block rounded radius-4 p-0.5 -m-0.5 -my-1.5', props.className)}>
+export const UnknownIcon = (props: ComponentProps<"span"> & { title: string }) => 
+  <span className={twMerge('inline-block rounded radius-4 p-0.5 -m-0.5 -my-1.5', props.className)} title={props.title}>
     <Ban className="h-4 w-4 stroke-destructive" />
   </span>;
 export const TraitGovernment = (props: ComponentProps<"span"> & { strokeClass?: string }) => 

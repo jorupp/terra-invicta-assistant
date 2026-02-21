@@ -63,6 +63,9 @@ export type ShowEffectsProps = Partial<
       controlPoints: number;
       combatScore: number;
       miltechBonus: number;
+      alienDetection: number;
+      humanDetection: number;
+      publicCampaignStrength: number;
     } & CouncilorAttributes & {
       water?: number;
       volatiles?: number;
@@ -191,6 +194,9 @@ export const ShowEffects = (
   const priorityBoostBonus = props.spaceflightBonus || 0;
   const miltechBonus = props.miltechBonus || 0;
   const miningBonus = props.miningBonus || 0;
+  const alienDetection = props.alienDetection || 0;
+  const humanDetection = props.humanDetection || 0;
+  const publicCampaignStrength = props.publicCampaignStrength || 0;
   const councilorTechBonus = props.councilorTechBonus || [];
   const techBonuses = props.techBonuses || [];
   const missionsGrantedNames = props.missionsGrantedNames || [];
@@ -429,6 +435,24 @@ export const ShowEffects = (
       {miltechBonus !== 0 && (
         <>
           <Miltech /> {miltechBonus.toFixed(2)}
+          {spacer}
+        </>
+      )}
+      {alienDetection !== 0 && (
+        <>
+          <MissionIcons.InvestigateAlienActivity title="Alien Detection" /> {smartRound(alienDetection)}
+          {spacer}
+        </>
+      )}
+      {humanDetection !== 0 && (
+        <>
+          <MissionIcons.DetectCouncilActivity title="Human Detection" /> {smartRound(humanDetection)}
+          {spacer}
+        </>
+      )}
+      {publicCampaignStrength !== 0 && (
+        <>
+          <MissionIcons.Propaganda title="Public Campaign Strength" /> {smartRound(publicCampaignStrength)}
           {spacer}
         </>
       )}

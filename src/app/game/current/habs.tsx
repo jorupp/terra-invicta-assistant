@@ -107,6 +107,9 @@ function ShowHabScienceEffects({ effects }: { effects: ShowEffectsProps }) {
       techBonuses={effects.techBonuses}
       controlPoints={effects.controlPoints}
       miltechBonus={effects.miltechBonus}
+      alienDetection={effects.alienDetection}
+      humanDetection={effects.humanDetection}
+      publicCampaignStrength={effects.publicCampaignStrength}
     />
   );
 }
@@ -158,7 +161,7 @@ function HabScienceTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; tim
                 <span
                   className={twMerge(
                     "p-1 cursor-help",
-                    hab.miningUpgradeInfo.factoryTier === 3 ? "bg-green-200 rounded" : ""
+                    hab.miningUpgradeInfo.factoryTier === 3 ? "bg-green-200 rounded" : "",
                   )}
                 >
                   <Pickaxe className="inline h-4 w-4" />
@@ -262,7 +265,7 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
           <span
             className={twMerge(
               "text-black p-1 rounded text-xs",
-              hab.mineTier === 1 ? "bg-blue-100" : hab.mineTier === 2 ? "bg-blue-300" : "bg-blue-500 text-white"
+              hab.mineTier === 1 ? "bg-blue-100" : hab.mineTier === 2 ? "bg-blue-300" : "bg-blue-500 text-white",
             )}
           >
             M{hab.mineTier}
@@ -275,13 +278,13 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
               hab.highestActiveFactoryTier === 1
                 ? "bg-green-100"
                 : hab.highestActiveFactoryTier === 2
-                ? "bg-green-300"
-                : "bg-green-500",
+                  ? "bg-green-300"
+                  : "bg-green-500",
               hab.highestActiveFactoryCount === 2
                 ? "outline outline-1 outline-black"
                 : hab.highestActiveFactoryCount >= 3
-                ? "outline outline-2 outline-black"
-                : ""
+                  ? "outline outline-2 outline-black"
+                  : "",
             )}
           >
             F{hab.highestActiveFactoryTier}
@@ -440,7 +443,12 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
 
   const {
     playerHabs,
-    playerFaction: { availableBoostProjects, availableCPProjects, availableMaxOrgProjects, availableExpandNationProjects },
+    playerFaction: {
+      availableBoostProjects,
+      availableCPProjects,
+      availableMaxOrgProjects,
+      availableExpandNationProjects,
+    },
     playerStealableProjects,
   } = analysis;
   const time = formatDateTime(analysis.gameCurrentDateTime);
@@ -448,7 +456,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
   const activeEffects = playerHabs.reduce<ShowEffectsProps>((acc, hab) => combineEffects(acc, hab.activeEffects), {});
   const potentialEffects = playerHabs.reduce<ShowEffectsProps>(
     (acc, hab) => combineEffects(acc, hab.potentialEffects),
-    {}
+    {},
   );
 
   // Handler for clicking mining bonus resources to sort
@@ -514,7 +522,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
         nobles_month: 0,
         fissiles_month: 0,
         miningModifier: 0,
-      }
+      },
     );
   const mineSummary = playerHabs
     .filter((h) => h.site)
@@ -537,7 +545,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
         nobles_month: 0,
         fissiles_month: 0,
         miningModifier: 0,
-      }
+      },
     );
 
   const techGoals = useTechnologyGoals(analysis);
@@ -799,7 +807,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                   const Icon = TechIcons[project.techCategory] || UnknownIcon;
                   return (
                     <li key={ix}>
-                      <FactionIcon /> {faction.displayName} <Icon />{" "}
+                      <FactionIcon title={faction.displayName!} /> {faction.displayName} <Icon />{" "}
                       <ResearchLink name={projectName} displayName={project.displayName!} /> ({project.researchCost})
                     </li>
                   );

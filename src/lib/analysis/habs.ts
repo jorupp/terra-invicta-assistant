@@ -224,15 +224,12 @@ export function analyzeHabs(
             effects.welfareBonus = (effects.welfareBonus || 0) + t.specialRulesValue!;
           if (t.specialRules?.includes("LEOBonusArmyCombatValue"))
             effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
-          // don't have these wired up to anything yet
-          // if (t.specialRules?.includes("LEOBonusAlienDetection"))
-          //   effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
-          // if (t.specialRules?.includes("LEOBonusHumanDetection"))
-          //   effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
-          // if (t.specialRules?.includes("LEOBonusOppression"))
-          //   effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
-          // if (t.specialRules?.includes("LEOBonusPropagandaStrength"))
-          //   effects.miltechBonus = (effects.miltechBonus || 0) + t.specialRulesValue!;
+          if (t.specialRules?.includes("LEOBonusAlienDetection"))
+            effects.alienDetection = (effects.alienDetection || 0) + t.tier!;
+          if (t.specialRules?.includes("LEOBonusHumanDetection"))
+            effects.humanDetection = (effects.humanDetection || 0) + t.tier!;
+          if (t.specialRules?.includes("LEOBonusPropagandaStrength"))
+            effects.publicCampaignStrength = (effects.publicCampaignStrength || 0) + t.tier!;
         }
         return { active, effects };
       });

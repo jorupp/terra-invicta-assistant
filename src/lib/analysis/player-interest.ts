@@ -146,6 +146,12 @@ export function analyzePlayerInterests(
           moduleEffects.welfareBonus = (moduleEffects.welfareBonus || 0) + template.specialRulesValue!;
         if (template.specialRules?.includes("LEOBonusArmyCombatValue"))
           moduleEffects.miltechBonus = (moduleEffects.miltechBonus || 0) + template.specialRulesValue!;
+        if (template.specialRules?.includes("LEOBonusAlienDetection"))
+          moduleEffects.alienDetection = (moduleEffects.alienDetection || 0) + template.tier!;
+        if (template.specialRules?.includes("LEOBonusHumanDetection"))
+          moduleEffects.humanDetection = (moduleEffects.humanDetection || 0) + template.tier!;
+        if (template.specialRules?.includes("LEOBonusPropagandaStrength"))
+          moduleEffects.publicCampaignStrength = (moduleEffects.publicCampaignStrength || 0) + template.tier!;
       }
 
       // Add to future effects always
