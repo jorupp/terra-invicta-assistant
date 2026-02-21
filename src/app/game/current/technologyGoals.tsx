@@ -290,7 +290,7 @@ function buildTechsList(goals: TechnologyGoal[], analysis: Analysis) {
   const accumulatedResearchByName = new Map<string, number>([
     ...analysis.globalTechState.techProgress.map((i) => [i.techTemplateName, i.accumulatedResearch] as const),
     ...analysis.playerFaction.currentProjectProgress.map(
-      (i) => [i.projectTemplateName, i.accumulatedResearch] as const
+      (i) => [i.projectTemplateName, i.accumulatedResearch] as const,
     ),
   ]);
 
@@ -367,7 +367,7 @@ function TechnologyGoalsDisplay({
               </span>
             )}
             <span className="mr-1">
-              <Icon />
+              <Icon title={tech.techCategory || "Unknown"} />
             </span>
             <ResearchLink name={tech.name} displayName={tech.displayName ?? tech.friendlyName} className="mr-2" />(
             {tech.accumulatedResearch.toFixed(0)}/{tech.researchCost.toFixed(0)})
