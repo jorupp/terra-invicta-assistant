@@ -802,6 +802,7 @@ function getSolarMultiplier(id: number | undefined): number | undefined {
       return 0.773;
     case 4855:
       return 0.781;
+    case 4881:
     case 4885:
     case 4886:
     case 4889:
@@ -810,6 +811,8 @@ function getSolarMultiplier(id: number | undefined): number | undefined {
     case 4875:
     case 4884:
     case 4877:
+    case 4890:
+    case 4892:
     case 4894:
     case 4887:
     case 4897:
