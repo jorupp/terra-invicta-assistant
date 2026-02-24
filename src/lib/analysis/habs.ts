@@ -802,29 +802,31 @@ function getSolarMultiplier(id: number | undefined): number | undefined {
       return 0.773;
     case 4855:
       return 0.781;
-    case 4881:
-    case 4885:
-    case 4886:
-    case 4889:
-    case 4891:
-    case 4896:
-    case 4875:
-    case 4884:
-    case 4877:
-    case 4890:
-    case 4892:
-    case 4894:
-    case 4887:
-    case 4897:
-    case 4880:
-    case 4895:
-    case 4882:
-    case 4879:
-    case 4874:
-    case 4876:
     case 4837:
+      return 4.93;
     case 4836:
     case 4839:
+      return 3.34;
+    case 4874:
+    case 4875:
+    case 4876:
+    case 4877:
+    case 4879:
+    case 4880:
+    case 4881:
+    case 4882:
+    case 4884:
+    case 4885:
+    case 4886:
+    case 4887:
+    case 4889:
+    case 4890:
+    case 4891:
+    case 4892:
+    case 4894:
+    case 4895:
+    case 4896:
+    case 4897:
       return 0.162; // all the mars surface ones
     case 4830:
       return 6.04; // Low Mercury
