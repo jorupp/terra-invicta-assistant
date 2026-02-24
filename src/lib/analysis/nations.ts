@@ -134,7 +134,7 @@ export function analyzeNations(saveFile: SaveFile, { playerFactionId }: AnalyzeN
   return { nations, nationsById, regions, regionsById, controlPoints, controlPointsByNationId, allNationStates };
 }
 
-export type NationRelationship = "federation" | "ally" | "neutral" | "rival";
+export type NationRelationship = "war" | "federation" | "ally" | "neutral" | "rival";
 
 function isDateInFuture(date: DateTime, current: DateTime): boolean {
   if (date.year !== current.year) return date.year > current.year;
@@ -253,7 +253,9 @@ export function analyzeNationClaims({
 
       // Determine relationship
       let relationship: NationRelationship = "neutral";
-      if (
+      if (nationState.wars?.some((w) => w.value === targetId)) {
+        relationship = "war";
+      } else if (
         nationState.federation &&
         targetState.federation &&
         nationState.federation.value === targetState.federation.value
@@ -305,9 +307,12 @@ export function analyzeNationClaims({
       });
     }
 
-    // Sort targets by executive faction name (uncontrolled last), relationship, then target nation name
-    const relationOrder: Record<NationRelationship, number> = { federation: 0, ally: 1, neutral: 2, rival: 3 };
+    // Sort targets: no co-claimants first, then faction, relationship, nation name
+    const relationOrder: Record<NationRelationship, number> = { war: 0, federation: 1, ally: 2, neutral: 3, rival: 4 };
     targets.sort((a, b) => {
+      const aHasCo = a.otherPlayerCapitalClaimants.length > 0 ? 1 : 0;
+      const bHasCo = b.otherPlayerCapitalClaimants.length > 0 ? 1 : 0;
+      if (aHasCo !== bHasCo) return aHasCo - bHasCo;
       const aFac = a.executiveFactionName ?? "\uFFFF";
       const bFac = b.executiveFactionName ?? "\uFFFF";
       const fc = aFac.localeCompare(bFac);

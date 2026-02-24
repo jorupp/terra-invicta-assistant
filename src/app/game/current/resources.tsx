@@ -427,6 +427,7 @@ const NationCPDetails = ({ analysis, nation }: { nation: Analysis["nations"][0];
 };
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
+  war: "War",
   federation: "Federation",
   ally: "Ally",
   neutral: "Neutral",
@@ -434,6 +435,7 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
 };
 
 const RELATIONSHIP_COLORS: Record<string, string> = {
+  war: "text-red-600 font-bold",
   federation: "text-blue-700 font-medium",
   ally: "text-green-700 font-medium",
   neutral: "",
