@@ -75,6 +75,12 @@ export async function analyzeFleets(
       }
       return acc;
     }, new Map<string, number>());
+    const massByHullType = fleetShips.reduce((acc, { hull, ship }) => {
+      if (hull) {
+        acc.set(hull.friendlyName, (acc.get(hull.friendlyName) || 0) + ship.currentMass_kg);
+      }
+      return acc;
+    }, new Map<string, number>());
     const shipsByRole = fleetShips.reduce((acc, { design }) => {
       if (design) {
         acc.set(design.role, (acc.get(design.role) || 0) + 1);
@@ -124,7 +130,7 @@ export async function analyzeFleets(
       totalMC,
       shipsByHullType: [...shipsByHullType.entries()]
         .map(([hullName, count]) => ({ hullName, count }))
-        .toSorted((a, b) => a.count - b.count),
+        .toSorted((a, b) => massByHullType.get(b.hullName)! - massByHullType.get(a.hullName)!), // sort by total mass of each hull type
       shipsByRole: [...shipsByRole.entries()]
         .map(([role, count]) => ({ role, count }))
         .toSorted((a, b) => a.count - b.count),
