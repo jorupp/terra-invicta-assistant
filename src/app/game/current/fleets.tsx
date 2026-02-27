@@ -163,7 +163,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               <TableCell className="whitespace-normal">
                 {fleet.shipsByHullType.length > 0
                   ? fleet.shipsByHullType
-                      .map((ship) => `${ship.count} ${ship.hullName}${ship.count > 1 ? "s" : ""}`)
+                      .map((ship) => `${ship.count} ${ship.hullName.replace("Alien ", "")}${ship.count > 1 ? "s" : ""}`)
                       .join(" + ")
                   : "-"}
               </TableCell>
@@ -204,49 +204,42 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
             {(() => {
               // Get all planets with fleets
               const planetsWithFleets = new Set(
-                analysis.alienFleetsToPlayerOrbits.map((f) => f.planetName || "Unknown")
+                analysis.alienFleetsToPlayerOrbits.map((f) => f.planetName || "Unknown"),
               );
 
               // Build defense data for each planet
               const defenseData = Array.from(planetsWithFleets)
                 .map((planet) => {
                   // Sum MC of all alien fleets at or coming to this planet
-                  const fleetsAtPlanet = analysis.alienFleetsToPlayerOrbits.filter(
-                    (f) => f.planetName === planet
-                  );
+                  const fleetsAtPlanet = analysis.alienFleetsToPlayerOrbits.filter((f) => f.planetName === planet);
                   const totalAlienMC = fleetsAtPlanet.reduce((sum, f) => sum + (f.totalMC || 0), 0);
 
                   // Get days until first alien fleet arrives (filter out fleets already there or with no arrival time)
                   const incomingFleets = fleetsAtPlanet.filter((f) => f.daysToTarget !== null && f.daysToTarget > 0);
-                  const daysToArrival = incomingFleets.length > 0
-                    ? Math.min(...incomingFleets.map((f) => f.daysToTarget!))
-                    : null;
+                  const daysToArrival =
+                    incomingFleets.length > 0 ? Math.min(...incomingFleets.map((f) => f.daysToTarget!)) : null;
 
                   // Get player fleets at or coming to this planet
-                  const playerFleetsAtPlanet = analysis.playerFleets.filter(
-                    (f) => f.planetName === planet
-                  );
-                  
+                  const playerFleetsAtPlanet = analysis.playerFleets.filter((f) => f.planetName === planet);
+
                   // Filter player fleets that are:
                   // 1. Already at the planet (no arrival time or daysToTarget <= 0)
                   // 2. Will arrive before the first alien fleet
                   const relevantPlayerFleets = playerFleetsAtPlanet.filter((f) => {
                     // If fleet is already there or has no target (stationed)
                     if (f.daysToTarget === null || f.daysToTarget <= 0) return true;
-                    
+
                     // If there's no incoming alien fleet, don't count player fleets in transit
                     if (daysToArrival === null) return false;
-                    
+
                     // Fleet will arrive before first alien fleet
                     return f.daysToTarget < daysToArrival;
                   });
-                  
+
                   const totalPlayerMC = relevantPlayerFleets.reduce((sum, f) => sum + (f.totalMC || 0), 0);
 
                   // Get all player habs at this planet
-                  const habsAtPlanet = analysis.playerHabs.filter(
-                    (h) => h.planetName === planet
-                  );
+                  const habsAtPlanet = analysis.playerHabs.filter((h) => h.planetName === planet);
 
                   return {
                     planet,
@@ -290,9 +283,9 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                               activeCombat === potentialCombat
                                 ? activeCombat.toFixed(0)
                                 : `${activeCombat.toFixed(0)} / ${potentialCombat.toFixed(0)}`;
-                            
+
                             const bgColor = hab.habType === "Station" ? "bg-yellow-100" : "bg-green-100";
-                            
+
                             return (
                               <Tooltip key={hab.id}>
                                 <TooltipTrigger asChild>
