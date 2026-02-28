@@ -1,6 +1,8 @@
 import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
@@ -119,204 +121,257 @@ export function getFleetsUi(analysis: Analysis) {
 }
 
 function FleetsComponent({ analysis }: { analysis: Analysis }) {
-  const fleets = analysis.alienFleetsToPlayerOrbits;
-
-  if (fleets.length === 0) {
-    return <div className="p-4 text-muted-foreground">No alien fleets detected heading to player orbits.</div>;
-  }
+  const alienFleets = analysis.alienFleetsToPlayerOrbits;
+  const playerFleets = analysis.playerFleets;
 
   return (
-    <div className="space-y-2">
-      <p>Tracking planets: {analysis.playerInterestedPlanets.map((p) => p.displayName).join(", ")}</p>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Fleet Name</TableHead>
-            <TableHead>Planet</TableHead>
-            <TableHead>Target Orbit</TableHead>
-            <TableHead>Arrival Date</TableHead>
-            <TableHead className="text-right">Days to Arrival</TableHead>
-            <TableHead className="text-right">MC Used</TableHead>
-            <TableHead className="text-right">Total Mass</TableHead>
-            <TableHead className="text-right">Max Ship Mass</TableHead>
-            {/* <TableHead className="text-right">DeltaV</TableHead> */}
-            <TableHead>Ships Hulls</TableHead>
-            <TableHead>Ships Roles</TableHead>
-            <TableHead>Operation</TableHead>
-            <TableHead>Operation Complete</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {fleets.map((fleet) => (
-            <TableRow key={fleet.id} className={twMerge(fleet.deltaV === 0 ? "bg-gray-500/5" : "")}>
-              <TableCell className="font-medium">{fleet.displayName}</TableCell>
-              <TableCell>{fleet.planetName}</TableCell>
-              <TableCell>{fleet.targetOrbitName}</TableCell>
-              <TableCell>{fleet.arrivalTimeFormatted || "-"}</TableCell>
-              <TableCell className="text-right">
-                {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
-              </TableCell>
-              <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
-              <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
-              <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
-              {/* <TableCell className="text-right">{fleet.deltaV !== null ? fleet.deltaV.toFixed(0) : "—"}</TableCell> */}
-              <TableCell className="whitespace-normal">
-                {fleet.shipsByHullType.length > 0
-                  ? fleet.shipsByHullType
-                      .map((ship) => `${ship.count} ${ship.hullName.replace("Alien ", "")}${ship.count > 1 ? "s" : ""}`)
-                      .join(" + ")
-                  : "-"}
-              </TableCell>
-              <TableCell className="whitespace-normal">
-                {fleet.shipsByRole.length > 0
-                  ? fleet.shipsByRole
-                      .map((ship) => `${ship.count} ${ship.role}${ship.count > 1 ? "s" : ""}`)
-                      .join(" + ")
-                  : "-"}
-              </TableCell>
-              <TableCell>{fleet.operation || "-"}</TableCell>
-              <TableCell>
-                {fleet.operationComplete
-                  ? `${fleet.operationComplete}${
-                      fleet.operationCompleteDays !== null ? ` (${fleet.operationCompleteDays.toFixed(0)}d)` : ""
-                    }`
-                  : "-"}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <SmartAccordion type="multiple" storageKey="fleetsSections" defaultValue={["alien-fleets", "player-fleets"]}>
+      {/* Alien Fleets */}
+      <AccordionItem value="alien-fleets">
+        <AccordionTrigger>Alien Fleets ({alienFleets.length})</AccordionTrigger>
+        <AccordionContent>
+          {alienFleets.length === 0 ? (
+            <div className="p-4 text-muted-foreground">No alien fleets detected heading to player orbits.</div>
+          ) : (
+            <div className="space-y-2">
+              <p>Tracking planets: {analysis.playerInterestedPlanets.map((p) => p.displayName).join(", ")}</p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fleet Name</TableHead>
+                    <TableHead>Planet</TableHead>
+                    <TableHead>Target Orbit</TableHead>
+                    <TableHead>Arrival Date</TableHead>
+                    <TableHead className="text-right">Days to Arrival</TableHead>
+                    <TableHead className="text-right">MC Used</TableHead>
+                    <TableHead className="text-right">Total Mass</TableHead>
+                    <TableHead className="text-right">Max Ship Mass</TableHead>
+                    <TableHead>Ships Hulls</TableHead>
+                    <TableHead>Ships Roles</TableHead>
+                    <TableHead>Operation</TableHead>
+                    <TableHead>Operation Complete</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {alienFleets.map((fleet) => (
+                    <TableRow key={fleet.id} className={twMerge(fleet.deltaV === 0 ? "bg-gray-500/5" : "")}>
+                      <TableCell className="font-medium">{fleet.displayName}</TableCell>
+                      <TableCell>{fleet.planetName}</TableCell>
+                      <TableCell>{fleet.targetOrbitName}</TableCell>
+                      <TableCell>{fleet.arrivalTimeFormatted || "-"}</TableCell>
+                      <TableCell className="text-right">
+                        {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
+                      <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
+                      <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
+                      <TableCell className="whitespace-normal">
+                        {fleet.shipsByHullType.length > 0
+                          ? fleet.shipsByHullType
+                              .map(
+                                (ship) =>
+                                  `${ship.count} ${ship.hullName.replace("Alien ", "")}${ship.count > 1 ? "s" : ""}`,
+                              )
+                              .join(" + ")
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="whitespace-normal">
+                        {fleet.shipsByRole.length > 0
+                          ? fleet.shipsByRole
+                              .map((ship) => `${ship.count} ${ship.role}${ship.count > 1 ? "s" : ""}`)
+                              .join(" + ")
+                          : "-"}
+                      </TableCell>
+                      <TableCell>{fleet.operation || "-"}</TableCell>
+                      <TableCell>
+                        {fleet.operationComplete
+                          ? `${fleet.operationComplete}${
+                              fleet.operationCompleteDays !== null
+                                ? ` (${fleet.operationCompleteDays.toFixed(0)}d)`
+                                : ""
+                            }`
+                          : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-      {/* Planetary Defense Summary */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Planetary Defense Summary</h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Planet</TableHead>
-              <TableHead className="text-right">Days to Arrival</TableHead>
-              <TableHead className="text-right">Alien Fleet MC</TableHead>
-              <TableHead className="text-right">Player Fleet MC</TableHead>
-              <TableHead>Habs (Active / Potential Combat)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(() => {
-              // Get all planets with fleets
-              const planetsWithFleets = new Set(
-                analysis.alienFleetsToPlayerOrbits.map((f) => f.planetName || "Unknown"),
-              );
+              {/* Planetary Defense Summary */}
+              <div className="mt-8">
+                <h2 className="text-2xl font-bold mb-4">Planetary Defense Summary</h2>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Planet</TableHead>
+                      <TableHead className="text-right">Days to Arrival</TableHead>
+                      <TableHead className="text-right">Alien Fleet MC</TableHead>
+                      <TableHead className="text-right">Player Fleet MC</TableHead>
+                      <TableHead>Habs (Active / Potential Combat)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(() => {
+                      const planetsWithFleets = new Set(
+                        analysis.alienFleetsToPlayerOrbits.map((f) => f.planetName || "Unknown"),
+                      );
+                      const defenseData = Array.from(planetsWithFleets)
+                        .map((planet) => {
+                          const fleetsAtPlanet = analysis.alienFleetsToPlayerOrbits.filter(
+                            (f) => f.planetName === planet,
+                          );
+                          const totalAlienMC = fleetsAtPlanet.reduce((sum, f) => sum + (f.totalMC || 0), 0);
+                          const incomingFleets = fleetsAtPlanet.filter(
+                            (f) => f.daysToTarget !== null && f.daysToTarget > 0,
+                          );
+                          const daysToArrival =
+                            incomingFleets.length > 0
+                              ? Math.min(...incomingFleets.map((f) => f.daysToTarget!))
+                              : null;
+                          const playerFleetsAtPlanet = analysis.playerFleets.filter(
+                            (f) => f.planetName === planet,
+                          );
+                          const relevantPlayerFleets = playerFleetsAtPlanet.filter((f) => {
+                            if (f.daysToTarget === null || f.daysToTarget <= 0) return true;
+                            if (daysToArrival === null) return false;
+                            return f.daysToTarget < daysToArrival;
+                          });
+                          const totalPlayerMC = relevantPlayerFleets.reduce((sum, f) => sum + (f.totalMC || 0), 0);
+                          const habsAtPlanet = analysis.playerHabs.filter((h) => h.planetName === planet);
+                          return { planet, totalAlienMC, totalPlayerMC, daysToArrival, habs: habsAtPlanet };
+                        })
+                        .filter((d) => d.habs.length > 0)
+                        .toSorted((a, b) => {
+                          if (a.daysToArrival === null && b.daysToArrival === null) return 0;
+                          if (a.daysToArrival === null) return 1;
+                          if (b.daysToArrival === null) return -1;
+                          return a.daysToArrival - b.daysToArrival;
+                        });
 
-              // Build defense data for each planet
-              const defenseData = Array.from(planetsWithFleets)
-                .map((planet) => {
-                  // Sum MC of all alien fleets at or coming to this planet
-                  const fleetsAtPlanet = analysis.alienFleetsToPlayerOrbits.filter((f) => f.planetName === planet);
-                  const totalAlienMC = fleetsAtPlanet.reduce((sum, f) => sum + (f.totalMC || 0), 0);
+                      return defenseData.map(({ planet, totalAlienMC, totalPlayerMC, daysToArrival, habs }) => (
+                        <TableRow key={planet}>
+                          <TableCell className="font-medium">{planet}</TableCell>
+                          <TableCell className="text-right">
+                            {daysToArrival !== null ? daysToArrival.toFixed(0) : "—"}
+                          </TableCell>
+                          <TableCell className="text-right">{totalAlienMC.toFixed(0)}</TableCell>
+                          <TableCell className="text-right">{totalPlayerMC.toFixed(0)}</TableCell>
+                          <TableCell>
+                            <TooltipProvider>
+                              <div className="flex gap-2 flex-wrap">
+                                {habs
+                                  .toSorted((a, b) => {
+                                    if (a.habType === "Station" && b.habType !== "Station") return -1;
+                                    if (a.habType !== "Station" && b.habType === "Station") return 1;
+                                    return 0;
+                                  })
+                                  .map((hab) => {
+                                    const activeCombat = hab.activeEffects.combatScore || 0;
+                                    const potentialCombat = hab.potentialEffects.combatScore || 0;
+                                    const combatDisplay =
+                                      activeCombat === potentialCombat
+                                        ? activeCombat.toFixed(0)
+                                        : `${activeCombat.toFixed(0)} / ${potentialCombat.toFixed(0)}`;
+                                    const bgColor = hab.habType === "Station" ? "bg-yellow-100" : "bg-green-100";
+                                    return (
+                                      <Tooltip key={hab.id}>
+                                        <TooltipTrigger asChild>
+                                          <span className={`cursor-help ${bgColor} px-1.5 py-0.5 rounded`}>
+                                            {combatDisplay}
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <div>{hab.displayName}</div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  })}
+                              </div>
+                            </TooltipProvider>
+                          </TableCell>
+                        </TableRow>
+                      ));
+                    })()}
+                  </TableBody>
+                </Table>
+              </div>
 
-                  // Get days until first alien fleet arrives (filter out fleets already there or with no arrival time)
-                  const incomingFleets = fleetsAtPlanet.filter((f) => f.daysToTarget !== null && f.daysToTarget > 0);
-                  const daysToArrival =
-                    incomingFleets.length > 0 ? Math.min(...incomingFleets.map((f) => f.daysToTarget!)) : null;
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button>Debug Data</Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <pre>{JSON.stringify(alienFleets, null, 2)}</pre>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          )}
+        </AccordionContent>
+      </AccordionItem>
 
-                  // Get player fleets at or coming to this planet
-                  const playerFleetsAtPlanet = analysis.playerFleets.filter((f) => f.planetName === planet);
-
-                  // Filter player fleets that are:
-                  // 1. Already at the planet (no arrival time or daysToTarget <= 0)
-                  // 2. Will arrive before the first alien fleet
-                  const relevantPlayerFleets = playerFleetsAtPlanet.filter((f) => {
-                    // If fleet is already there or has no target (stationed)
-                    if (f.daysToTarget === null || f.daysToTarget <= 0) return true;
-
-                    // If there's no incoming alien fleet, don't count player fleets in transit
-                    if (daysToArrival === null) return false;
-
-                    // Fleet will arrive before first alien fleet
-                    return f.daysToTarget < daysToArrival;
-                  });
-
-                  const totalPlayerMC = relevantPlayerFleets.reduce((sum, f) => sum + (f.totalMC || 0), 0);
-
-                  // Get all player habs at this planet
-                  const habsAtPlanet = analysis.playerHabs.filter((h) => h.planetName === planet);
-
-                  return {
-                    planet,
-                    totalAlienMC,
-                    totalPlayerMC,
-                    daysToArrival,
-                    habs: habsAtPlanet,
-                  };
-                })
-                .filter((d) => d.habs.length > 0) // Only show planets with habs
-                .toSorted((a, b) => {
-                  // Sort by days to arrival (soonest first), null values last
-                  if (a.daysToArrival === null && b.daysToArrival === null) return 0;
-                  if (a.daysToArrival === null) return 1;
-                  if (b.daysToArrival === null) return -1;
-                  return a.daysToArrival - b.daysToArrival;
-                });
-
-              return defenseData.map(({ planet, totalAlienMC, totalPlayerMC, daysToArrival, habs }) => (
-                <TableRow key={planet}>
-                  <TableCell className="font-medium">{planet}</TableCell>
-                  <TableCell className="text-right">
-                    {daysToArrival !== null ? daysToArrival.toFixed(0) : "—"}
-                  </TableCell>
-                  <TableCell className="text-right">{totalAlienMC.toFixed(0)}</TableCell>
-                  <TableCell className="text-right">{totalPlayerMC.toFixed(0)}</TableCell>
-                  <TableCell>
-                    <TooltipProvider>
-                      <div className="flex gap-2 flex-wrap">
-                        {habs
-                          .toSorted((a, b) => {
-                            // Stations first (Station type), then Bases
-                            if (a.habType === "Station" && b.habType !== "Station") return -1;
-                            if (a.habType !== "Station" && b.habType === "Station") return 1;
-                            return 0;
-                          })
-                          .map((hab) => {
-                            const activeCombat = hab.activeEffects.combatScore || 0;
-                            const potentialCombat = hab.potentialEffects.combatScore || 0;
-                            const combatDisplay =
-                              activeCombat === potentialCombat
-                                ? activeCombat.toFixed(0)
-                                : `${activeCombat.toFixed(0)} / ${potentialCombat.toFixed(0)}`;
-
-                            const bgColor = hab.habType === "Station" ? "bg-yellow-100" : "bg-green-100";
-
-                            return (
-                              <Tooltip key={hab.id}>
-                                <TooltipTrigger asChild>
-                                  <span className={`cursor-help ${bgColor} px-1.5 py-0.5 rounded`}>
-                                    {combatDisplay}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <div>{hab.displayName}</div>
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })}
-                      </div>
-                    </TooltipProvider>
-                  </TableCell>
+      {/* Player Fleets */}
+      <AccordionItem value="player-fleets">
+        <AccordionTrigger>Player Fleets ({playerFleets.length})</AccordionTrigger>
+        <AccordionContent>
+          {playerFleets.length === 0 ? (
+            <div className="p-4 text-muted-foreground">No player fleets found.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fleet Name</TableHead>
+                  <TableHead>Planet</TableHead>
+                  <TableHead>Target Orbit</TableHead>
+                  <TableHead>Arrival Date</TableHead>
+                  <TableHead className="text-right">Days to Arrival</TableHead>
+                  <TableHead className="text-right">MC Used</TableHead>
+                  <TableHead className="text-right">Total Mass</TableHead>
+                  <TableHead className="text-right">Max Ship Mass</TableHead>
+                  <TableHead>Ship Hulls</TableHead>
+                  <TableHead>Ship Classes</TableHead>
                 </TableRow>
-              ));
-            })()}
-          </TableBody>
-        </Table>
-      </div>
-
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button>Debug Data</Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <pre>{JSON.stringify(fleets, null, 2)}</pre>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
+              </TableHeader>
+              <TableBody>
+                {playerFleets.map((fleet) => (
+                  <TableRow key={fleet.id}>
+                    <TableCell className="font-medium">{fleet.displayName}</TableCell>
+                    <TableCell>{fleet.planetName}</TableCell>
+                    <TableCell>{fleet.targetOrbitName}</TableCell>
+                    <TableCell>{fleet.arrivalTimeFormatted || "-"}</TableCell>
+                    <TableCell className="text-right">
+                      {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
+                    </TableCell>
+                    <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
+                    <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
+                    <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
+                    <TableCell className="whitespace-normal">
+                      {fleet.shipsByHullType.length > 0
+                        ? fleet.shipsByHullType.map((ship, i) => (
+                            <Fragment key={ship.hullName}>
+                              {i > 0 && <br />}
+                              {ship.count} {ship.hullName}
+                              {ship.count > 1 ? "s" : ""}
+                            </Fragment>
+                          ))
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      {fleet.shipsByClass.length > 0
+                        ? fleet.shipsByClass.map((cls, i) => (
+                            <Fragment key={cls.className}>
+                              {i > 0 && <br />}
+                              {cls.count}× {cls.className}
+                            </Fragment>
+                          ))
+                        : "-"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </AccordionContent>
+      </AccordionItem>
+    </SmartAccordion>
   );
 }

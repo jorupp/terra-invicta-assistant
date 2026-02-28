@@ -87,6 +87,14 @@ export async function analyzeFleets(
       }
       return acc;
     }, new Map<string, number>());
+    const shipsByClass = fleetShips.reduce((acc, { design, ship }) => {
+      if (design) {
+        const className = design.displayName || design.dataName || "Unknown";
+        const existing = acc.get(className) || { count: 0, maxMass: 0 };
+        acc.set(className, { count: existing.count + 1, maxMass: Math.max(existing.maxMass, ship.currentMass_kg) });
+      }
+      return acc;
+    }, new Map<string, { count: number; maxMass: number }>());
 
     // Get target orbit body name
     const targetOrbitId = rawFleet.trajectory?.destinationOrbit?.value ?? rawFleet.orbitState?.value;
@@ -134,6 +142,9 @@ export async function analyzeFleets(
       shipsByRole: [...shipsByRole.entries()]
         .map(([role, count]) => ({ role, count }))
         .toSorted((a, b) => a.count - b.count),
+      shipsByClass: [...shipsByClass.entries()]
+        .map(([className, { count, maxMass }]) => ({ className, count, maxMass }))
+        .toSorted((a, b) => b.maxMass - a.maxMass),
       totalMass,
       maxShipMass,
       deltaV,
