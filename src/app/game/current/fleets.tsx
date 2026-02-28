@@ -406,11 +406,11 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                         designName: ship.designName,
                         hullName: ship.hullName,
                         noseArmor: ship.noseArmor,
-                        entries: [] as { days: number; waiting: boolean }[],
+                        entries: [] as { days: number; status: "building" | "queued" | "waiting" }[],
                       });
-                    acc.get(key)!.entries.push({ days: ship.daysToCompletion, waiting: ship.status === "waiting" });
+                    acc.get(key)!.entries.push({ days: ship.daysToCompletion, status: ship.status });
                     return acc;
-                  }, new Map<string, { planetName: string; designName: string; hullName: string; noseArmor: number; entries: { days: number; waiting: boolean }[] }>());
+                  }, new Map<string, { planetName: string; designName: string; hullName: string; noseArmor: number; entries: { days: number; status: "building" | "queued" | "waiting" }[] }>());
 
                   return [...byPlanetDesign.values()]
                     .toSorted((a, b) => a.planetName.localeCompare(b.planetName) || a.designName.localeCompare(b.designName))
@@ -427,7 +427,13 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                             .map((e, i) => (
                               <Fragment key={i}>
                                 {i > 0 && ", "}
-                                {e.waiting ? <span title="Waiting for materials">⚠️{e.days.toFixed(0)}</span> : e.days.toFixed(0)}
+                                {e.status === "waiting" ? (
+                                  <span title="Waiting for materials">⚠️{e.days.toFixed(0)}</span>
+                                ) : e.status === "queued" ? (
+                                  <span className="text-muted-foreground" title="Queued">({e.days.toFixed(0)})</span>
+                                ) : (
+                                  e.days.toFixed(0)
+                                )}
                               </Fragment>
                             ))}
                         </TableCell>
