@@ -57,6 +57,11 @@ IGNORE_UNCOMPRESSED_FILES=true  # Only watch .gz files, not .json
 DUMP_JSON_ERROR=debug.json      # Write failed JSON parses to file - mainly useful in debugging save parsing.
 ```
 
+## PowerShell Notes
+
+- This project runs on Windows. Use PowerShell-native commands, not Unix commands.
+- To limit command output, use `Select-Object -Last 20` (not `tail -20`, which is Unix-only and will trigger a security prompt).
+
 ## Code Conventions
 
 - **Path Aliases**: Use `@/` for imports from `src/` (e.g., `@/lib/utils`, `@/components/ui/button`)
