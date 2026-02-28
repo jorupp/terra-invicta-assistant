@@ -401,6 +401,7 @@ export interface ShipyardQueueItem {
   shipyard: IDValue;
   daysToCompletion: number;
   resourcesCost: ResourcesCost;
+  costPaid: boolean;
 }
 
 export interface ShipDesign {

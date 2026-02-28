@@ -400,20 +400,34 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                   const byPlanetDesign = shipsUnderConstruction.reduce((acc, ship) => {
                     const key = `${ship.planetName}||${ship.designName}`;
                     if (!acc.has(key))
-                      acc.set(key, { planetName: ship.planetName, designName: ship.designName, hullName: ship.hullName, days: [] });
-                    acc.get(key)!.days.push(ship.daysToCompletion);
+                      acc.set(key, {
+                        planetName: ship.planetName,
+                        designName: ship.designName,
+                        hullName: ship.hullName,
+                        entries: [] as { days: number; waiting: boolean }[],
+                      });
+                    acc.get(key)!.entries.push({ days: ship.daysToCompletion, waiting: ship.status === "waiting" });
                     return acc;
-                  }, new Map<string, { planetName: string; designName: string; hullName: string; days: number[] }>());
+                  }, new Map<string, { planetName: string; designName: string; hullName: string; entries: { days: number; waiting: boolean }[] }>());
 
                   return [...byPlanetDesign.values()]
                     .toSorted((a, b) => a.planetName.localeCompare(b.planetName) || a.designName.localeCompare(b.designName))
-                    .map(({ planetName, designName, hullName, days }) => (
+                    .map(({ planetName, designName, hullName, entries }) => (
                       <TableRow key={`${planetName}||${designName}`}>
                         <TableCell>{planetName}</TableCell>
                         <TableCell className="font-medium">{designName}</TableCell>
                         <TableCell>{hullName}</TableCell>
-                        <TableCell className="text-right">{days.length}</TableCell>
-                        <TableCell>{days.toSorted((a, b) => a - b).map((d) => d.toFixed(0)).join(", ")}</TableCell>
+                        <TableCell className="text-right">{entries.length}</TableCell>
+                        <TableCell>
+                          {entries
+                            .toSorted((a, b) => a.days - b.days)
+                            .map((e, i) => (
+                              <Fragment key={i}>
+                                {i > 0 && ", "}
+                                {e.waiting ? <span title="Waiting for materials">⚠️{e.days.toFixed(0)}</span> : e.days.toFixed(0)}
+                              </Fragment>
+                            ))}
+                        </TableCell>
                       </TableRow>
                     ));
                 })()}

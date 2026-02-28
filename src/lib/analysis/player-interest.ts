@@ -73,12 +73,17 @@ export function analyzePlayerInterests(
       const planetName = (habId !== undefined ? habPlanetByHabId.get(habId) : undefined) ?? "Unknown";
       return queue.map((item, index) => {
         const design = shipDesignsByDataName.get(item.shipDesignTemplateName);
+        const status = !item.costPaid
+          ? ("waiting" as const)
+          : index === 0
+            ? ("building" as const)
+            : ("queued" as const);
         return {
           designName: design?.displayName || item.shipDesignTemplateName,
           hullName: design?.hullName ?? "Unknown",
           daysToCompletion: item.daysToCompletion,
           planetName,
-          status: index === 0 ? ("building" as const) : ("queued" as const),
+          status,
         };
       });
     },
