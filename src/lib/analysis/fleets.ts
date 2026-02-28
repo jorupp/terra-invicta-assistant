@@ -81,6 +81,13 @@ export async function analyzeFleets(
       }
       return acc;
     }, new Map<string, number>());
+    const noseArmorByHullType = fleetShips.reduce((acc, { hull, design }) => {
+      if (hull && design) {
+        const existing = acc.get(hull.friendlyName) || { total: 0, count: 0 };
+        acc.set(hull.friendlyName, { total: existing.total + (design.noseArmor?.armorValue ?? 0), count: existing.count + 1 });
+      }
+      return acc;
+    }, new Map<string, { total: number; count: number }>());
     const shipsByRole = fleetShips.reduce((acc, { design }) => {
       if (design) {
         acc.set(design.role, (acc.get(design.role) || 0) + 1);
@@ -90,11 +97,11 @@ export async function analyzeFleets(
     const shipsByClass = fleetShips.reduce((acc, { design, ship }) => {
       if (design) {
         const className = design.displayName || design.dataName || "Unknown";
-        const existing = acc.get(className) || { count: 0, maxMass: 0 };
-        acc.set(className, { count: existing.count + 1, maxMass: Math.max(existing.maxMass, ship.currentMass_kg) });
+        const existing = acc.get(className) || { count: 0, maxMass: 0, noseArmor: design.noseArmor?.armorValue ?? 0 };
+        acc.set(className, { count: existing.count + 1, maxMass: Math.max(existing.maxMass, ship.currentMass_kg), noseArmor: existing.noseArmor });
       }
       return acc;
-    }, new Map<string, { count: number; maxMass: number }>());
+    }, new Map<string, { count: number; maxMass: number; noseArmor: number }>());
 
     // Get target orbit body name
     const targetOrbitId = rawFleet.trajectory?.destinationOrbit?.value ?? rawFleet.orbitState?.value;
@@ -137,13 +144,17 @@ export async function analyzeFleets(
       fleetShips,
       totalMC,
       shipsByHullType: [...shipsByHullType.entries()]
-        .map(([hullName, count]) => ({ hullName, count }))
-        .toSorted((a, b) => massByHullType.get(b.hullName)! - massByHullType.get(a.hullName)!), // sort by total mass of each hull type
+        .map(([hullName, count]) => {
+          const armorData = noseArmorByHullType.get(hullName);
+          const avgNoseArmor = armorData && armorData.count > 0 ? Math.round(armorData.total / armorData.count) : 0;
+          return { hullName, count, avgNoseArmor };
+        })
+        .toSorted((a, b) => massByHullType.get(b.hullName)! - massByHullType.get(a.hullName)!),
       shipsByRole: [...shipsByRole.entries()]
         .map(([role, count]) => ({ role, count }))
         .toSorted((a, b) => a.count - b.count),
       shipsByClass: [...shipsByClass.entries()]
-        .map(([className, { count, maxMass }]) => ({ className, count, maxMass }))
+        .map(([className, { count, maxMass, noseArmor }]) => ({ className, count, maxMass, noseArmor }))
         .toSorted((a, b) => b.maxMass - a.maxMass),
       totalMass,
       maxShipMass,

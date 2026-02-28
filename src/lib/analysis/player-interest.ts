@@ -81,6 +81,7 @@ export function analyzePlayerInterests(
         return {
           designName: design?.displayName || item.shipDesignTemplateName,
           hullName: design?.hullName ?? "Unknown",
+          noseArmor: design?.noseArmor?.armorValue ?? 0,
           daysToCompletion: item.daysToCompletion,
           planetName,
           status,

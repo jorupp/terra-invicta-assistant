@@ -173,10 +173,10 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                       <TableCell className="whitespace-normal">
                         {fleet.shipsByHullType.length > 0
                           ? fleet.shipsByHullType
-                              .map(
-                                (ship) =>
-                                  `${ship.count} ${ship.hullName.replace("Alien ", "")}${ship.count > 1 ? "s" : ""}`,
-                              )
+                              .map((ship) => {
+                                const name = `${ship.count} ${ship.hullName.replace("Alien ", "")}${ship.count > 1 ? "s" : ""}`;
+                                return ship.avgNoseArmor > 0 ? `${name} (${ship.avgNoseArmor})` : name;
+                              })
                               .join(" + ")
                           : "-"}
                       </TableCell>
@@ -365,7 +365,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                         ? fleet.shipsByClass.map((cls, i) => (
                             <Fragment key={cls.className}>
                               {i > 0 && <br />}
-                              {cls.count}× {cls.className}
+                              {cls.count}× {cls.className}{cls.noseArmor > 0 ? ` (${cls.noseArmor})` : ""}
                             </Fragment>
                           ))
                         : "-"}
@@ -391,6 +391,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                   <TableHead>Planet</TableHead>
                   <TableHead>Design</TableHead>
                   <TableHead>Hull</TableHead>
+                  <TableHead className="text-right">Nose Armor</TableHead>
                   <TableHead className="text-right">Count</TableHead>
                   <TableHead>Days to Complete</TableHead>
                 </TableRow>
@@ -404,19 +405,21 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                         planetName: ship.planetName,
                         designName: ship.designName,
                         hullName: ship.hullName,
+                        noseArmor: ship.noseArmor,
                         entries: [] as { days: number; waiting: boolean }[],
                       });
                     acc.get(key)!.entries.push({ days: ship.daysToCompletion, waiting: ship.status === "waiting" });
                     return acc;
-                  }, new Map<string, { planetName: string; designName: string; hullName: string; entries: { days: number; waiting: boolean }[] }>());
+                  }, new Map<string, { planetName: string; designName: string; hullName: string; noseArmor: number; entries: { days: number; waiting: boolean }[] }>());
 
                   return [...byPlanetDesign.values()]
                     .toSorted((a, b) => a.planetName.localeCompare(b.planetName) || a.designName.localeCompare(b.designName))
-                    .map(({ planetName, designName, hullName, entries }) => (
+                    .map(({ planetName, designName, hullName, noseArmor, entries }) => (
                       <TableRow key={`${planetName}||${designName}`}>
                         <TableCell>{planetName}</TableCell>
                         <TableCell className="font-medium">{designName}</TableCell>
                         <TableCell>{hullName}</TableCell>
+                        <TableCell className="text-right">{noseArmor > 0 ? noseArmor : "-"}</TableCell>
                         <TableCell className="text-right">{entries.length}</TableCell>
                         <TableCell>
                           {entries
