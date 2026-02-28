@@ -123,9 +123,14 @@ export function getFleetsUi(analysis: Analysis) {
 function FleetsComponent({ analysis }: { analysis: Analysis }) {
   const alienFleets = analysis.alienFleetsToPlayerOrbits;
   const playerFleets = analysis.playerFleets;
+  const shipsUnderConstruction = analysis.playerShipsUnderConstruction;
 
   return (
-    <SmartAccordion type="multiple" storageKey="fleetsSections" defaultValue={["alien-fleets", "player-fleets"]}>
+    <SmartAccordion
+      type="multiple"
+      storageKey="fleetsSections"
+      defaultValue={["alien-fleets", "player-fleets", "ships-under-construction"]}
+    >
       {/* Alien Fleets */}
       <AccordionItem value="alien-fleets">
         <AccordionTrigger>Alien Fleets ({alienFleets.length})</AccordionTrigger>
@@ -367,6 +372,51 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                     </TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          )}
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* Ships Under Construction */}
+      <AccordionItem value="ships-under-construction">
+        <AccordionTrigger>Ships Under Construction ({shipsUnderConstruction.length})</AccordionTrigger>
+        <AccordionContent>
+          {shipsUnderConstruction.length === 0 ? (
+            <div className="p-4 text-muted-foreground">No ships under construction.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Planet</TableHead>
+                  <TableHead>Design</TableHead>
+                  <TableHead>Hull</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
+                  <TableHead>Days to Complete</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(() => {
+                  const byPlanetDesign = shipsUnderConstruction.reduce((acc, ship) => {
+                    const key = `${ship.planetName}||${ship.designName}`;
+                    if (!acc.has(key))
+                      acc.set(key, { planetName: ship.planetName, designName: ship.designName, hullName: ship.hullName, days: [] });
+                    acc.get(key)!.days.push(ship.daysToCompletion);
+                    return acc;
+                  }, new Map<string, { planetName: string; designName: string; hullName: string; days: number[] }>());
+
+                  return [...byPlanetDesign.values()]
+                    .toSorted((a, b) => a.planetName.localeCompare(b.planetName) || a.designName.localeCompare(b.designName))
+                    .map(({ planetName, designName, hullName, days }) => (
+                      <TableRow key={`${planetName}||${designName}`}>
+                        <TableCell>{planetName}</TableCell>
+                        <TableCell className="font-medium">{designName}</TableCell>
+                        <TableCell>{hullName}</TableCell>
+                        <TableCell className="text-right">{days.length}</TableCell>
+                        <TableCell>{days.toSorted((a, b) => a - b).map((d) => d.toFixed(0)).join(", ")}</TableCell>
+                      </TableRow>
+                    ));
+                })()}
               </TableBody>
             </Table>
           )}

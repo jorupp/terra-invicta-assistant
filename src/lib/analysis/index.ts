@@ -91,6 +91,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     alienFleetsToPlayerOrbits,
     playerHabs,
     playerFleets,
+    playerShipsUnderConstruction,
     playerNationIds,
     playerInterestedPlanets,
   } = analyzePlayerInterests(saveFile, {
@@ -134,6 +135,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     playerHabs,
     buildingSummary,
     playerFleets,
+    playerShipsUnderConstruction,
     playerPlanets,
     alienFleetsToPlayerOrbits,
     playerUnassignedOrgs,

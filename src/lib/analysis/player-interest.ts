@@ -52,6 +52,38 @@ export function analyzePlayerInterests(
   const playerHabs = habs.filter((hab) => hab.faction === playerFaction.id);
   const playerFleets = fleets.filter((fleet) => fleet.faction === playerFaction.id);
 
+  // Build hab planet lookup from already-analyzed habs
+  const habPlanetByHabId = new Map(habs.map((hab) => [hab.id, hab.planetName]));
+
+  // Build module → hab lookup: module ID → sector ID → hab ID
+  const sectorByModuleId = new Map(
+    saveFile.gamestates["PavonisInteractive.TerraInvicta.TISectorState"].flatMap(({ Value: sector }) =>
+      sector.habModules.map((mod) => [mod.value, sector.hab.value]),
+    ),
+  );
+
+  // Ships under construction: read from raw faction shipyard queues
+  const playerFactionState = saveFile.gamestates["PavonisInteractive.TerraInvicta.TIFactionState"].find(
+    ({ Value }) => Value.ID.value === playerFaction.id,
+  )?.Value;
+  const shipDesignsByDataName = new Map(playerFaction.shipDesigns.map((d) => [d.dataName, d]));
+  const playerShipsUnderConstruction = (playerFactionState?.nShipyardQueues ?? []).flatMap(
+    ({ Key: shipyardModuleId, Value: queue }) => {
+      const habId = sectorByModuleId.get(shipyardModuleId.value);
+      const planetName = (habId !== undefined ? habPlanetByHabId.get(habId) : undefined) ?? "Unknown";
+      return queue.map((item, index) => {
+        const design = shipDesignsByDataName.get(item.shipDesignTemplateName);
+        return {
+          designName: design?.displayName || item.shipDesignTemplateName,
+          hullName: design?.hullName ?? "Unknown",
+          daysToCompletion: item.daysToCompletion,
+          planetName,
+          status: index === 0 ? ("building" as const) : ("queued" as const),
+        };
+      });
+    },
+  );
+
   // Create a map from hab ID to original hab data for looking up inEarthLEO
   const originalHabsById = new Map(
     saveFile.gamestates["PavonisInteractive.TerraInvicta.TIHabState"].map(({ Value: hab }) => [hab.ID.value, hab]),
@@ -341,6 +373,7 @@ export function analyzePlayerInterests(
     alienFleetsToPlayerOrbits,
     playerHabs,
     playerFleets,
+    playerShipsUnderConstruction,
     playerNationIds: [...playerNationIds],
     playerInterestedPlanets,
   };
