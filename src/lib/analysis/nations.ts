@@ -238,10 +238,14 @@ export function analyzeNationClaims({
 
     // Build cooldown lookups for this nation
     const improveCooldowns = new Map<number, DateTime>(
-      (nationState.improveRelationsCooldowns || []).map((kv) => [kv.Key.value, kv.Value]),
+      (Array.isArray(nationState.improveRelationsCooldowns) ? nationState.improveRelationsCooldowns : []).map(
+        (kv) => [kv.Key.value, kv.Value],
+      ),
     );
     const rivalryCooldowns = new Map<number, DateTime>(
-      (nationState.rivalryCooldowns || []).map((kv) => [kv.Key.value, kv.Value]),
+      (Array.isArray(nationState.rivalryCooldowns) ? nationState.rivalryCooldowns : []).map(
+        (kv) => [kv.Key.value, kv.Value],
+      ),
     );
 
     const targets: NationClaimTarget[] = [];
