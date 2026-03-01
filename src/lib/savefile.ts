@@ -23,6 +23,9 @@ export async function loadSaveFile(filePath: string): Promise<SaveFile> {
   content = content.replace(/": -Infinity/g, '": -1e+300');
   content = content.replace(/": Infinity/g, '": 1e+300');
 
+  // we're seeing NaN numbers for chippedPct on armor at times - not sure why - the armor in question had a value of 0, so maybe it's some kind of divide by zero issue in the game code? In any case, we'll replace those with 0 to avoid JSON parsing errors and NaN values in the output data.
+  content = content.replace(/": NaN/g, '": 0');
+
   try {
     const rawData = JSON.parse(content);
     console.log(`Loaded, decompressed, and parsed save file in ${Date.now() - start}ms`);
