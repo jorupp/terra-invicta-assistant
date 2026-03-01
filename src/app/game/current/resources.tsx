@@ -9,6 +9,7 @@ import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Analysis } from "@/lib/analysis";
+import { ClaimCoverage } from "@/lib/analysis/nations";
 import { diffDateTime, smartRound, sortByDateTime, toDays } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
@@ -442,6 +443,33 @@ const RELATIONSHIP_COLORS: Record<string, string> = {
   rival: "text-red-700 font-medium",
 };
 
+function ClaimCoverageCell({ coverage }: { coverage: ClaimCoverage }) {
+  if (coverage.totalRegions === 0) return <span className="text-muted-foreground">N/A</span>;
+  const allCovered = coverage.missing === 0;
+  if (allCovered && coverage.hostile === 0) {
+    return (
+      <span className="text-green-600 font-medium" title="All regions covered, all non-hostile">
+        ✓ all
+      </span>
+    );
+  }
+  if (allCovered) {
+    return (
+      <span className="text-amber-600 font-medium" title={`All regions covered, but ${coverage.hostile} hostile`}>
+        ✓ all <span className="text-red-500 text-xs">({coverage.hostile}⚔)</span>
+      </span>
+    );
+  }
+  const missingLabel = `${coverage.missing} of ${coverage.totalRegions} missing`;
+  const hostileNote = coverage.hostile > 0 ? `, ${coverage.hostile}⚔` : "";
+  return (
+    <span className="text-red-600 text-xs font-medium" title={missingLabel + hostileNote}>
+      −{coverage.missing}/{coverage.totalRegions}
+      {coverage.hostile > 0 && <span className="text-red-500"> ({coverage.hostile}⚔)</span>}
+    </span>
+  );
+}
+
 function NationClaimsSection({ analysis }: { analysis: Analysis }) {
   const { nationClaims } = analysis;
 
@@ -467,6 +495,8 @@ function NationClaimsSection({ analysis }: { analysis: Analysis }) {
                   <TableHead title="Earliest date war/rivalry action available (cooldown active if shown)">War After</TableHead>
                   <TableHead title="Faction controlling the Executive control point">Executive Faction</TableHead>
                   <TableHead title="Other player-controlled nations with a capital claim on this nation">Co-claimants</TableHead>
+                  <TableHead title="Whether this nation has claims on ALL of the target's current regions">All Current?</TableHead>
+                  <TableHead title="Whether this nation also has claims on all regions the target claims from other nations">All Claimed?</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -479,10 +509,26 @@ function NationClaimsSection({ analysis }: { analysis: Analysis }) {
                       <TableCell>
                         {target.targetNationName}
                         {target.isCapitalClaim && (
-                          <span className="ml-1 text-xs font-medium text-amber-700" title="Claim on capital region">
-                            ★ capital
+                          <span
+                            className={`ml-1 text-xs font-medium ${target.isCapitalClaimHostile ? "text-red-600" : "text-amber-700"}`}
+                            title={target.isCapitalClaimHostile ? "Hostile claim on capital region" : "Non-hostile claim on capital region"}
+                          >
+                            {target.isCapitalClaimHostile ? "⚔ capital" : "★ capital"}
                           </span>
                         )}
+                        {(() => {
+                          const gap = target.governmentGap;
+                          const isWarning = gap > 1.5;
+                          const sign = gap > 0 ? "+" : "";
+                          return (
+                            <span
+                              className={`ml-1 text-xs font-medium ${isWarning ? "text-orange-600" : "text-green-600"}`}
+                              title={`Government score difference (target − claimant): ${sign}${gap}`}
+                            >
+                              {isWarning ? "⚠" : ""} gov {sign}{gap}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className={RELATIONSHIP_COLORS[target.relationship]}>
                         {RELATIONSHIP_LABELS[target.relationship]}
@@ -501,6 +547,12 @@ function NationClaimsSection({ analysis }: { analysis: Analysis }) {
                         {target.otherPlayerCapitalClaimants.length > 0
                           ? target.otherPlayerCapitalClaimants.map((c) => c.nationName).join(", ")
                           : <span className="text-muted-foreground">–</span>}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <ClaimCoverageCell coverage={target.currentRegionCoverage} />
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <ClaimCoverageCell coverage={target.targetClaimCoverage} />
                       </TableCell>
                     </TableRow>
                   );

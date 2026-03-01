@@ -157,6 +157,13 @@ export interface AnalyzeNationClaimsArgs {
   gameCurrentDateTime: DateTime;
 }
 
+export interface ClaimCoverage {
+  totalRegions: number;
+  nonHostile: number;
+  hostile: number;
+  missing: number;
+}
+
 export interface NationClaimTarget {
   targetNationId: number;
   targetNationName: string;
@@ -167,7 +174,12 @@ export interface NationClaimTarget {
   executiveFactionName: string | null;
   executiveFactionTemplateName: string | null;
   isCapitalClaim: boolean;
+  isCapitalClaimHostile: boolean | null;
   otherPlayerCapitalClaimants: { nationId: number; nationName: string }[];
+  currentRegionCoverage: ClaimCoverage;
+  targetClaimCoverage: ClaimCoverage;
+  /** Democracy score of target minus claimant (positive = target is higher) */
+  governmentGap: number;
 }
 
 export interface NationClaimsEntry {
@@ -188,6 +200,14 @@ export function analyzeNationClaims({
 }: AnalyzeNationClaimsArgs): NationClaimsEntry[] {
   const nationStateById = new Map(allNationStates.map((n) => [n.ID.value, n]));
 
+  // Build regionIdsByNationId from regionsById for coverage checks
+  const regionIdsByNationId = new Map<number, Set<number>>();
+  for (const [regionId, region] of regionsById) {
+    if (!region.nationId) continue;
+    if (!regionIdsByNationId.has(region.nationId)) regionIdsByNationId.set(region.nationId, new Set());
+    regionIdsByNationId.get(region.nationId)!.add(regionId);
+  }
+
   const playerNationIdSet = new Set(playerNationIds);
 
   // Pre-pass: build map of targetNationId → player nations that have a capital claim on it
@@ -196,7 +216,8 @@ export function analyzeNationClaims({
     const pState = nationStateById.get(pNationId);
     const pNation = nationsById.get(pNationId);
     if (!pState || !pNation) continue;
-    for (const claimRef of pState.claims) {
+    const allPClaims = [...pState.claims, ...pState.hostileClaims];
+    for (const claimRef of allPClaims) {
       const region = regionsById.get(claimRef.value);
       if (!region || !region.nationId || region.nationId === pNationId) continue;
       const targetState = nationStateById.get(region.nationId);
@@ -220,17 +241,28 @@ export function analyzeNationClaims({
     if (!nationState || !nation) continue;
 
     // Map claims (region IDs) to target nation IDs (excluding self-claims)
-    // Track which region IDs are claimed per target nation
+    // Track which region IDs are claimed per target nation (combined) and hostile
     const claimedRegionsByTargetNation = new Map<number, Set<number>>();
-    for (const claimRef of nationState.claims) {
+    const hostileClaimedRegionsByTargetNation = new Map<number, Set<number>>();
+
+    const addClaim = (claimRef: { value: number }, isHostile: boolean) => {
       const region = regionsById.get(claimRef.value);
       if (region && region.nationId && region.nationId !== nationId) {
         if (!claimedRegionsByTargetNation.has(region.nationId)) {
           claimedRegionsByTargetNation.set(region.nationId, new Set());
         }
         claimedRegionsByTargetNation.get(region.nationId)!.add(claimRef.value);
+        if (isHostile) {
+          if (!hostileClaimedRegionsByTargetNation.has(region.nationId)) {
+            hostileClaimedRegionsByTargetNation.set(region.nationId, new Set());
+          }
+          hostileClaimedRegionsByTargetNation.get(region.nationId)!.add(claimRef.value);
+        }
       }
-    }
+    };
+
+    for (const claimRef of nationState.claims) addClaim(claimRef, false);
+    for (const claimRef of nationState.hostileClaims) addClaim(claimRef, true);
 
     const targetNationIds = claimedRegionsByTargetNation.keys();
 
@@ -291,9 +323,39 @@ export function analyzeNationClaims({
       const targetCapitalId = targetState.capital?.value;
       const claimedRegions = claimedRegionsByTargetNation.get(targetId)!;
       const isCapitalClaim = !!targetCapitalId && claimedRegions.has(targetCapitalId);
+      const isCapitalClaimHostile = isCapitalClaim
+        ? (hostileClaimedRegionsByTargetNation.get(targetId)?.has(targetCapitalId!) ?? false)
+        : null;
 
       // Skip if player owns exec AND this is not a capital claim
       if (playerOwnsExec && !isCapitalClaim) continue;
+
+      // Coverage checks — counts non-hostile, hostile, and missing claims per region set
+      const buildCoverage = (regionIds: number[]): ClaimCoverage => {
+        const hostileSet = hostileClaimedRegionsByTargetNation.get(targetId);
+        let nonHostile = 0, hostile = 0, missing = 0;
+        for (const rid of regionIds) {
+          if (hostileSet?.has(rid)) hostile++;
+          else if (claimedRegions.has(rid)) nonHostile++;
+          else missing++;
+        }
+        return { totalRegions: regionIds.length, nonHostile, hostile, missing };
+      };
+
+      const targetCurrentRegionIds = regionIdsByNationId.get(targetId) ?? new Set<number>();
+      const currentRegionCoverage = buildCoverage([...targetCurrentRegionIds]);
+
+      // Target nation's irredentist claims (regions in OTHER nations that the target claims)
+      const targetIrredentistClaims = (Array.isArray(targetState.claims) ? targetState.claims : [])
+        .map((c) => c.value)
+        .filter((rid) => !targetCurrentRegionIds.has(rid));
+      const targetClaimCoverage = buildCoverage(targetIrredentistClaims);
+
+      // Government gap warning: flag if claimant's democracy is >1.5 below target's
+      const claimantDemocracy = nation.democracy;
+      const targetDemocracy = targetNation.democracy;
+      const rawGap = targetDemocracy - claimantDemocracy;
+      const governmentGap = Math.round(rawGap * 10) / 10;
 
       targets.push({
         targetNationId: targetId,
@@ -305,9 +367,13 @@ export function analyzeNationClaims({
         executiveFactionName: execFaction?.displayName ?? null,
         executiveFactionTemplateName: execFaction?.templateName ?? null,
         isCapitalClaim,
+        isCapitalClaimHostile,
         otherPlayerCapitalClaimants: (capitalClaimantsByTarget.get(targetId) ?? []).filter(
           (c) => c.nationId !== nationId,
         ),
+        currentRegionCoverage,
+        targetClaimCoverage,
+        governmentGap,
       });
     }
 
