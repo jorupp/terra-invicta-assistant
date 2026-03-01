@@ -262,6 +262,13 @@ export function analyzePlayerInterests(
     (i) => i.arrivalTime,
   );
 
+  const humanEnemyFleetsToPlayerOrbits = sortByDateTime(
+    fleets
+      .filter((fleet) => fleet.faction !== playerFaction.id && fleet.faction !== alienFaction.id)
+      .filter((fleet) => fleet.targetOrbitId && playerInterestedOrbitIds.has(fleet.targetOrbitId)),
+    (i) => i.arrivalTime,
+  );
+
   const playerNationIds = new Set<number>(
     controlPoints
       .filter((cp) => cp.factionId === playerFaction.id && cp.nationId)
@@ -377,6 +384,7 @@ export function analyzePlayerInterests(
     buildingSummary: buildingSummaryArray,
     playerPlanets,
     alienFleetsToPlayerOrbits,
+    humanEnemyFleetsToPlayerOrbits,
     playerHabs,
     playerFleets,
     playerShipsUnderConstruction,

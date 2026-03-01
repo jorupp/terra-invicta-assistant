@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
-import { MissionControl } from "@/components/icons";
+import { FactionIcons, MissionControl } from "@/components/icons";
 import { twMerge } from "tailwind-merge";
 
 export function getFleetsUi(analysis: Analysis) {
@@ -100,7 +100,7 @@ export function getFleetsUi(analysis: Analysis) {
     key: "fleets",
     tab: (
       <>
-        Alien Fleets
+        Fleets
         {label.length > 0 ? (
           <>
             {" - "}
@@ -122,6 +122,7 @@ export function getFleetsUi(analysis: Analysis) {
 
 function FleetsComponent({ analysis }: { analysis: Analysis }) {
   const alienFleets = analysis.alienFleetsToPlayerOrbits;
+  const humanEnemyFleets = analysis.humanEnemyFleetsToPlayerOrbits;
   const playerFleets = analysis.playerFleets;
   const shipsUnderConstruction = analysis.playerShipsUnderConstruction;
 
@@ -129,7 +130,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
     <SmartAccordion
       type="multiple"
       storageKey="fleetsSections"
-      defaultValue={["alien-fleets", "player-fleets", "ships-under-construction"]}
+      defaultValue={["alien-fleets", "human-enemy-fleets", "player-fleets", "ships-under-construction"]}
     >
       {/* Alien Fleets */}
       <AccordionItem value="alien-fleets">
@@ -149,6 +150,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                     <TableHead>Arrival Date</TableHead>
                     <TableHead className="text-right">Days to Arrival</TableHead>
                     <TableHead className="text-right">MC Used</TableHead>
+                    <TableHead className="text-right">Marine CP</TableHead>
                     <TableHead className="text-right">Total Mass</TableHead>
                     <TableHead className="text-right">Max Ship Mass</TableHead>
                     <TableHead>Ships Hulls</TableHead>
@@ -168,6 +170,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                         {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
                       </TableCell>
                       <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
+                      <TableCell className="text-right">{fleet.marineCombatPower > 0 ? fleet.marineCombatPower : "—"}</TableCell>
                       <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
                       <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
                       <TableCell className="whitespace-normal">
@@ -314,6 +317,86 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
         </AccordionContent>
       </AccordionItem>
 
+      {/* Other Human Factions Fleets */}
+      <AccordionItem value="human-enemy-fleets">
+        <AccordionTrigger>Other Human Factions ({humanEnemyFleets.length})</AccordionTrigger>
+        <AccordionContent>
+          {humanEnemyFleets.length === 0 ? (
+            <div className="p-4 text-muted-foreground">No other human faction fleets detected heading to player orbits.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Faction</TableHead>
+                  <TableHead>Fleet Name</TableHead>
+                  <TableHead>Planet</TableHead>
+                  <TableHead>Target Orbit</TableHead>
+                  <TableHead>Arrival Date</TableHead>
+                  <TableHead className="text-right">Days to Arrival</TableHead>
+                  <TableHead className="text-right">MC Used</TableHead>
+                  <TableHead className="text-right">Marine CP</TableHead>
+                  <TableHead className="text-right">Total Mass</TableHead>
+                  <TableHead className="text-right">Max Ship Mass</TableHead>
+                  <TableHead>Ship Hulls</TableHead>
+                  <TableHead>Ship Roles</TableHead>
+                  <TableHead>Operation</TableHead>
+                  <TableHead>Operation Complete</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {humanEnemyFleets.map((fleet) => {
+                  const FactionIcon = fleet.factionTemplateName
+                    ? FactionIcons[fleet.factionTemplateName as keyof typeof FactionIcons]
+                    : null;
+                  return (
+                    <TableRow key={fleet.id} className={twMerge(fleet.deltaV === 0 ? "bg-gray-500/5" : "")}>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {FactionIcon && <FactionIcon className="p-1 rounded" />}
+                          <span className="text-sm">{fleet.factionDisplayName ?? fleet.factionTemplateName ?? "Unknown"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{fleet.displayName}</TableCell>
+                      <TableCell>{fleet.planetName}</TableCell>
+                      <TableCell>{fleet.targetOrbitName}</TableCell>
+                      <TableCell>{fleet.arrivalTimeFormatted || "-"}</TableCell>
+                      <TableCell className="text-right">
+                        {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
+                      <TableCell className="text-right">{fleet.marineCombatPower > 0 ? fleet.marineCombatPower : "—"}</TableCell>
+                      <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
+                      <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
+                      <TableCell className="whitespace-normal">
+                        {fleet.shipsByHullType.length > 0
+                          ? fleet.shipsByHullType
+                              .map((ship) => {
+                                const name = `${ship.count} ${ship.hullName}${ship.count > 1 ? "s" : ""}`;
+                                return ship.avgNoseArmor > 0 ? `${name} (${ship.avgNoseArmor})` : name;
+                              })
+                              .join(" + ")
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="whitespace-normal">
+                        {fleet.shipsByRole.length > 0
+                          ? fleet.shipsByRole.map((s) => `${s.count} ${s.role}${s.count > 1 ? "s" : ""}`).join(" + ")
+                          : "-"}
+                      </TableCell>
+                      <TableCell>{fleet.operation || "-"}</TableCell>
+                      <TableCell>
+                        {fleet.operationComplete
+                          ? `${fleet.operationComplete}${fleet.operationCompleteDays !== null ? ` (${fleet.operationCompleteDays.toFixed(0)}d)` : ""}`
+                          : "-"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </AccordionContent>
+      </AccordionItem>
+
       {/* Player Fleets */}
       <AccordionItem value="player-fleets">
         <AccordionTrigger>Player Fleets ({playerFleets.length})</AccordionTrigger>
@@ -330,6 +413,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                   <TableHead>Arrival Date</TableHead>
                   <TableHead className="text-right">Days to Arrival</TableHead>
                   <TableHead className="text-right">MC Used</TableHead>
+                  <TableHead className="text-right">Marine CP</TableHead>
                   <TableHead className="text-right">Total Mass</TableHead>
                   <TableHead className="text-right">Max Ship Mass</TableHead>
                   <TableHead>Ship Hulls</TableHead>
@@ -347,6 +431,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                       {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
                     </TableCell>
                     <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
+                    <TableCell className="text-right">{fleet.marineCombatPower > 0 ? fleet.marineCombatPower : "—"}</TableCell>
                     <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
                     <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
                     <TableCell className="whitespace-normal">

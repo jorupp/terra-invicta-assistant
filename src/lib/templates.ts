@@ -1216,7 +1216,8 @@ export interface UtilityModule {
     metals: number;
     nobleMetals: number;
   };
-  specialModuleRules: string[];
+  specialModuleRules?: string[];
+  specialModuleValue?: number;
   iconResource: string;
 }
 

@@ -19,6 +19,14 @@ export async function analyzeFleets(
   const shipDesignsByDataName = new Map<string, (typeof factions)[0]["shipDesigns"][0]>(
     factions.flatMap((faction) => faction.shipDesigns).map((design) => [design.dataName, design]),
   );
+  const factionTemplateNameById = new Map(factions.map((f) => [f.id, f.templateName]));
+
+  // Build map of assault module dataName → marine combat power
+  const assaultModulePowerByName = new Map<string, number>(
+    (await templates.utilityModules())
+      .filter((m) => m.specialModuleRules?.includes("Assault") && m.specialModuleValue != null)
+      .map((m) => [m.dataName, m.specialModuleValue!]),
+  );
 
   const shipHulls = (await templates.shipHulls()).map((h) => ({
     dataName: h.dataName,
@@ -38,6 +46,7 @@ export async function analyzeFleets(
     currentMass_kg: ship.currentMass_kg,
     currentDeltaV_kps: ship.currentDeltaV_kps,
     currentMaxDeltaV_kps: ship.currentMaxDeltaV_kps,
+    utilityModules: ship.utilityModules.map((m) => m.moduleTemplateName),
   }));
   const shipsById = new Map<number, (typeof ships)[0]>(ships.map((ship) => [ship.id, ship]));
 
@@ -66,6 +75,8 @@ export async function analyzeFleets(
       });
 
     const totalMC = fleetShips.reduce((acc, i) => acc + i.estimatedMc, 0);
+    const marineCombatPower = fleetShips.reduce((acc, { ship }) =>
+      acc + ship.utilityModules.reduce((s, mod) => s + (assaultModulePowerByName.get(mod) ?? 0), 0), 0);
     const totalMass = fleetShips.reduce((acc, i) => acc + i.ship.currentMass_kg, 0);
     const maxShipMass = fleetShips.reduce((acc, i) => Math.max(acc, i.ship.currentMass_kg), 0);
     const deltaV = fleetShips.reduce((acc, i) => Math.min(acc, i.ship.currentDeltaV_kps), Infinity);
@@ -123,6 +134,8 @@ export async function analyzeFleets(
     return {
       id: rawFleet.ID.value,
       faction: rawFleet.faction.value,
+      factionTemplateName: factionTemplateNameById.get(rawFleet.faction.value) ?? null,
+      factionDisplayName: factions.find((f) => f.id === rawFleet.faction.value)?.displayName ?? null,
       displayName: rawFleet.displayNameByFaction.find((dn) => dn.Key.value === playerFactionId)?.Value || "UNKNOWN",
       // TODO: shipInfo - can the player always see this?
       originOrbitId: rawFleet.trajectory?.originOrbit?.value,
@@ -143,6 +156,7 @@ export async function analyzeFleets(
         : null,
       fleetShips,
       totalMC,
+      marineCombatPower,
       shipsByHullType: [...shipsByHullType.entries()]
         .map(([hullName, count]) => {
           const armorData = noseArmorByHullType.get(hullName);
