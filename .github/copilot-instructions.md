@@ -61,6 +61,7 @@ DUMP_JSON_ERROR=debug.json      # Write failed JSON parses to file - mainly usef
 
 - This project runs on Windows. Use PowerShell-native commands, not Unix commands.
 - To limit command output, use `Select-Object -Last 20` (not `tail -20`, which is Unix-only and will trigger a security prompt).
+- Do **not** use `Set-Location` — it is not allowed and will be rejected. Use `cd C:\path\to\dir && command` syntax instead (e.g., `cd <dir>\terra-invicta-assistant && npm run type-check 2>&1 | Select-Object -Last 20`).
 
 ## Code Conventions
 
