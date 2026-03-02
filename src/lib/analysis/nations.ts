@@ -401,3 +401,117 @@ export function analyzeNationClaims({
   result.sort((a, b) => a.nationName.localeCompare(b.nationName));
   return result;
 }
+
+export interface UnificationCandidate {
+  claimantNationId: number;
+  claimantNationName: string;
+  claimantDemocracy: number;
+  targetNationId: number;
+  targetNationName: string;
+  targetDemocracy: number;
+  isHostileClaim: boolean;
+  relationship: NationRelationship;
+  relationsCanImproveAfter: string | null;
+}
+
+export function analyzeUnificationCandidates({
+  allNationStates,
+  nationsById,
+  regionsById,
+  controlPointsByNationId,
+  playerFactionId,
+  gameCurrentDateTime,
+}: Pick<
+  AnalyzeNationClaimsArgs,
+  "allNationStates" | "nationsById" | "regionsById" | "controlPointsByNationId" | "playerFactionId" | "gameCurrentDateTime"
+>): UnificationCandidate[] {
+  const nationStateById = new Map(allNationStates.map((n) => [n.ID.value, n]));
+
+  // Collect all nation IDs where the player controls the executive CP
+  const playerExecNationIds = new Set<number>(
+    [...controlPointsByNationId.entries()]
+      .filter(([, cps]) => cps.some((cp) => cp.controlPointType === "Executive" && cp.factionId === playerFactionId))
+      .map(([nationId]) => nationId),
+  );
+
+  const results: UnificationCandidate[] = [];
+  const seen = new Set<string>(); // deduplicate symmetric pairs
+
+  for (const claimantId of playerExecNationIds) {
+    const claimantState = nationStateById.get(claimantId);
+    const claimantNation = nationsById.get(claimantId);
+    if (!claimantState || !claimantNation) continue;
+
+    const improveCooldowns = new Map<number, DateTime>(
+      (Array.isArray(claimantState.improveRelationsCooldowns) ? claimantState.improveRelationsCooldowns : []).map(
+        (kv) => [kv.Key.value, kv.Value],
+      ),
+    );
+
+    const allClaims = [
+      ...(Array.isArray(claimantState.claims) ? claimantState.claims : []).map((c) => ({ ref: c, hostile: false })),
+      ...(Array.isArray(claimantState.hostileClaims) ? claimantState.hostileClaims : []).map((c) => ({ ref: c, hostile: true })),
+    ];
+
+    for (const { ref, hostile } of allClaims) {
+      const region = regionsById.get(ref.value);
+      if (!region?.nationId || region.nationId === claimantId) continue;
+      const targetId = region.nationId;
+
+      // Target must also be player-exec-controlled
+      if (!playerExecNationIds.has(targetId)) continue;
+
+      const targetState = nationStateById.get(targetId);
+      const targetNation = nationsById.get(targetId);
+      if (!targetState || !targetNation) continue;
+
+      // This claim must be on the target's capital
+      if (targetState.capital?.value !== ref.value) continue;
+
+      // Deduplicate: only emit each (claimant, target) pair once
+      const key = `${claimantId}:${targetId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      // Relationship
+      let relationship: NationRelationship = "neutral";
+      if (claimantState.wars?.some((w) => w.value === targetId)) {
+        relationship = "war";
+      } else if (
+        claimantState.federation &&
+        targetState.federation &&
+        claimantState.federation.value === targetState.federation.value
+      ) {
+        relationship = "federation";
+      } else if (claimantState.allies.some((a) => a.value === targetId)) {
+        relationship = "ally";
+      } else if (claimantState.rivals.some((r) => r.value === targetId)) {
+        relationship = "rival";
+      }
+
+      const improveDate = improveCooldowns.get(targetId);
+      const relationsCanImproveAfter =
+        improveDate && isDateInFuture(improveDate, gameCurrentDateTime) ? formatDateShort(improveDate) : null;
+
+      results.push({
+        claimantNationId: claimantId,
+        claimantNationName: claimantNation.displayName ?? claimantNation.templateName ?? "",
+        claimantDemocracy: Math.round(claimantNation.democracy * 10) / 10,
+        targetNationId: targetId,
+        targetNationName: targetNation.displayName ?? targetNation.templateName ?? "",
+        targetDemocracy: Math.round(targetNation.democracy * 10) / 10,
+        isHostileClaim: hostile,
+        relationship,
+        relationsCanImproveAfter,
+      });
+    }
+  }
+
+  const relationOrder: Record<NationRelationship, number> = { federation: 0, ally: 1, neutral: 2, rival: 3, war: 4 };
+  results.sort((a, b) => {
+    const rc = relationOrder[a.relationship] - relationOrder[b.relationship];
+    return rc !== 0 ? rc : a.claimantNationName.localeCompare(b.claimantNationName);
+  });
+
+  return results;
+}

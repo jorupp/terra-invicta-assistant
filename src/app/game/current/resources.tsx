@@ -359,6 +359,12 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
             <NationClaimsSection analysis={analysis} />
           </AccordionContent>
         </AccordionItem>
+        <AccordionItem value="unification-candidates">
+          <AccordionTrigger>Unification Candidates ({analysis.unificationCandidates.length})</AccordionTrigger>
+          <AccordionContent>
+            <UnificationCandidatesSection analysis={analysis} />
+          </AccordionContent>
+        </AccordionItem>
       </SmartAccordion>
 
       <Collapsible>
@@ -563,5 +569,60 @@ function NationClaimsSection({ analysis }: { analysis: Analysis }) {
         </AccordionItem>
       ))}
     </SmartAccordion>
+  );
+}
+
+function UnificationCandidatesSection({ analysis }: { analysis: Analysis }) {
+  const { unificationCandidates } = analysis;
+
+  if (unificationCandidates.length === 0) {
+    return <div className="p-4 text-muted-foreground">No unification candidates found.</div>;
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead title="Nation that has the capital claim">Claimant Nation</TableHead>
+          <TableHead title="Nation whose capital is claimed">Target Nation</TableHead>
+          <TableHead>Claim Type</TableHead>
+          <TableHead>Relationship</TableHead>
+          <TableHead title="Earliest date relations can improve (cooldown active if shown)">Relations After</TableHead>
+          <TableHead title="Government scores: claimant / target (red if claimant is more than 1.5 below target)">Gov Scores</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {unificationCandidates.map((candidate) => {
+          const govGap = candidate.targetDemocracy - candidate.claimantDemocracy;
+          const govWarning = govGap > 1.5;
+          return (
+          <TableRow key={`${candidate.claimantNationId}:${candidate.targetNationId}`}>
+            <TableCell className="font-medium">{candidate.claimantNationName}</TableCell>
+            <TableCell>{candidate.targetNationName}</TableCell>
+            <TableCell>
+              {candidate.isHostileClaim ? (
+                <span className="text-red-600 font-medium text-xs">⚔ hostile</span>
+              ) : (
+                <span className="text-amber-700 font-medium text-xs">★ non-hostile</span>
+              )}
+            </TableCell>
+            <TableCell className={RELATIONSHIP_COLORS[candidate.relationship]}>
+              {RELATIONSHIP_LABELS[candidate.relationship]}
+            </TableCell>
+            <TableCell className="text-sm">
+              {candidate.relationsCanImproveAfter ?? <span className="text-muted-foreground">–</span>}
+            </TableCell>
+            <TableCell className="text-sm">
+              <span className={govWarning ? "text-red-600 font-medium" : ""}>
+                {candidate.claimantDemocracy}
+              </span>
+              {" / "}
+              <span>{candidate.targetDemocracy}</span>
+            </TableCell>
+          </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 }

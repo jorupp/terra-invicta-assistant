@@ -5,7 +5,7 @@ import { analyzeHabSites } from "./habSites";
 import { analyzePlanets } from "./planets";
 import { analyzeResearch } from "./research";
 import { analyzeFactions, postProcessFactions } from "./factions";
-import { analyzeNations, analyzeNationClaims } from "./nations";
+import { analyzeNations, analyzeNationClaims, analyzeUnificationCandidates } from "./nations";
 import { analyzeHabs } from "./habs";
 import { analyzeFleets } from "./fleets";
 import { analyzeOrgs } from "./orgs";
@@ -124,6 +124,15 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
     gameCurrentDateTime: time.currentDateTime,
   });
 
+  const unificationCandidates = analyzeUnificationCandidates({
+    allNationStates,
+    nationsById,
+    regionsById,
+    controlPointsByNationId,
+    playerFactionId,
+    gameCurrentDateTime: time.currentDateTime,
+  });
+
   return {
     fileName,
     lastModified,
@@ -164,6 +173,7 @@ export async function analyzeData(saveFile: SaveFile, fileName: string, lastModi
       : undefined,
     radiators: allRadiatorsWithMeta,
     nationClaims,
+    unificationCandidates,
   };
 }
 
