@@ -19,18 +19,18 @@ import { twMerge } from "tailwind-merge";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
-    <TableHeader>
+    <TableHeader className="bg-muted/50">
       <TableRow>
-        <TableHead>Name</TableHead>
-        <TableHead>Modified Stats</TableHead>
-        {hasOrgs && <TableHead>Org Tiers</TableHead>}
-        <TableHead>Monthly Effects</TableHead>
-        <TableHead>Priorities</TableHead>
-        <TableHead>Science</TableHead>
-        <TableHead>Missions</TableHead>
-        <TableHead>Score</TableHead>
-        <TableHead>NM Score</TableHead>
-        <TableHead>CP Cap</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Name</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Modified Stats</TableHead>
+        {hasOrgs && <TableHead className="font-bold uppercase text-[10px] tracking-wider">Org Tiers</TableHead>}
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Monthly Effects</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Priorities</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Science</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Missions</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Score</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">NM Score</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking- wider">CP Cap</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -38,16 +38,16 @@ function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
 
 function OrgTableHeader({ costHeader }: { costHeader?: string }) {
   return (
-    <TableHeader>
+    <TableHeader className="bg-muted/50">
       <TableRow>
-        <TableHead>Org Name</TableHead>
-        <TableHead>Requirements</TableHead>
-        <TableHead>Tier</TableHead>
-        {costHeader ? <TableHead>{costHeader}</TableHead> : <TableHead>Purchase / Transfer</TableHead>}
-        <TableHead>Monthly</TableHead>
-        <TableHead>Effects</TableHead>
-        <TableHead>Score</TableHead>
-        <TableHead>NM Score</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Org Name</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Requirements</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Tier</TableHead>
+        {costHeader ? <TableHead className="font-bold uppercase text-[10px] tracking-wider">{costHeader}</TableHead> : <TableHead className="font-bold uppercase text-[10px] tracking-wider">Purchase / Transfer</TableHead>}
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Monthly</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Effects</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">Score</TableHead>
+        <TableHead className="font-bold uppercase text-[10px] tracking-wider">NM Score</TableHead>
       </TableRow>
     </TableHeader>
   );
