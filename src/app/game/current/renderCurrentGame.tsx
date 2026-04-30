@@ -38,9 +38,9 @@ export default function RenderCurrentGame({ renderKey }: { renderKey?: any }) {
 
   if (!analysis) {
     return (
-      <div>
-        Waiting for game state....
-        <Loader />
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
+        <Loader className="h-5 w-5 text-muted-foreground animate-spin" />
+        <span className="text-xs text-muted-foreground font-medium">Loading game state...</span>
       </div>
     );
   }
