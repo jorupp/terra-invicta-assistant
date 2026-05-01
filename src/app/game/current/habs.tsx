@@ -30,6 +30,21 @@ import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
 import { User, Factory, ArrowUp, Pickaxe } from "lucide-react";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
+import { ContentPanel } from "./tree-nav";
+import {
+  BarChart3,
+  Sparkles,
+  Zap,
+  Eye,
+  Wrench,
+  FolderOpen,
+  ListChecks,
+  Building2,
+  ScrollText,
+  Ruler,
+  Globe,
+  Target,
+} from "lucide-react";
 
 type AlienGoal = Analysis["expandedAlienGoals"][0];
 
@@ -50,30 +65,6 @@ function AlienGoalList({ goals }: { goals: AlienGoal[] }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-function HabScienceHeader() {
-  return (
-    <TableHeader>
-      <TableRow>
-        <TableHead>Name</TableHead>
-        <TableHead>
-          <CombatScore />
-        </TableHead>
-        <TableHead>Most important upcoming completion</TableHead>
-        <TableHead title="Days to complete">D2C</TableHead>
-        <TableHead>Alerts</TableHead>
-        <TableHead title="Current Power">
-          <HabPower />
-        </TableHead>
-        <TableHead title="Future Power">
-          <HabPower />
-        </TableHead>
-        <TableHead>Current bonuses</TableHead>
-        <TableHead>Future bonuses</TableHead>
-      </TableRow>
-    </TableHeader>
   );
 }
 
@@ -111,6 +102,30 @@ function ShowHabScienceEffects({ effects }: { effects: ShowEffectsProps }) {
       humanDetection={effects.humanDetection}
       publicCampaignStrength={effects.publicCampaignStrength}
     />
+  );
+}
+
+function HabScienceHeader() {
+  return (
+    <TableHeader>
+      <TableRow>
+        <TableHead>Name</TableHead>
+        <TableHead>
+          <CombatScore />
+        </TableHead>
+        <TableHead>Most important upcoming completion</TableHead>
+        <TableHead title="Days to complete">D2C</TableHead>
+        <TableHead>Alerts</TableHead>
+        <TableHead title="Current Power">
+          <HabPower />
+        </TableHead>
+        <TableHead title="Future Power">
+          <HabPower />
+        </TableHead>
+        <TableHead>Current bonuses</TableHead>
+        <TableHead>Future bonuses</TableHead>
+      </TableRow>
+    </TableHeader>
   );
 }
 
@@ -307,9 +322,496 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
 type MineResourceType = "water" | "volatiles" | "metals" | "nobles" | "fissiles" | null;
 type MineSortDirection = "asc" | "desc" | null;
 
+export function getHabsContentPanels(analysis: Analysis): ContentPanel[] {
+  const { playerHabs, playerFaction, playerStealableProjects } = analysis;
+  const time = formatDateTime(analysis.gameCurrentDateTime);
+  const { goals, addGoal, removeGoal } = useTechnologyGoals(analysis);
+
+  const activeEffects = playerHabs.reduce<ShowEffectsProps>((acc, hab) => combineEffects(acc, hab.activeEffects), {});
+  const potentialEffects = playerHabs.reduce<ShowEffectsProps>(
+    (acc, hab) => combineEffects(acc, hab.potentialEffects),
+    {},
+  );
+
+  const [mineSortResource, setMineSortResource] = useState<MineResourceType>(null);
+  const [mineSortDirection, setMineSortDirection] = useState<MineSortDirection>(null);
+
+  const handleMineResourceSort = (resource: MineResourceType) => {
+    if (mineSortResource === resource) {
+      if (mineSortDirection === "desc") {
+        setMineSortDirection("asc");
+      } else if (mineSortDirection === "asc") {
+        setMineSortResource(null);
+        setMineSortDirection(null);
+      }
+    } else {
+      setMineSortResource(resource);
+      setMineSortDirection("desc");
+    }
+  };
+
+  const sortedMineHabs = [...playerHabs]
+    .filter((i) => i.habType === "Base")
+    .sort((a, b) => {
+      if (!mineSortResource || !mineSortDirection) return 0;
+      const resourceKey = `${mineSortResource}_month` as keyof typeof a.currentMinePoweredEffects;
+      const aValue = a.currentMinePoweredEffects[resourceKey];
+      const bValue = b.currentMinePoweredEffects[resourceKey];
+      if (mineSortDirection === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return bValue < aValue ? -1 : bValue > aValue ? 1 : 0;
+      }
+    });
+
+  const activeMineSummary = playerHabs
+    .filter((h) => h.site)
+    .reduce(
+      (acc, hab) => {
+        const effects = hab.currentMineEffects;
+        if (
+          effects.water_month > 0 ||
+          effects.volatiles_month > 0 ||
+          effects.metals_month > 0 ||
+          effects.nobles_month > 0 ||
+          effects.fissiles_month > 0
+        ) {
+          acc.count++;
+          acc.water_month += effects.water_month;
+          acc.volatiles_month += effects.volatiles_month;
+          acc.metals_month += effects.metals_month;
+          acc.nobles_month += effects.nobles_month;
+          acc.fissiles_month += effects.fissiles_month;
+        }
+        return acc;
+      },
+      { count: 0, water_month: 0, volatiles_month: 0, metals_month: 0, nobles_month: 0, fissiles_month: 0, miningModifier: 0 },
+    );
+
+  const mineSummary = playerHabs
+    .filter((h) => h.site)
+    .reduce(
+      (acc, hab) => {
+        const effects = hab.bestMineEffects;
+        acc.count++;
+        acc.water_month += effects.water_month;
+        acc.volatiles_month += effects.volatiles_month;
+        acc.metals_month += effects.metals_month;
+        acc.nobles_month += effects.nobles_month;
+        acc.fissiles_month += effects.fissiles_month;
+        return acc;
+      },
+      { count: 0, water_month: 0, volatiles_month: 0, metals_month: 0, nobles_month: 0, fissiles_month: 0, miningModifier: 0 },
+    );
+
+  const habsWithoutSolarPowerMultipler = playerHabs
+    .filter((hab) => hab.hasSolar && !hab.solarMultiplier)
+    .toSorted((a, b) => a.finderSortOverride - b.finderSortOverride);
+
+  return [
+    {
+      key: "current-bonuses",
+      label: "Current Bonuses",
+      icon: BarChart3,
+      source: "habs",
+      content: <ShowHabScienceEffects effects={activeEffects} />,
+    },
+    {
+      key: "future-bonuses",
+      label: "Future Bonuses",
+      icon: Sparkles,
+      source: "habs",
+      content: <ShowHabScienceEffects effects={potentialEffects} />,
+    },
+    {
+      key: "boost-mc-summary",
+      label: "MC/Boost Income",
+      icon: Zap,
+      source: "habs",
+      content: (
+        <div className="flex space-x-4 pb-4">
+          <span>
+            <Boost />
+            {analysis.playerFaction.nationHistory.currentBoost.toFixed(2)}
+            {analysis.playerFaction.nationHistory.boostMonthlyChange !== 0 && (
+              <span
+                className={
+                  analysis.playerFaction.nationHistory.boostMonthlyChange > 0 ? "text-green-600" : "text-red-600"
+                }
+              >
+                {" "}
+                ({analysis.playerFaction.nationHistory.boostMonthlyChange > 0 ? "+" : ""}
+                {analysis.playerFaction.nationHistory.boostMonthlyChange.toFixed(2)})
+              </span>
+            )}
+          </span>
+          <span>
+            <MissionControl />
+            {analysis.playerFaction.nationHistory.currentMC.toFixed(0)}
+            {analysis.playerFaction.nationHistory.mcMonthlyChange !== 0 && (
+              <span
+                className={
+                  analysis.playerFaction.nationHistory.mcMonthlyChange > 0 ? "text-green-600" : "text-red-600"
+                }
+              >
+                {" "}
+                ({analysis.playerFaction.nationHistory.mcMonthlyChange > 0 ? "+" : ""}
+                {analysis.playerFaction.nationHistory.mcMonthlyChange.toFixed(0)})
+              </span>
+            )}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "alien-hate",
+      label: "Alien Hate",
+      icon: Eye,
+      source: "habs",
+      content: (
+        <div className="space-y-1">
+          <div>
+            <strong>Current Alien Strategy:</strong>{" "}
+            {analysis.alienFaction.defaultPriorityPresetTemplateName || "Unknown"}
+          </div>
+          <div>
+            <strong>Active Goals (Top 10 of {analysis.expandedAlienGoals.length} by Importance):</strong>
+            <AlienGoalList goals={analysis.expandedAlienGoals.slice(0, 10)} />
+            {analysis.expandedAlienGoals.length > 10 && (
+              <Collapsible className="mt-2">
+                <CollapsibleTrigger className="text-sm text-blue-500 hover:underline ml-4">
+                  Show {analysis.expandedAlienGoals.length - 10} more goals...
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <AlienGoalList goals={analysis.expandedAlienGoals.slice(10)} />
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </div>
+          <div>
+            <strong>Alien Hate of Player:</strong>{" "}
+            {analysis.alienFaction.factionHate?.get(analysis.playerFaction.id)?.toFixed(1) ?? "Unknown"}
+          </div>
+          <div>
+            <strong>Assessed Alien Hate of Player:</strong>{" "}
+            {analysis.playerFaction.assessedAlienHateOfMe?.toFixed(1) ?? "Unknown"}
+          </div>
+          <div>
+            <strong>Last Fixed Hate Date:</strong>{" "}
+            {analysis.playerFaction.lastDateOfFixedAlienHate
+              ? formatDateTime(analysis.playerFaction.lastDateOfFixedAlienHate)
+              : "Never"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "building-details",
+      label: "Building Details",
+      icon: Building2,
+      source: "habs",
+      content: (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Building</TableHead>
+              <TableHead className="text-right">Current Count</TableHead>
+              <TableHead className="text-right">Future Count</TableHead>
+              <TableHead>Current Bonuses</TableHead>
+              <TableHead>Future Bonuses</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {analysis.buildingSummary.map((building) => (
+              <TableRow key={building.templateName}>
+                <TableCell>{building.friendlyName}</TableCell>
+                <TableCell className="text-right">{building.currentCount}</TableCell>
+                <TableCell className="text-right">{building.futureCount}</TableCell>
+                <TableCell>
+                  <ShowHabScienceEffects effects={building.currentEffects} />
+                </TableCell>
+                <TableCell>
+                  <ShowHabScienceEffects effects={building.futureEffects} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ),
+    },
+    ...(analysis.playerFaction.availableBoostProjects.length > 0
+      ? [
+          {
+            key: "available-boost-projects",
+            label: "Available Boost Projects",
+            icon: FolderOpen,
+            source: "habs",
+            content: (
+              <ul>
+                {analysis.playerFaction.availableBoostProjects
+                  .toSorted((a, b) => a.researchCost - b.researchCost)
+                  .map((project, ix) => {
+                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                    return (
+                      <li key={ix}>
+                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                        {project.researchCost})
+                      </li>
+                    );
+                  })}
+              </ul>
+            ),
+          } as ContentPanel,
+        ]
+      : []),
+    ...(analysis.playerFaction.availableCPProjects.length > 0
+      ? [
+          {
+            key: "available-cp-projects",
+            label: "Available Control Point Projects",
+            icon: ControlPoint,
+            source: "habs",
+            content: (
+              <ul>
+                {analysis.playerFaction.availableCPProjects
+                  .toSorted((a, b) => {
+                    const aRemaining = a.researchCost - a.currentProgress;
+                    const bRemaining = b.researchCost - b.currentProgress;
+                    const aEfficiency = aRemaining > 0 ? a.cpBonus / aRemaining : 0;
+                    const bEfficiency = bRemaining > 0 ? b.cpBonus / bRemaining : 0;
+                    return bEfficiency - aEfficiency;
+                  })
+                  .map((project, ix) => {
+                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                    return (
+                      <li key={ix}>
+                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                        {project.currentProgress.toFixed(0)}/{project.researchCost}, +{project.cpBonus} CP)
+                      </li>
+                    );
+                  })}
+              </ul>
+            ),
+          } as ContentPanel,
+        ]
+      : []),
+    ...(analysis.playerFaction.availableMaxOrgProjects.length > 0
+      ? [
+          {
+            key: "available-max-org-projects",
+            label: "Available Max Org Projects",
+            icon: FolderOpen,
+            source: "habs",
+            content: (
+              <ul>
+                {analysis.playerFaction.availableMaxOrgProjects
+                  .toSorted((a, b) => a.researchCost - b.researchCost)
+                  .map((project, ix) => {
+                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                    return (
+                      <li key={ix}>
+                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                        {project.researchCost})
+                      </li>
+                    );
+                  })}
+              </ul>
+            ),
+          } as ContentPanel,
+        ]
+      : []),
+    ...(analysis.playerFaction.availableExpandNationProjects.length > 0
+      ? [
+          {
+            key: "available-expand-nation-projects",
+            label: "Available Expand Nations",
+            icon: Globe,
+            source: "habs",
+            content: (
+              <ul>
+                {analysis.playerFaction.availableExpandNationProjects
+                  .toSorted((a, b) => {
+                    const aRemaining = a.researchCost - a.currentProgress;
+                    const bRemaining = b.researchCost - b.currentProgress;
+                    return aRemaining - bRemaining;
+                  })
+                  .map((project, ix) => {
+                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                    return (
+                      <li key={ix}>
+                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
+                        {project.currentProgress.toFixed(0)}/{project.researchCost}, {project.requiresNation})
+                      </li>
+                    );
+                  })}
+              </ul>
+            ),
+          } as ContentPanel,
+        ]
+      : []),
+    ...(playerStealableProjects.length > 0
+      ? [
+          {
+            key: "available-stealable-projects",
+            label: "Available Stealable Projects",
+            icon: Target,
+            source: "habs",
+            content: (
+              <ul>
+                {playerStealableProjects.map(({ projectName, factionId }, ix) => {
+                  const faction = analysis.factionsById.get(factionId);
+                  if (!faction) return null;
+                  const FactionIcon = faction.templateName
+                    ? FactionIcons[faction.templateName]
+                    : UnknownIcon || UnknownIcon;
+                  const project = analysis.projects.get(projectName);
+                  if (!project) return null;
+                  const Icon = TechIcons[project.techCategory] || UnknownIcon;
+                  return (
+                    <li key={ix}>
+                      <FactionIcon title={faction.displayName!} /> {faction.displayName} <Icon />{" "}
+                      <ResearchLink name={projectName} displayName={project.displayName!} /> ({project.researchCost})
+                    </li>
+                  );
+                })}
+              </ul>
+            ),
+          } as ContentPanel,
+        ]
+      : []),
+    {
+      key: "technology-goals",
+      label: "Technology Goals",
+      icon: ScrollText,
+      source: "habs",
+      content: (
+        <>
+          <TechnologyGoalsDialog
+            analysis={analysis}
+            goals={goals}
+            onAdd={addGoal}
+            onRemove={removeGoal}
+          />
+          <ResearchLink displayName="Tech Tree" className="ml-5" />
+          <br />
+          <br />
+          <TechnologyGoalsList analysis={analysis} goals={goals} onRemove={removeGoal} />
+        </>
+      ),
+    },
+    {
+      key: "habs",
+      label: "Manage Habs",
+      icon: Wrench,
+      source: "habs",
+      content: (
+        <>
+          {habsWithoutSolarPowerMultipler.length > 0 && (
+            <>
+              <h3>Habs without Solar Power Multiplier</h3>
+              <ul>
+                {habsWithoutSolarPowerMultipler.map((hab) => (
+                  <li key={hab.id}>
+                    {hab.displayName} - site/orbit id: {hab.habSiteId || hab.orbitStateId}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <Table>
+            <HabScienceHeader />
+            <TableBody>
+              {playerHabs.map((hab) => (
+                <HabScienceTableRow hab={hab} key={hab.id} time={time} />
+              ))}
+            </TableBody>
+          </Table>
+        </>
+      ),
+    },
+    {
+      key: "mines",
+      label: "Manage Mines",
+      icon: Pickaxe,
+      source: "habs",
+      content: (
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mining Bonuses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 text-sm">
+                <button
+                  className="flex items-center gap-1 cursor-pointer hover:underline"
+                  onClick={() => handleMineResourceSort("water")}
+                >
+                  <Water />
+                  {((analysis.playerFaction.miningMultipliers.water - 1) * 100).toFixed(0)}%
+                </button>
+                <button
+                  className="flex items-center gap-1 cursor-pointer hover:underline"
+                  onClick={() => handleMineResourceSort("volatiles")}
+                >
+                  <Volatiles />
+                  {((analysis.playerFaction.miningMultipliers.volatiles - 1) * 100).toFixed(0)}%
+                </button>
+                <button
+                  className="flex items-center gap-1 cursor-pointer hover:underline"
+                  onClick={() => handleMineResourceSort("metals")}
+                >
+                  <Metals />
+                  {((analysis.playerFaction.miningMultipliers.metals - 1) * 100).toFixed(0)}%
+                </button>
+                <button
+                  className="flex items-center gap-1 cursor-pointer hover:underline"
+                  onClick={() => handleMineResourceSort("nobles")}
+                >
+                  <Nobles />
+                  {((analysis.playerFaction.miningMultipliers.nobles - 1) * 100).toFixed(0)}%
+                </button>
+                <button
+                  className="flex items-center gap-1 cursor-pointer hover:underline"
+                  onClick={() => handleMineResourceSort("fissiles")}
+                >
+                  <Fissiles />
+                  {((analysis.playerFaction.miningMultipliers.fissiles - 1) * 100).toFixed(0)}%
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Base income from active mines</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <span>{activeMineSummary.count} active mines</span> <ShowHabMineEffects effects={activeMineSummary} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Base income from potential mines</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <span>{mineSummary.count} potential mines</span> <ShowHabMineEffects effects={mineSummary} />
+            </CardContent>
+          </Card>
+          <Table>
+            <HabMineHeader />
+            <TableBody>
+              {sortedMineHabs.map((hab) => (
+                <HabMineTableRow hab={hab} key={hab.id} time={time} />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ),
+    },
+  ];
+}
+
 export function getHabsUi(analysis: Analysis) {
   const { playerHabs } = analysis;
-
   const missingMines = playerHabs.filter((h) => h.missingMine);
   const unnecessaryFactoryHabs = playerHabs.filter((h) => h.hasUnnecessaryFactory);
   const upgradablePowerHabs = playerHabs.filter((h) => h.canUpgradePower);
@@ -325,7 +827,6 @@ export function getHabsUi(analysis: Analysis) {
       return a.daysToCompletion < b.daysToCompletion ? -1 : 1;
     })[0];
 
-  // can't use a tooltip for this because it's in the button that is the tab label, which would be nested buttons and cause hydration issues
   const missingMinesTitle =
     missingMines.length > 0 ? `Missing mines: ${missingMines.map((h) => h.displayName).join(", ")}` : "";
   const unnecessaryFactoryTitle =
@@ -426,527 +927,6 @@ export function getHabsUi(analysis: Analysis) {
         )}
       </>
     ),
-    content: (
-      <HabsComponent
-        {...{
-          analysis,
-        }}
-      />
-    ),
+    content: <div />,
   };
-}
-
-function HabsComponent({ analysis }: { analysis: Analysis }) {
-  // State for sorting mines table
-  const [mineSortResource, setMineSortResource] = useState<MineResourceType>(null);
-  const [mineSortDirection, setMineSortDirection] = useState<MineSortDirection>(null);
-
-  const {
-    playerHabs,
-    playerFaction: {
-      availableBoostProjects,
-      availableCPProjects,
-      availableMaxOrgProjects,
-      availableExpandNationProjects,
-    },
-    playerStealableProjects,
-  } = analysis;
-  const time = formatDateTime(analysis.gameCurrentDateTime);
-  const { goals, addGoal, removeGoal } = useTechnologyGoals(analysis);
-  const activeEffects = playerHabs.reduce<ShowEffectsProps>((acc, hab) => combineEffects(acc, hab.activeEffects), {});
-  const potentialEffects = playerHabs.reduce<ShowEffectsProps>(
-    (acc, hab) => combineEffects(acc, hab.potentialEffects),
-    {},
-  );
-
-  // Handler for clicking mining bonus resources to sort
-  const handleMineResourceSort = (resource: MineResourceType) => {
-    if (mineSortResource === resource) {
-      // Same resource clicked - cycle through asc -> desc -> null
-      if (mineSortDirection === "desc") {
-        setMineSortDirection("asc");
-      } else if (mineSortDirection === "asc") {
-        setMineSortResource(null);
-        setMineSortDirection(null);
-      }
-    } else {
-      // New resource clicked - start with ascending
-      setMineSortResource(resource);
-      setMineSortDirection("desc");
-    }
-  };
-
-  // Sort habs for mines table
-  const sortedMineHabs = [...playerHabs]
-    .filter((i) => i.habType === "Base")
-    .sort((a, b) => {
-      if (!mineSortResource || !mineSortDirection) return 0;
-
-      const resourceKey = `${mineSortResource}_month` as keyof typeof a.currentMinePoweredEffects;
-      const aValue = a.currentMinePoweredEffects[resourceKey];
-      const bValue = b.currentMinePoweredEffects[resourceKey];
-
-      if (mineSortDirection === "asc") {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return bValue < aValue ? -1 : bValue > aValue ? 1 : 0;
-      }
-    });
-
-  const activeMineSummary = playerHabs
-    .filter((h) => h.site)
-    .reduce(
-      (acc, hab) => {
-        const effects = hab.currentMineEffects;
-        if (
-          effects.water_month > 0 ||
-          effects.volatiles_month > 0 ||
-          effects.metals_month > 0 ||
-          effects.nobles_month > 0 ||
-          effects.fissiles_month > 0
-        ) {
-          acc.count++;
-          acc.water_month += effects.water_month;
-          acc.volatiles_month += effects.volatiles_month;
-          acc.metals_month += effects.metals_month;
-          acc.nobles_month += effects.nobles_month;
-          acc.fissiles_month += effects.fissiles_month;
-        }
-        return acc;
-      },
-      {
-        count: 0,
-        water_month: 0,
-        volatiles_month: 0,
-        metals_month: 0,
-        nobles_month: 0,
-        fissiles_month: 0,
-        miningModifier: 0,
-      },
-    );
-  const mineSummary = playerHabs
-    .filter((h) => h.site)
-    .reduce(
-      (acc, hab) => {
-        const effects = hab.bestMineEffects;
-        acc.count++;
-        acc.water_month += effects.water_month;
-        acc.volatiles_month += effects.volatiles_month;
-        acc.metals_month += effects.metals_month;
-        acc.nobles_month += effects.nobles_month;
-        acc.fissiles_month += effects.fissiles_month;
-        return acc;
-      },
-      {
-        count: 0,
-        water_month: 0,
-        volatiles_month: 0,
-        metals_month: 0,
-        nobles_month: 0,
-        fissiles_month: 0,
-        miningModifier: 0,
-      },
-    );
-
-  const techGoals = useTechnologyGoals(analysis);
-  const habsWithoutSolarPowerMultipler = playerHabs
-    .filter((hab) => hab.hasSolar && !hab.solarMultiplier)
-    .toSorted((a, b) => a.finderSortOverride - b.finderSortOverride);
-
-  return (
-    <div className="space-y-2">
-      <SmartAccordion
-        type="multiple"
-        defaultValue={["current-bonuses", "future-bonuses", "available-cp-projects"]}
-        storageKey="habs"
-      >
-        <AccordionItem value="current-bonuses">
-          <AccordionTrigger>
-            <span>Current Hab bonuses</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <ShowHabScienceEffects effects={activeEffects} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="future-bonuses">
-          <AccordionTrigger>
-            <span>Future Hab bonuses (including unpowered/under-construction)</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <ShowHabScienceEffects effects={potentialEffects} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="boost-mc-summary">
-          <AccordionTrigger>
-            <span>MC/Boost Income Summary</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="flex space-x-4 pb-4">
-              <span>
-                <Boost />
-                {analysis.playerFaction.nationHistory.currentBoost.toFixed(2)}
-                {analysis.playerFaction.nationHistory.boostMonthlyChange !== 0 && (
-                  <span
-                    className={
-                      analysis.playerFaction.nationHistory.boostMonthlyChange > 0 ? "text-green-600" : "text-red-600"
-                    }
-                  >
-                    {" "}
-                    ({analysis.playerFaction.nationHistory.boostMonthlyChange > 0 ? "+" : ""}
-                    {analysis.playerFaction.nationHistory.boostMonthlyChange.toFixed(2)})
-                  </span>
-                )}
-              </span>
-              <span>
-                <MissionControl />
-                {analysis.playerFaction.nationHistory.currentMC.toFixed(0)}
-                {analysis.playerFaction.nationHistory.mcMonthlyChange !== 0 && (
-                  <span
-                    className={
-                      analysis.playerFaction.nationHistory.mcMonthlyChange > 0 ? "text-green-600" : "text-red-600"
-                    }
-                  >
-                    {" "}
-                    ({analysis.playerFaction.nationHistory.mcMonthlyChange > 0 ? "+" : ""}
-                    {analysis.playerFaction.nationHistory.mcMonthlyChange.toFixed(0)})
-                  </span>
-                )}
-              </span>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="alien-hate">
-          <AccordionTrigger>
-            <span>Alien Hate</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-1">
-              <div>
-                <strong>Current Alien Strategy:</strong>{" "}
-                {analysis.alienFaction.defaultPriorityPresetTemplateName || "Unknown"}
-              </div>
-              <div>
-                <strong>Active Goals (Top 10 of {analysis.expandedAlienGoals.length} by Importance):</strong>
-                <AlienGoalList goals={analysis.expandedAlienGoals.slice(0, 10)} />
-                {analysis.expandedAlienGoals.length > 10 && (
-                  <Collapsible className="mt-2">
-                    <CollapsibleTrigger className="text-sm text-blue-500 hover:underline ml-4">
-                      Show {analysis.expandedAlienGoals.length - 10} more goals...
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <AlienGoalList goals={analysis.expandedAlienGoals.slice(10)} />
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
-              </div>
-              <div>
-                <strong>Alien Hate of Player:</strong>{" "}
-                {analysis.alienFaction.factionHate?.get(analysis.playerFaction.id)?.toFixed(1) ?? "Unknown"}
-              </div>
-              <div>
-                <strong>Assessed Alien Hate of Player:</strong>{" "}
-                {analysis.playerFaction.assessedAlienHateOfMe?.toFixed(1) ?? "Unknown"}
-              </div>
-              <div>
-                <strong>Last Fixed Hate Date:</strong>{" "}
-                {analysis.playerFaction.lastDateOfFixedAlienHate
-                  ? formatDateTime(analysis.playerFaction.lastDateOfFixedAlienHate)
-                  : "Never"}
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="building-details">
-          <AccordionTrigger>
-            <span>Building Details</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Building</TableHead>
-                  <TableHead className="text-right">Current Count</TableHead>
-                  <TableHead className="text-right">Future Count</TableHead>
-                  <TableHead>Current Bonuses</TableHead>
-                  <TableHead>Future Bonuses</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {analysis.buildingSummary.map((building) => (
-                  <TableRow key={building.templateName}>
-                    <TableCell>{building.friendlyName}</TableCell>
-                    <TableCell className="text-right">{building.currentCount}</TableCell>
-                    <TableCell className="text-right">{building.futureCount}</TableCell>
-                    <TableCell>
-                      <ShowHabScienceEffects effects={building.currentEffects} />
-                    </TableCell>
-                    <TableCell>
-                      <ShowHabScienceEffects effects={building.futureEffects} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        {availableBoostProjects.length > 0 && (
-          <AccordionItem value="available-boost-projects">
-            <AccordionTrigger>
-              <span>Available Boost Projects</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <ul>
-                {availableBoostProjects
-                  .toSorted((a, b) => a.researchCost - b.researchCost)
-                  .map((project, ix) => {
-                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                    return (
-                      <li key={ix}>
-                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
-                        {project.researchCost})
-                      </li>
-                    );
-                  })}
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        {availableCPProjects.length > 0 && (
-          <AccordionItem value="available-cp-projects">
-            <AccordionTrigger>
-              <span>Available Control Point Projects</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <ul>
-                {availableCPProjects
-                  .toSorted((a, b) => {
-                    // Sort by efficiency: CP gained per research remaining (highest first)
-                    const aRemaining = a.researchCost - a.currentProgress;
-                    const bRemaining = b.researchCost - b.currentProgress;
-                    const aEfficiency = aRemaining > 0 ? a.cpBonus / aRemaining : 0;
-                    const bEfficiency = bRemaining > 0 ? b.cpBonus / bRemaining : 0;
-                    return bEfficiency - aEfficiency;
-                  })
-                  .map((project, ix) => {
-                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                    return (
-                      <li key={ix}>
-                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
-                        {project.currentProgress.toFixed(0)}/{project.researchCost}, +{project.cpBonus} CP)
-                      </li>
-                    );
-                  })}
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        {availableMaxOrgProjects.length > 0 && (
-          <AccordionItem value="available-max-org-projects">
-            <AccordionTrigger>
-              <span>Available Max Org Projects</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <ul>
-                {availableMaxOrgProjects
-                  .toSorted((a, b) => a.researchCost - b.researchCost)
-                  .map((project, ix) => {
-                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                    return (
-                      <li key={ix}>
-                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
-                        {project.researchCost})
-                      </li>
-                    );
-                  })}
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        {availableExpandNationProjects.length > 0 && (
-          <AccordionItem value="available-expand-nation-projects">
-            <AccordionTrigger>
-              <span>Available Expand Nations</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <ul>
-                {availableExpandNationProjects
-                  .toSorted((a, b) => {
-                    // Sort by progress (most complete first)
-                    const aRemaining = a.researchCost - a.currentProgress;
-                    const bRemaining = b.researchCost - b.currentProgress;
-                    return aRemaining - bRemaining;
-                  })
-                  .map((project, ix) => {
-                    const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                    return (
-                      <li key={ix}>
-                        <Icon /> <ResearchLink name={project.dataName} displayName={project.friendlyName} /> (
-                        {project.currentProgress.toFixed(0)}/{project.researchCost}, {project.requiresNation})
-                      </li>
-                    );
-                  })}
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        {playerStealableProjects.length > 0 && (
-          <AccordionItem value="available-stealable-projects">
-            <AccordionTrigger>
-              <span>Available Stealable Projects</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <ul>
-                {playerStealableProjects.map(({ projectName, factionId }, ix) => {
-                  const faction = analysis.factionsById.get(factionId);
-                  if (!faction) return null;
-                  const FactionIcon = faction.templateName
-                    ? FactionIcons[faction.templateName]
-                    : UnknownIcon || UnknownIcon;
-                  const project = analysis.projects.get(projectName);
-                  if (!project) return null;
-                  const Icon = TechIcons[project.techCategory] || UnknownIcon;
-                  return (
-                    <li key={ix}>
-                      <FactionIcon title={faction.displayName!} /> {faction.displayName} <Icon />{" "}
-                      <ResearchLink name={projectName} displayName={project.displayName!} /> ({project.researchCost})
-                    </li>
-                  );
-                })}
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        <AccordionItem value="technology-goals">
-          <AccordionTrigger>
-            <span>Technology goals</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <TechnologyGoalsDialog
-              analysis={analysis}
-              goals={techGoals.goals}
-              onAdd={techGoals.addGoal}
-              onRemove={techGoals.removeGoal}
-            />
-            <ResearchLink displayName="Tech Tree" className="ml-5" />
-            <br />
-            <br />
-            <TechnologyGoalsList analysis={analysis} goals={techGoals.goals} onRemove={techGoals.removeGoal} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="habs">
-          <AccordionTrigger>
-            <span>Manage Habs</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <>
-              {habsWithoutSolarPowerMultipler.length > 0 && (
-                <>
-                  <h3>Habs without Solar Power Multiplier</h3>
-                  <ul>
-                    {habsWithoutSolarPowerMultipler.map((hab) => (
-                      <li key={hab.id}>
-                        {hab.displayName} - site/orbit id: {hab.habSiteId || hab.orbitStateId}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              <Table>
-                <HabScienceHeader />
-                <TableBody>
-                  {playerHabs.map((hab) => (
-                    <HabScienceTableRow hab={hab} key={hab.id} time={time} />
-                  ))}
-                </TableBody>
-              </Table>
-            </>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="mines">
-          <AccordionTrigger>
-            <span>Manage Mines</span>
-          </AccordionTrigger>
-          <AccordionContent innerClassName="py-2 space-y-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mining Bonuses</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4 text-sm">
-                  <button
-                    className="flex items-center gap-1 cursor-pointer hover:underline"
-                    onClick={() => handleMineResourceSort("water")}
-                  >
-                    <Water />
-                    {((analysis.playerFaction.miningMultipliers.water - 1) * 100).toFixed(0)}%
-                  </button>
-                  <button
-                    className="flex items-center gap-1 cursor-pointer hover:underline"
-                    onClick={() => handleMineResourceSort("volatiles")}
-                  >
-                    <Volatiles />
-                    {((analysis.playerFaction.miningMultipliers.volatiles - 1) * 100).toFixed(0)}%
-                  </button>
-                  <button
-                    className="flex items-center gap-1 cursor-pointer hover:underline"
-                    onClick={() => handleMineResourceSort("metals")}
-                  >
-                    <Metals />
-                    {((analysis.playerFaction.miningMultipliers.metals - 1) * 100).toFixed(0)}%
-                  </button>
-                  <button
-                    className="flex items-center gap-1 cursor-pointer hover:underline"
-                    onClick={() => handleMineResourceSort("nobles")}
-                  >
-                    <Nobles />
-                    {((analysis.playerFaction.miningMultipliers.nobles - 1) * 100).toFixed(0)}%
-                  </button>
-                  <button
-                    className="flex items-center gap-1 cursor-pointer hover:underline"
-                    onClick={() => handleMineResourceSort("fissiles")}
-                  >
-                    <Fissiles />
-                    {((analysis.playerFaction.miningMultipliers.fissiles - 1) * 100).toFixed(0)}%
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Base income from active mines</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <span>{activeMineSummary.count} active mines</span> <ShowHabMineEffects effects={activeMineSummary} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Base income from potential mines</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <span>{mineSummary.count} potential mines</span> <ShowHabMineEffects effects={mineSummary} />
-              </CardContent>
-            </Card>
-            <Table>
-              <HabMineHeader />
-              <TableBody>
-                {sortedMineHabs.map((hab) => (
-                  <HabMineTableRow hab={hab} key={hab.id} time={time} />
-                ))}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
-
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline">Debug Data</Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <pre>{JSON.stringify(analysis.playerHabs, null, 2)}</pre>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  );
 }

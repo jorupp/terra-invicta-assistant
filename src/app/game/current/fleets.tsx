@@ -2,23 +2,180 @@ import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
 import { FactionIcons, MissionControl } from "@/components/icons";
 import { twMerge } from "tailwind-merge";
+import { ContentPanel } from "./tree-nav";
+import { AlertTriangle, Users, Ship, Construction } from "lucide-react";
 
-export function getFleetsUi(analysis: Analysis) {
-  const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
+function FleetsTable({
+  fleets,
+  title,
+}: {
+  fleets: Analysis["alienFleetsToPlayerOrbits"] | Analysis["humanEnemyFleetsToPlayerOrbits"];
+  title: string;
+}) {
+  return (
+    <>
+      <h3 className="font-semibold">{title} ({fleets.length})</h3>
+      {fleets.length === 0 ? (
+        <div className="p-4 text-muted-foreground">No {title.toLowerCase()} detected.</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Fleet Name</TableHead>
+              <TableHead>Planet</TableHead>
+              <TableHead>Target Orbit</TableHead>
+              <TableHead>Arrival Date</TableHead>
+              <TableHead className="text-right">Days to Arrival</TableHead>
+              <TableHead className="text-right">MC Used</TableHead>
+              <TableHead className="text-right">Marine CP</TableHead>
+              <TableHead className="text-right">Total Mass</TableHead>
+              <TableHead className="text-right">Max Ship Mass</TableHead>
+              <TableHead>Ships Hulls</TableHead>
+              <TableHead>Ships Roles</TableHead>
+              <TableHead>Operation</TableHead>
+              <TableHead>Operation Complete</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {fleets.map((fleet) => (
+              <TableRow key={fleet.id} className={twMerge(fleet.deltaV === 0 ? "bg-gray-500/5" : "")}>
+                <TableCell className="font-medium">{fleet.displayName}</TableCell>
+                <TableCell>{fleet.planetName}</TableCell>
+                <TableCell>{fleet.targetOrbitName}</TableCell>
+                <TableCell>{fleet.arrivalTimeFormatted || "-"}</TableCell>
+                <TableCell className="text-right">
+                  {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
+                </TableCell>
+                <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
+                <TableCell className="text-right">{fleet.marineCombatPower > 0 ? fleet.marineCombatPower : "—"}</TableCell>
+                <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
+                <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
+                <TableCell className="whitespace-normal">
+                  {fleet.shipsByHullType.length > 0
+                    ? fleet.shipsByHullType
+                        .map((ship) => {
+                          const name = `${ship.count} ${ship.hullName.replace("Alien ", "")}${ship.count > 1 ? "s" : ""}`;
+                          return ship.avgNoseArmor > 0 ? `${name} (${ship.avgNoseArmor})` : name;
+                        })
+                        .join(" + ")
+                    : "-"}
+                </TableCell>
+                <TableCell className="whitespace-normal">
+                  {fleet.shipsByRole.length > 0
+                    ? fleet.shipsByRole
+                        .map((ship) => `${ship.count} ${ship.role}${ship.count > 1 ? "s" : ""}`)
+                        .join(" + ")
+                    : "-"}
+                </TableCell>
+                <TableCell>{fleet.operation || "-"}</TableCell>
+                <TableCell>
+                  {fleet.operationComplete
+                    ? `${fleet.operationComplete}${
+                        fleet.operationCompleteDays !== null
+                          ? ` (${fleet.operationCompleteDays.toFixed(0)}d)`
+                          : ""
+                      }`
+                    : "-"}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </>
+  );
+}
+
+function ShipsUnderConstructionTable({ ships }: { ships: Analysis["playerShipsUnderConstruction"] }) {
+  return (
+    <>
+      <h3 className="font-semibold">Ships Under Construction ({ships.length})</h3>
+      {ships.length === 0 ? (
+        <div className="p-4 text-muted-foreground">No ships under construction.</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Planet</TableHead>
+              <TableHead>Design</TableHead>
+              <TableHead>Hull</TableHead>
+              <TableHead className="text-right">Nose Armor</TableHead>
+              <TableHead className="text-right">Count</TableHead>
+              <TableHead>Days to Complete</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {(() => {
+              const byPlanetDesign = ships.reduce((acc, ship) => {
+                const key = `${ship.planetName}||${ship.designName}`;
+                if (!acc.has(key))
+                  acc.set(key, {
+                    planetName: ship.planetName,
+                    designName: ship.designName,
+                    hullName: ship.hullName,
+                    noseArmor: ship.noseArmor,
+                    entries: [] as { days: number; status: "building" | "queued" | "waiting" }[],
+                  });
+                acc.get(key)!.entries.push({ days: ship.daysToCompletion, status: ship.status });
+                return acc;
+              }, new Map<string, { planetName: string; designName: string; hullName: string; noseArmor: number; entries: { days: number; status: "building" | "queued" | "waiting" }[] }>());
+
+              return [...byPlanetDesign.values()]
+                .toSorted((a, b) => a.planetName.localeCompare(b.planetName) || a.designName.localeCompare(b.designName))
+                .map(({ planetName, designName, hullName, noseArmor, entries }) => (
+                  <TableRow key={`${planetName}||${designName}`}>
+                    <TableCell>{planetName}</TableCell>
+                    <TableCell className="font-medium">{designName}</TableCell>
+                    <TableCell>{hullName}</TableCell>
+                    <TableCell className="text-right">{noseArmor > 0 ? noseArmor : "-"}</TableCell>
+                    <TableCell className="text-right">{entries.length}</TableCell>
+                    <TableCell>
+                      {entries
+                        .toSorted((a, b) => a.days - b.days)
+                        .map((e, i) => (
+                          <Fragment key={i}>
+                            {i > 0 && ", "}
+                            {e.status === "waiting" ? (
+                              <span title="Waiting for materials">⚠️{e.days.toFixed(0)}</span>
+                            ) : e.status === "queued" ? (
+                              <span className="text-muted-foreground" title="Queued">({e.days.toFixed(0)})</span>
+                            ) : (
+                              e.days.toFixed(0)
+                            )}
+                          </Fragment>
+                        ))}
+                    </TableCell>
+                  </TableRow>
+                ));
+            })()}
+          </TableBody>
+        </Table>
+      )}
+    </>
+  );
+}
+
+export function getFleetsContentPanels(analysis: Analysis): ContentPanel[] {
+  const alienFleets = analysis.alienFleetsToPlayerOrbits;
+  const humanEnemyFleets = analysis.humanEnemyFleetsToPlayerOrbits;
+  const playerFleets = analysis.playerFleets;
+  const shipsUnderConstruction = analysis.playerShipsUnderConstruction;
+
+  const byTarget = alienFleets.reduce((acc, fleet) => {
     const key = fleet.planetName || "Unknown Orbit";
     if (!acc.has(key)) {
       acc.set(key, []);
     }
     acc.get(key)!.push(fleet);
     return acc;
-  }, new Map<string, typeof analysis.alienFleetsToPlayerOrbits>());
+  }, new Map<string, typeof alienFleets>());
+
   const label = [
     ...byTarget.entries().map(([target, rawFleets]) => {
       const fleets = rawFleets.filter((f) => f.deltaV > 0 && (f.daysToTarget || 0) > 0);
@@ -44,7 +201,6 @@ export function getFleetsUi(analysis: Analysis) {
         }
         return null;
       }
-      // now that we know the arrival of the first one, find all arriving within 14 days to summarize MC
       const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime || analysis.gameCurrentDateTime)[0];
       const firstFleets = fleets.filter(
         (f) =>
@@ -56,11 +212,6 @@ export function getFleetsUi(analysis: Analysis) {
           ) < 14,
       );
       const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
-
-      // tier 2 hab (60d), fusion power, and defense module (90d) take a total of 150 days
-      // tier 3 hab (90d), fusion power, and defense module (180d) take a total of 270 days.
-      // T2 hab should be able to stop a bombard from a 10MC fleet, and T3 is the best we can do anyway, plus the turn time of 30 days should make for enough warning
-      // before that, we'll still have the nameplate warning and can look at details in the fleets tab
       const warningNeeded = (firstMc > 10 ? 270 : 150) + 30;
       const daysToTarget = firstFleet.daysToTarget || 0;
       const farFuture = daysToTarget > warningNeeded;
@@ -96,116 +247,39 @@ export function getFleetsUi(analysis: Analysis) {
     }),
   ].filter((i) => !!i);
 
-  return {
-    key: "fleets",
-    tab: (
-      <>
-        Fleets
-        {label.length > 0 ? (
-          <>
-            {" - "}
-            {label.map((i, ix) => (
-              <Fragment key={ix}>
-                {i}
-                {ix < label.length - 1 ? " | " : ""}
-              </Fragment>
-            ))}
-          </>
-        ) : (
-          ""
-        )}
-      </>
-    ),
-    content: <FleetsComponent analysis={analysis} />,
-  };
-}
+  const tabLabel = (
+    <>
+      Fleets
+      {label.length > 0 ? (
+        <>
+          {" - "}
+          {label.map((i, ix) => (
+            <Fragment key={ix}>
+              {i}
+              {ix < label.length - 1 ? " | " : ""}
+            </Fragment>
+          ))}
+        </>
+      ) : (
+        ""
+      )}
+    </>
+  );
 
-function FleetsComponent({ analysis }: { analysis: Analysis }) {
-  const alienFleets = analysis.alienFleetsToPlayerOrbits;
-  const humanEnemyFleets = analysis.humanEnemyFleetsToPlayerOrbits;
-  const playerFleets = analysis.playerFleets;
-  const shipsUnderConstruction = analysis.playerShipsUnderConstruction;
-
-  return (
-    <SmartAccordion
-      type="multiple"
-      storageKey="fleetsSections"
-      defaultValue={["alien-fleets", "human-enemy-fleets", "player-fleets", "ships-under-construction"]}
-    >
-      {/* Alien Fleets */}
-      <AccordionItem value="alien-fleets">
-        <AccordionTrigger>Alien Fleets ({alienFleets.length})</AccordionTrigger>
-        <AccordionContent>
+  return [
+    {
+      key: "alien-fleets",
+      label: `Alien Fleets (${alienFleets.length})`,
+      icon: AlertTriangle,
+      source: "fleets",
+      content: (
+        <div className="space-y-2">
           {alienFleets.length === 0 ? (
             <div className="p-4 text-muted-foreground">No alien fleets detected heading to player orbits.</div>
           ) : (
             <div className="space-y-2">
               <p>Tracking planets: {analysis.playerInterestedPlanets.map((p) => p.displayName).join(", ")}</p>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fleet Name</TableHead>
-                    <TableHead>Planet</TableHead>
-                    <TableHead>Target Orbit</TableHead>
-                    <TableHead>Arrival Date</TableHead>
-                    <TableHead className="text-right">Days to Arrival</TableHead>
-                    <TableHead className="text-right">MC Used</TableHead>
-                    <TableHead className="text-right">Marine CP</TableHead>
-                    <TableHead className="text-right">Total Mass</TableHead>
-                    <TableHead className="text-right">Max Ship Mass</TableHead>
-                    <TableHead>Ships Hulls</TableHead>
-                    <TableHead>Ships Roles</TableHead>
-                    <TableHead>Operation</TableHead>
-                    <TableHead>Operation Complete</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {alienFleets.map((fleet) => (
-                    <TableRow key={fleet.id} className={twMerge(fleet.deltaV === 0 ? "bg-gray-500/5" : "")}>
-                      <TableCell className="font-medium">{fleet.displayName}</TableCell>
-                      <TableCell>{fleet.planetName}</TableCell>
-                      <TableCell>{fleet.targetOrbitName}</TableCell>
-                      <TableCell>{fleet.arrivalTimeFormatted || "-"}</TableCell>
-                      <TableCell className="text-right">
-                        {fleet.daysToTarget !== null ? `${fleet.daysToTarget.toFixed(0)}` : "—"}
-                      </TableCell>
-                      <TableCell className="text-right">{fleet.totalMC.toFixed(0)}</TableCell>
-                      <TableCell className="text-right">{fleet.marineCombatPower > 0 ? fleet.marineCombatPower : "—"}</TableCell>
-                      <TableCell className="text-right">{(fleet.totalMass / 1000000).toFixed(0)} Mkg</TableCell>
-                      <TableCell className="text-right">{(fleet.maxShipMass / 1000000).toFixed(0)} Mkg</TableCell>
-                      <TableCell className="whitespace-normal">
-                        {fleet.shipsByHullType.length > 0
-                          ? fleet.shipsByHullType
-                              .map((ship) => {
-                                const name = `${ship.count} ${ship.hullName.replace("Alien ", "")}${ship.count > 1 ? "s" : ""}`;
-                                return ship.avgNoseArmor > 0 ? `${name} (${ship.avgNoseArmor})` : name;
-                              })
-                              .join(" + ")
-                          : "-"}
-                      </TableCell>
-                      <TableCell className="whitespace-normal">
-                        {fleet.shipsByRole.length > 0
-                          ? fleet.shipsByRole
-                              .map((ship) => `${ship.count} ${ship.role}${ship.count > 1 ? "s" : ""}`)
-                              .join(" + ")
-                          : "-"}
-                      </TableCell>
-                      <TableCell>{fleet.operation || "-"}</TableCell>
-                      <TableCell>
-                        {fleet.operationComplete
-                          ? `${fleet.operationComplete}${
-                              fleet.operationCompleteDays !== null
-                                ? ` (${fleet.operationCompleteDays.toFixed(0)}d)`
-                                : ""
-                            }`
-                          : "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {/* Planetary Defense Summary */}
+              <FleetsTable fleets={alienFleets} title="Alien Fleets" />
               <div className="mt-8">
                 <h2 className="text-2xl font-bold mb-4">Planetary Defense Summary</h2>
                 <Table>
@@ -303,7 +377,6 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
                   </TableBody>
                 </Table>
               </div>
-
               <Collapsible>
                 <CollapsibleTrigger asChild>
                   <Button>Debug Data</Button>
@@ -314,15 +387,18 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               </Collapsible>
             </div>
           )}
-        </AccordionContent>
-      </AccordionItem>
-
-      {/* Other Human Factions Fleets */}
-      <AccordionItem value="human-enemy-fleets">
-        <AccordionTrigger>Other Human Factions ({humanEnemyFleets.length})</AccordionTrigger>
-        <AccordionContent>
+        </div>
+      ),
+    },
+    {
+      key: "human-enemy-fleets",
+      label: `Other Human Factions (${humanEnemyFleets.length})`,
+      icon: Users,
+      source: "fleets",
+      content: (
+        <div className="space-y-2">
           {humanEnemyFleets.length === 0 ? (
-            <div className="p-4 text-muted-foreground">No other human faction fleets detected heading to player orbits.</div>
+            <div className="p-4 text-muted-foreground">No other human faction fleets detected.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -394,13 +470,16 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               </TableBody>
             </Table>
           )}
-        </AccordionContent>
-      </AccordionItem>
-
-      {/* Player Fleets */}
-      <AccordionItem value="player-fleets">
-        <AccordionTrigger>Player Fleets ({playerFleets.length})</AccordionTrigger>
-        <AccordionContent>
+        </div>
+      ),
+    },
+    {
+      key: "player-fleets",
+      label: `Player Fleets (${playerFleets.length})`,
+      icon: Ship,
+      source: "fleets",
+      content: (
+        <div className="space-y-2">
           {playerFleets.length === 0 ? (
             <div className="p-4 text-muted-foreground">No player fleets found.</div>
           ) : (
@@ -460,76 +539,120 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               </TableBody>
             </Table>
           )}
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      ),
+    },
+    {
+      key: "ships-under-construction",
+      label: `Ships Under Construction (${shipsUnderConstruction.length})`,
+      icon: Construction,
+      source: "fleets",
+      content: <ShipsUnderConstructionTable ships={shipsUnderConstruction} />,
+    },
+  ];
+}
 
-      {/* Ships Under Construction */}
-      <AccordionItem value="ships-under-construction">
-        <AccordionTrigger>Ships Under Construction ({shipsUnderConstruction.length})</AccordionTrigger>
-        <AccordionContent>
-          {shipsUnderConstruction.length === 0 ? (
-            <div className="p-4 text-muted-foreground">No ships under construction.</div>
+export function getFleetsUi(analysis: Analysis) {
+  const { playerHabs } = analysis;
+  const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
+    const key = fleet.planetName || "Unknown Orbit";
+    if (!acc.has(key)) {
+      acc.set(key, []);
+    }
+    acc.get(key)!.push(fleet);
+    return acc;
+  }, new Map<string, typeof analysis.alienFleetsToPlayerOrbits>());
+  const label = [
+    ...byTarget.entries().map(([target, rawFleets]) => {
+      const fleets = rawFleets.filter((f) => f.deltaV > 0 && (f.daysToTarget || 0) > 0);
+      const surv = rawFleets.filter((f) => f.operation === "AlienEarthSurveillanceOperation" && !f.arrivalTime);
+      const survInfo = surv.length ? (
+        <>
+          <span className="text-white bg-destructive rounded py-2 px-3 font-bold">
+            {surv
+              .map((f) => f.operationCompleteDays || 0)
+              .reduce((a, b) => Math.min(a, b), 9999999999)
+              .toFixed(0)}
+            d Surveillance
+          </span>{" "}
+        </>
+      ) : null;
+      if (fleets.length === 0) {
+        if (survInfo) {
+          return (
+            <span>
+              {target}: {survInfo}
+            </span>
+          );
+        }
+        return null;
+      }
+      const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime || analysis.gameCurrentDateTime)[0];
+      const firstFleets = fleets.filter(
+        (f) =>
+          toDays(
+            diffDateTime(
+              f.arrivalTime || analysis.gameCurrentDateTime,
+              firstFleet.arrivalTime || analysis.gameCurrentDateTime,
+            ),
+          ) < 14,
+      );
+      const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
+      const warningNeeded = (firstMc > 10 ? 270 : 150) + 30;
+      const daysToTarget = firstFleet.daysToTarget || 0;
+      const farFuture = daysToTarget > warningNeeded;
+      const className = twMerge(
+        farFuture && "px-1 -mx-1 py-0.5 -my-0.5 rounded bg-green-500",
+        farFuture &&
+          (daysToTarget < warningNeeded + 50
+            ? "bg-red-200"
+            : daysToTarget < warningNeeded + 100
+              ? "bg-yellow-200"
+              : "bg-green-200"),
+      );
+      return (
+        <span
+          className={className}
+          title={`${fleets.length} fleet(s) targeting ${target}, arriving in ${daysToTarget.toFixed(
+            0,
+          )} days, using ${firstMc.toFixed(0)} MC`}
+        >
+          {target}
+          {fleets.length > 1 ? `(${fleets.length})` : ""}
+          {farFuture ? (
+            ""
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Planet</TableHead>
-                  <TableHead>Design</TableHead>
-                  <TableHead>Hull</TableHead>
-                  <TableHead className="text-right">Nose Armor</TableHead>
-                  <TableHead className="text-right">Count</TableHead>
-                  <TableHead>Days to Complete</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(() => {
-                  const byPlanetDesign = shipsUnderConstruction.reduce((acc, ship) => {
-                    const key = `${ship.planetName}||${ship.designName}`;
-                    if (!acc.has(key))
-                      acc.set(key, {
-                        planetName: ship.planetName,
-                        designName: ship.designName,
-                        hullName: ship.hullName,
-                        noseArmor: ship.noseArmor,
-                        entries: [] as { days: number; status: "building" | "queued" | "waiting" }[],
-                      });
-                    acc.get(key)!.entries.push({ days: ship.daysToCompletion, status: ship.status });
-                    return acc;
-                  }, new Map<string, { planetName: string; designName: string; hullName: string; noseArmor: number; entries: { days: number; status: "building" | "queued" | "waiting" }[] }>());
-
-                  return [...byPlanetDesign.values()]
-                    .toSorted((a, b) => a.planetName.localeCompare(b.planetName) || a.designName.localeCompare(b.designName))
-                    .map(({ planetName, designName, hullName, noseArmor, entries }) => (
-                      <TableRow key={`${planetName}||${designName}`}>
-                        <TableCell>{planetName}</TableCell>
-                        <TableCell className="font-medium">{designName}</TableCell>
-                        <TableCell>{hullName}</TableCell>
-                        <TableCell className="text-right">{noseArmor > 0 ? noseArmor : "-"}</TableCell>
-                        <TableCell className="text-right">{entries.length}</TableCell>
-                        <TableCell>
-                          {entries
-                            .toSorted((a, b) => a.days - b.days)
-                            .map((e, i) => (
-                              <Fragment key={i}>
-                                {i > 0 && ", "}
-                                {e.status === "waiting" ? (
-                                  <span title="Waiting for materials">⚠️{e.days.toFixed(0)}</span>
-                                ) : e.status === "queued" ? (
-                                  <span className="text-muted-foreground" title="Queued">({e.days.toFixed(0)})</span>
-                                ) : (
-                                  e.days.toFixed(0)
-                                )}
-                              </Fragment>
-                            ))}
-                        </TableCell>
-                      </TableRow>
-                    ));
-                })()}
-              </TableBody>
-            </Table>
+            <>
+              : {daysToTarget.toFixed(0)}d <MissionControl />
+              {firstMc.toFixed(0)}
+            </>
           )}
-        </AccordionContent>
-      </AccordionItem>
-    </SmartAccordion>
-  );
+          {survInfo && <>,{survInfo}</>}
+        </span>
+      );
+    }),
+  ].filter((i) => !!i);
+
+  return {
+    key: "fleets",
+    tab: (
+      <>
+        Fleets
+        {label.length > 0 ? (
+          <>
+            {" - "}
+            {label.map((i, ix) => (
+              <Fragment key={ix}>
+                {i}
+                {ix < label.length - 1 ? " | " : ""}
+              </Fragment>
+            ))}
+          </>
+        ) : (
+          ""
+        )}
+      </>
+    ),
+    content: <div />,
+  };
 }
