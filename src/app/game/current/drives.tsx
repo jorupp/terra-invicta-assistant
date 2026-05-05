@@ -3,7 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ShowEffects } from "@/components/showEffects";
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash2, Rocket, Table2, Calculator } from "lucide-react";
+import type { TreeNavItem } from "./treeNavigation";
 import { smartRound, formatPercent, addMaterials } from "@/lib/utils";
 import { ResearchLink } from "./researchLink";
 import { useTechnologyGoals } from "./technologyGoals";
@@ -12,8 +13,6 @@ import { Water, Volatiles, Metals, Nobles, Fissiles, Antimatter } from "@/compon
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
-import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Materials } from "@/lib/templates";
 import { twMerge } from "tailwind-merge";
 
@@ -1079,25 +1078,30 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
   );
 }
 
-export function getDrivesUi(analysis: Analysis) {
-  return {
-    key: "drives",
-    tab: "Drives",
-    content: (
-      <SmartAccordion type="multiple" storageKey="drives-accordion" defaultValue={["drive-table", "drive-calculator"]}>
-        <AccordionItem value="drive-table">
-          <AccordionTrigger>Drive Systems</AccordionTrigger>
-          <AccordionContent>
-            <DrivesTable analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="drive-calculator">
-          <AccordionTrigger>Drive Calculator</AccordionTrigger>
-          <AccordionContent>
-            <DriveCalculator analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
-    ),
-  };
+export function getDrivesUi(analysis: Analysis): TreeNavItem[] {
+  return [
+    {
+      key: "drives",
+      label: "Drives",
+      icon: Rocket,
+      children: [
+        {
+          key: "drive-table",
+          label: "Drive Systems",
+          subtitle: "Browse and compare all available drive systems",
+          icon: Table2,
+          content: <DrivesTable analysis={analysis} />,
+        },
+        {
+          key: "drive-calculator",
+          label: "Drive Calculator",
+          subtitle: "Plan ship mass, fuel, and delta-V for drives",
+          icon: Calculator,
+          content: <DriveCalculator analysis={analysis} />,
+        },
+      ],
+    },
+  ];
 }
+
+export type DrivesTreeItem = ReturnType<typeof getDrivesUi>[number];
