@@ -1,18 +1,16 @@
-/* src/pages/GameCurrentPage.tsx */
-import React from 'react';
-import { LeftNavTree } from '../elements/LeftNavTree';
-import { GameContentView } from '../elements/GameContentView';
-import { useParams } from 'react-router-dom';
+import { useRouter } from "next/router";
+import { LeftNavTree } from "../components/LeftNavTree";
+import { GameContentView } from "../components/GameContentView";
 
 export const GameCurrentPage = () => {
-  const { node } = useParams<{ node?: string }>(); // defaults to undefined
-  const selectedNode = node ? node : 'councilors'; // default to councilors if none specified
+  const router = useRouter();
+  const node = router.query.node ? router.query.node : "councilors";
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: "flex" }}>
       <LeftNavTree />
       <main style={{ flex: 1, marginLeft: 24 }}>
-        <GameContentView node={selectedNode} />
+        <GameContentView node={node} />
       </main>
     </div>
   );
