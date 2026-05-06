@@ -37,5 +37,5 @@ GHCP did have the standard issue of generating scripts that used calls that requ
 - [FastDMS context compression](https://www.reddit.com/r/LocalLLaMA/comments/1t3vlrx/fastdms_64x_kvcache_compression_running_faster/) - I wonder if this would make models like granite-4.1-8b more viable for a 16GB VRAM setup.
 - MTP (multi-token prediction) - haven't explored this at all, but this might make the LLM calls even faster, though not sure if the extra VRAM usage would mean smaller or more-aggressively-quantized models would be needed to make it work.
 - [GHCP w/ local models](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/use-byok-models) - I'm curious how this will compare to OpenCode.
-- Other models - `quen3.6-27b`, `gpt-oss-20b`
+- Other models - `quen3.6-27b`, `gpt-oss-20b`, `gemma-4-26b-a4b`, `nemotron-3-nano-omni`, `lfm2-24b-a2b`, `Qwen3-Coder-30B-A3B-Instruct`
 - See if any 5090s have fallen off the back of a truck in my neighborhood
