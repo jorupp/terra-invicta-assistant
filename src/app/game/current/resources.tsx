@@ -3,9 +3,9 @@
 import { Boost, ControlPoint, FactionIcons, MissionControl, PrioritySpoils, ResourceIcons } from "@/components/icons";
 import { pct } from "@/components/showEffects";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
 import { SmartAccordion } from "@/components/ui/smart-accordion";
+import { NavTreeGroup } from "@/components/ui/nav-tree";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Analysis } from "@/lib/analysis";
@@ -25,7 +25,7 @@ function getNationBg(
   );
 }
 
-export function getResourcesUi(analysis: Analysis) {
+export function buildResourcesTree(analysis: Analysis): NavTreeGroup {
   const spoils = analysis.playerFaction.monthlyTransactionSummary
     .filter((i) => i.resource === "Money" && i.source === "Spoils")
     .reduce((sum, i) => sum + i.amount, 0);
@@ -49,40 +49,45 @@ export function getResourcesUi(analysis: Analysis) {
         }
       )
   );
-
-  // once you're using over 300mc, you're not worried about your MC hate floor anymore.
   const showMcInfo = mcUsage < 300;
+
+  const subtitle = (
+    <>
+      <span className={twMerge(nationBg, "px-1 py-0.5 -mx-1 -my-0.5 rounded")}>
+        <PrioritySpoils /> ${spoils.toFixed(0)}
+      </span>
+      {showMcInfo ? (
+        <>
+          {" "}
+          <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
+          <span title="If more MC is used than this, alien hate will never fall below 50">
+            Lim {mcAlienWarLimit.toFixed(0)}
+          </span>
+          <span title="Current hate floor (alien hate cannot go below this due to your MC usage)">
+            {" "}Flr {mcHateFloor.toFixed(0)}
+          </span>
+        </>
+      ) : null}
+    </>
+  );
+
   return {
+    type: "group",
     key: "resources",
-    tab: (
-      <>
-        <span className={twMerge(nationBg, "px-1 py-0.5 -mx-1 -my-0.5 rounded")}>Resources</span>
-        (<PrioritySpoils /> ${spoils.toFixed(0)}
-        {showMcInfo ? (
-          <>
-            , <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
-            <span title="If more MC is used than this, alien hate will never fall below 50">
-              Lim {mcAlienWarLimit.toFixed(0)}
-            </span>
-            <span title="Current hate floor (alien hate cannot go below this due to your MC usage)">
-              Flr {mcHateFloor.toFixed(0)}
-            </span>
-          </>
-        ) : null}
-        )
-      </>
-    ),
-    content: (
-      <ResourcesComponent
-        {...{
-          analysis,
-        }}
-      />
-    ),
+    label: "Resources",
+    subtitle,
+    children: [
+      { type: "leaf", key: "resources/transactions", label: "Transactions" },
+      { type: "leaf", key: "resources/owned", label: "Owned Nations" },
+      { type: "leaf", key: "resources/spoils", label: "Spoil Targets" },
+      { type: "leaf", key: "resources/space", label: "MC/Boost Targets" },
+      { type: "leaf", key: "resources/nation-claims", label: "Nation Claims" },
+      { type: "leaf", key: "resources/unification", label: "Unification Candidates" },
+    ],
   };
 }
 
-function ResourcesComponent({ analysis }: { analysis: Analysis }) {
+export function ResourcesSection({ analysis, section }: { analysis: Analysis; section: string }) {
   const {
     playerFaction: { monthlyTransactionSummary, permaAbandonedNationIds, id: playerFactionId },
     nations,
@@ -131,253 +136,229 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
   resourcesSet.delete("MissionControl");
   const resources = [...resourcesSet];
 
-  return (
-    <div className="space-y-2">
-      <SmartAccordion type="single" collapsible defaultValue="transactions" storageKey="resources-accordion">
-        <AccordionItem value="transactions">
-          <AccordionTrigger>
-            <span>Transactions</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Source</TableHead>
-                  {resources.map((resource) => (
-                    <TableHead key={resource}>
-                      {(() => {
-                        const Icon = ResourceIcons[resource as keyof typeof ResourceIcons];
-                        return Icon ? <Icon /> : null;
-                      })()}{" "}
-                      {resource}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[...bySourceByResource.entries()].map(([source, resourceMap]) => (
-                  <TableRow key={source}>
-                    <TableCell>{source}</TableCell>
-                    {resources.map((resource) => {
-                      const data = resourceMap.get(resource);
-                      if (!data) return <TableCell key={resource}></TableCell>;
-                      
-                      const hasTooltip = (resource === "Exotics" || resource === "Antimatter") && data.transactions.length > 0;
-                      const content = smartRound(data.amount);
-                      
-                      return (
-                        <TableCell key={resource}>
-                          {hasTooltip ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="cursor-help">{content}</span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <div className="space-y-1">
-                                    {data.transactions.map((txn, i) => (
-                                      <div key={i}>{txn.date}: {smartRound(txn.amount)}</div>
-                                    ))}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            content
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TableHead>Total</TableHead>
-                  {resources.map((resource) => (
-                    <TableHead key={resource}>{smartRound(byResource.get(resource) || 0)}</TableHead>
-                  ))}
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="owned">
-          <AccordionTrigger>Owned nations</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nation</TableHead>
-                  <TableHead>Control Points</TableHead>
-                  <TableHead>Opp P</TableHead>
-                  <TableHead>Boost P</TableHead>
-                  <TableHead>MC P</TableHead>
-                  <TableHead>Spoil P</TableHead>
-                  <TableHead>Unrest</TableHead>
-                  <TableHead>Total Spoils</TableHead>
-                  <TableHead>Total Spoils Per Point</TableHead>
-                  <TableHead>Total Spoils Per CP Cost</TableHead>
-                  <TableHead>Current MC / Boost</TableHead>
-                  <TableHead>Boost/mo Per CP Cost</TableHead>
-                  <TableHead>MC Per CP Cost</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {nations
-                  .filter((i) => i.controlPoints.some((cp) => cp.factionId === playerFactionId))
-                  .toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1))
-                  .map((nation) => (
-                    <TableRow key={nation.id} className={getNationBg(nation)}>
-                      <TableCell>{nation.displayName}</TableCell>
-                      <TableCell>
-                        <NationCPDetails {...{ analysis, nation }} />
-                      </TableCell>
-                      <TableCell>
-                        {nation.allocatedPriorities.Oppression ? pct(nation.allocatedPriorities.Oppression) : null}
-                      </TableCell>
-                      <TableCell>
-                        {nation.allocatedPriorities.LaunchFacilities
-                          ? pct(nation.allocatedPriorities.LaunchFacilities)
-                          : null}
-                      </TableCell>
-                      <TableCell>
-                        {nation.allocatedPriorities.MissionControl
-                          ? pct(nation.allocatedPriorities.MissionControl)
-                          : null}
-                      </TableCell>
-                      <TableCell>
-                        {nation.allocatedPriorities.Spoils ? pct(nation.allocatedPriorities.Spoils) : null}
-                      </TableCell>
-                      <TableCell>{nation.unrest.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <span
-                          title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(
-                            2
-                          )} IP`}
-                        >
-                          {nation.totalSpoils.toFixed(0)}
-                        </span>
-                      </TableCell>
-                      <TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell>
-                      <TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell>
-                      <TableCell>
-                        {nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost />
-                      </TableCell>
-                      <TableCell>{nation.boostPerMonthPerCpCost.toFixed(2)}</TableCell>
-                      <TableCell>{nation.mcPerCpCost.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="spoils">
-          <AccordionTrigger>Spoil targets</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nation</TableHead>
-                  <TableHead>Control Points</TableHead>
-                  <TableHead>Unrest</TableHead>
-                  <TableHead>Total Spoils</TableHead>
-                  <TableHead>Total Spoils Per Point</TableHead>
-                  <TableHead>Total Spoils Per CP Cost</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {nations
-                  .toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1))
-                  .map((nation) => (
-                    <TableRow key={nation.id}>
-                      <TableCell>{nation.displayName}</TableCell>
-                      <TableCell>
-                        <NationCPDetails {...{ analysis, nation }} />
-                      </TableCell>
-                      <TableCell>{nation.unrest.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <span
-                          title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(
-                            2
-                          )} IP`}
-                        >
-                          {nation.totalSpoils.toFixed(0)}
-                        </span>
-                      </TableCell>
-                      <TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell>
-                      <TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="space">
-          <AccordionTrigger>MC/Boost targets</AccordionTrigger>
-          <AccordionContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nation</TableHead>
-                  <TableHead>Control Points</TableHead>
-                  <TableHead>Possible Boost IP Per CP Cost</TableHead>
-                  <TableHead>Current MC / Boost</TableHead>
-                  <TableHead>Boost/mo Per CP Cost</TableHead>
-                  <TableHead>MC Per CP Cost</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {nations
-                  .toSorted((a, b) => {
-                    if (a.boostPerMonthPerCpCost !== b.boostPerMonthPerCpCost) {
-                      return b.possibleBoostPerCpCost - a.possibleBoostPerCpCost;
-                    }
-                    return a.boostPerMonthPerCpCost < b.boostPerMonthPerCpCost ? 1 : -1;
-                  })
-                  .map((nation) => (
-                    <TableRow key={nation.id}>
-                      <TableCell>{nation.displayName}</TableCell>
-                      <TableCell>
-                        <NationCPDetails {...{ analysis, nation }} />
-                      </TableCell>
-                      <TableCell>{nation.possibleBoostPerCpCost.toFixed(2)}</TableCell>
-                      <TableCell>
-                        {nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost />
-                      </TableCell>
-                      <TableCell>{nation.boostPerMonthPerCpCost.toFixed(2)}</TableCell>
-                      <TableCell>{nation.mcPerCpCost.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="nation-claims">
-          <AccordionTrigger>Nation Claims</AccordionTrigger>
-          <AccordionContent>
-            <NationClaimsSection analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="unification-candidates">
-          <AccordionTrigger>Unification Candidates ({analysis.unificationCandidates.length})</AccordionTrigger>
-          <AccordionContent>
-            <UnificationCandidatesSection analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
+  switch (section) {
+    case "transactions":
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Source</TableHead>
+              {resources.map((resource) => (
+                <TableHead key={resource}>
+                  {(() => {
+                    const Icon = ResourceIcons[resource as keyof typeof ResourceIcons];
+                    return Icon ? <Icon /> : null;
+                  })()}{" "}
+                  {resource}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...bySourceByResource.entries()].map(([source, resourceMap]) => (
+              <TableRow key={source}>
+                <TableCell>{source}</TableCell>
+                {resources.map((resource) => {
+                  const data = resourceMap.get(resource);
+                  if (!data) return <TableCell key={resource}></TableCell>;
+                  
+                  const hasTooltip = (resource === "Exotics" || resource === "Antimatter") && data.transactions.length > 0;
+                  const content = smartRound(data.amount);
+                  
+                  return (
+                    <TableCell key={resource}>
+                      {hasTooltip ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">{content}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="space-y-1">
+                                {data.transactions.map((txn, i) => (
+                                  <div key={i}>{txn.date}: {smartRound(txn.amount)}</div>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        content
+                      )}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableHead>Total</TableHead>
+              {resources.map((resource) => (
+                <TableHead key={resource}>{smartRound(byResource.get(resource) || 0)}</TableHead>
+              ))}
+            </TableRow>
+          </TableFooter>
+        </Table>
+      );
 
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline">Debug Data</Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <pre>{JSON.stringify(monthlyTransactionSummary, null, 2)}</pre>
-          <pre>{JSON.stringify(nations, null, 2)}</pre>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  );
+    case "owned":
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nation</TableHead>
+              <TableHead>Control Points</TableHead>
+              <TableHead>Opp P</TableHead>
+              <TableHead>Boost P</TableHead>
+              <TableHead>MC P</TableHead>
+              <TableHead>Spoil P</TableHead>
+              <TableHead>Unrest</TableHead>
+              <TableHead>Total Spoils</TableHead>
+              <TableHead>Total Spoils Per Point</TableHead>
+              <TableHead>Total Spoils Per CP Cost</TableHead>
+              <TableHead>Current MC / Boost</TableHead>
+              <TableHead>Boost/mo Per CP Cost</TableHead>
+              <TableHead>MC Per CP Cost</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {nations
+              .filter((i) => i.controlPoints.some((cp) => cp.factionId === playerFactionId))
+              .toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1))
+              .map((nation) => (
+                <TableRow key={nation.id} className={getNationBg(nation)}>
+                  <TableCell>{nation.displayName}</TableCell>
+                  <TableCell>
+                    <NationCPDetails {...{ analysis, nation }} />
+                  </TableCell>
+                  <TableCell>
+                    {nation.allocatedPriorities.Oppression ? pct(nation.allocatedPriorities.Oppression) : null}
+                  </TableCell>
+                  <TableCell>
+                    {nation.allocatedPriorities.LaunchFacilities
+                      ? pct(nation.allocatedPriorities.LaunchFacilities)
+                      : null}
+                  </TableCell>
+                  <TableCell>
+                    {nation.allocatedPriorities.MissionControl
+                      ? pct(nation.allocatedPriorities.MissionControl)
+                      : null}
+                  </TableCell>
+                  <TableCell>
+                    {nation.allocatedPriorities.Spoils ? pct(nation.allocatedPriorities.Spoils) : null}
+                  </TableCell>
+                  <TableCell>{nation.unrest.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <span
+                      title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(
+                        2
+                      )} IP`}
+                    >
+                      {nation.totalSpoils.toFixed(0)}
+                    </span>
+                  </TableCell>
+                  <TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell>
+                  <TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost />
+                  </TableCell>
+                  <TableCell>{nation.boostPerMonthPerCpCost.toFixed(2)}</TableCell>
+                  <TableCell>{nation.mcPerCpCost.toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      );
+
+    case "spoils":
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nation</TableHead>
+              <TableHead>Control Points</TableHead>
+              <TableHead>Unrest</TableHead>
+              <TableHead>Total Spoils</TableHead>
+              <TableHead>Total Spoils Per Point</TableHead>
+              <TableHead>Total Spoils Per CP Cost</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {nations
+              .toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1))
+              .map((nation) => (
+                <TableRow key={nation.id}>
+                  <TableCell>{nation.displayName}</TableCell>
+                  <TableCell>
+                    <NationCPDetails {...{ analysis, nation }} />
+                  </TableCell>
+                  <TableCell>{nation.unrest.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <span
+                      title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(
+                        2
+                      )} IP`}
+                    >
+                      {nation.totalSpoils.toFixed(0)}
+                    </span>
+                  </TableCell>
+                  <TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell>
+                  <TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      );
+
+    case "space":
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nation</TableHead>
+              <TableHead>Control Points</TableHead>
+              <TableHead>Possible Boost IP Per CP Cost</TableHead>
+              <TableHead>Current MC / Boost</TableHead>
+              <TableHead>Boost/mo Per CP Cost</TableHead>
+              <TableHead>MC Per CP Cost</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {nations
+              .toSorted((a, b) => {
+                if (a.boostPerMonthPerCpCost !== b.boostPerMonthPerCpCost) {
+                  return b.possibleBoostPerCpCost - a.possibleBoostPerCpCost;
+                }
+                return a.boostPerMonthPerCpCost < b.boostPerMonthPerCpCost ? 1 : -1;
+              })
+              .map((nation) => (
+                <TableRow key={nation.id}>
+                  <TableCell>{nation.displayName}</TableCell>
+                  <TableCell>
+                    <NationCPDetails {...{ analysis, nation }} />
+                  </TableCell>
+                  <TableCell>{nation.possibleBoostPerCpCost.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost />
+                  </TableCell>
+                  <TableCell>{nation.boostPerMonthPerCpCost.toFixed(2)}</TableCell>
+                  <TableCell>{nation.mcPerCpCost.toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      );
+
+    case "nation-claims":
+      return <NationClaimsSection analysis={analysis} />;
+
+    case "unification":
+      return <UnificationCandidatesSection analysis={analysis} />;
+
+    default:
+      return null;
+  }
 }
 
 const NationCPDetails = ({ analysis, nation }: { nation: Analysis["nations"][0]; analysis: Analysis }) => {

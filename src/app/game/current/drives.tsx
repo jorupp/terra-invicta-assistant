@@ -12,8 +12,7 @@ import { Water, Volatiles, Metals, Nobles, Fissiles, Antimatter } from "@/compon
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
-import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { NavTreeGroup } from "@/components/ui/nav-tree";
 import { Materials } from "@/lib/templates";
 import { twMerge } from "tailwind-merge";
 
@@ -1079,25 +1078,25 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
   );
 }
 
-export function getDrivesUi(analysis: Analysis) {
+export function buildDrivesTree(analysis: Analysis): NavTreeGroup {
   return {
+    type: "group",
     key: "drives",
-    tab: "Drives",
-    content: (
-      <SmartAccordion type="multiple" storageKey="drives-accordion" defaultValue={["drive-table", "drive-calculator"]}>
-        <AccordionItem value="drive-table">
-          <AccordionTrigger>Drive Systems</AccordionTrigger>
-          <AccordionContent>
-            <DrivesTable analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="drive-calculator">
-          <AccordionTrigger>Drive Calculator</AccordionTrigger>
-          <AccordionContent>
-            <DriveCalculator analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
-    ),
+    label: "Drives",
+    children: [
+      { type: "leaf", key: "drives/table", label: "Drive Table" },
+      { type: "leaf", key: "drives/calculator", label: "Drive Calculator" },
+    ],
   };
+}
+
+export function DrivesSection({ analysis, section }: { analysis: Analysis; section: string }) {
+  switch (section) {
+    case "table":
+      return <DrivesTable analysis={analysis} />;
+    case "calculator":
+      return <DriveCalculator analysis={analysis} />;
+    default:
+      return null;
+  }
 }
