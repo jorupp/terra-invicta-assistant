@@ -39,3 +39,4 @@ GHCP did have the standard issue of generating scripts that used calls that requ
 - [GHCP w/ local models](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/use-byok-models) - I'm curious how this will compare to OpenCode.
 - Other models - `quen3.6-27b`, `gpt-oss-20b`, `gemma-4-26b-a4b`, `nemotron-3-nano-omni`, `lfm2-24b-a2b`, `Qwen3-Coder-30B-A3B-Instruct`
 - See if any 5090s have fallen off the back of a truck in my neighborhood
+- models with extended context via [YaRN](https://arxiv.org/pdf/2309.00071)
