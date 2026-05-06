@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartTabs } from "@/components/ui/smart-tabs";
 import { twMerge } from "tailwind-merge";
 
-function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
+export function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
     <TableHeader>
       <TableRow>
@@ -36,7 +36,7 @@ function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   );
 }
 
-function OrgTableHeader({ costHeader }: { costHeader?: string }) {
+export function OrgTableHeader({ costHeader }: { costHeader?: string }) {
   return (
     <TableHeader>
       <TableRow>
@@ -53,7 +53,7 @@ function OrgTableHeader({ costHeader }: { costHeader?: string }) {
   );
 }
 
-function CouncilorTableRow({
+export function CouncilorTableRow({
   councilor,
   stats,
   label,
@@ -171,7 +171,7 @@ function CouncilorTableRow({
   );
 }
 
-function OrgTableRow({
+export function OrgTableRow({
   org,
   playerNationIds,
   playerTraits,
