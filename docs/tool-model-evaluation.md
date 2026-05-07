@@ -16,7 +16,7 @@ This document is a collection of notes from those experiments on a 4080 (16GB VR
 
 > `*` Call count is from the session logs or GHCP session event log file - it is unclear how trustworthy they are for this number - ie. I'm unsure if this includes sub-agent calls or just calls from the main agent.
 
-> `**` For GHCP-hosted models, costs are projected based on token usage for announced prices that take effect in June 2026.  For local models, costs are estimated based on observed power draw for the system (500W) at a bit over Illinois residential power costs ($0.20/kWh) for the duration of the run.  There is no attempt to account for hardware costs or depreciation in this number.  Models at didn't complete successfully are marked with "x" since it's not clear how to estimate their costs.
+> `**` For GHCP-hosted models, costs are projected based on token usage for announced prices that take effect in June 2026.  For local models, costs are estimated based on observed power draw for the system (500W) at a bit over Illinois residential power costs ($0.20/kWh) for the duration of the run.  There is no attempt to account for hardware costs or depreciation in this number.  Models that didn't complete successfully are marked with "x" since it's not clear how to estimate their costs.
 
 ## Thoughts
 
