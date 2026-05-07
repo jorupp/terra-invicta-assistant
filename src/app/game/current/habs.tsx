@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Analysis } from "@/lib/analysis";
 import { formatDateTime, noDate } from "@/lib/utils";
 import { Fragment, useState } from "react";
@@ -30,6 +29,8 @@ import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
 import { User, Factory, ArrowUp, Pickaxe } from "lucide-react";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
+import { NavItem } from "./types";
+
 
 type AlienGoal = Analysis["expandedAlienGoals"][0];
 
@@ -307,7 +308,7 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
 type MineResourceType = "water" | "volatiles" | "metals" | "nobles" | "fissiles" | null;
 type MineSortDirection = "asc" | "desc" | null;
 
-export function getHabsUi(analysis: Analysis) {
+export function getHabsUi(analysis: Analysis): NavItem {
   const { playerHabs } = analysis;
 
   const missingMines = playerHabs.filter((h) => h.missingMine);
@@ -361,7 +362,7 @@ export function getHabsUi(analysis: Analysis) {
 
   return {
     key: "habs",
-    tab: (
+    label: (
       <>
         Habs ({playerHabs.length}){nextCompletion && <> {nextCompletion.daysToCompletion?.toFixed(0)}d</>}
         {missingMines.length > 0 && (
@@ -369,7 +370,7 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span className="bg-yellow-300 text-black p-1 rounded" title={missingMinesTitle}>
               M
-            </span>
+            </span >
           </>
         )}
         {unnecessaryFactoryHabs.length > 0 && (
@@ -377,7 +378,7 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span title={unnecessaryFactoryTitle}>
               <Factory className="inline h-4 w-4 text-red-600" />
-            </span>
+            </span >
           </>
         )}
         {upgradablePowerHabs.length > 0 && (
@@ -397,7 +398,7 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span title={upgradableFarmTitle}>
               <User className="inline h-4 w-4" />
-            </span>
+            </span >
           </>
         )}
         {upgradableFactoryHabs.length > 0 && (
@@ -405,7 +406,7 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span title={upgradableFactoryTitle}>
               <Factory className="inline h-4 w-4" />
-            </span>
+            </span >
           </>
         )}
         {upgradableMiningHabs.length > 0 && (
@@ -413,7 +414,7 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span title={upgradableMiningTitle}>
               <Pickaxe className="inline h-4 w-4" />
-            </span>
+            </span >
           </>
         )}
         {upgradableOtherHabs.length > 0 && (
@@ -421,7 +422,7 @@ export function getHabsUi(analysis: Analysis) {
             {" "}
             <span title={upgradableOtherTitle}>
               <ArrowUp className="inline h-4 w-4" />
-            </span>
+            </span >
           </>
         )}
       </>
@@ -435,6 +436,7 @@ export function getHabsUi(analysis: Analysis) {
     ),
   };
 }
+
 
 function HabsComponent({ analysis }: { analysis: Analysis }) {
   // State for sorting mines table

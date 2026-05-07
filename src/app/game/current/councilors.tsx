@@ -16,6 +16,7 @@ import { Administration, MissionIcons, TraitIcons, UnknownIcon } from "@/compone
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartTabs } from "@/components/ui/smart-tabs";
 import { twMerge } from "tailwind-merge";
+import { NavItem } from "./types";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
@@ -312,7 +313,7 @@ function OrgTableRow({
   );
 }
 
-export function getCouncilorsUi(analysis: Analysis) {
+export function getCouncilorsUi(analysis: Analysis): NavItem {
   const { playerMissionCounts } = analysis;
   const [weights, setWeights] = useState<ScoringWeights>(defaultScoringWeights);
 
@@ -365,9 +366,10 @@ export function getCouncilorsUi(analysis: Analysis) {
 
   return {
     key: "councilors",
-    tab: (
+    label: "Councilors",
+    subtitle: (
       <>
-        Councilors ({worstExistingCouncilor?.toFixed(0)} vs. {bestAvailableCouncilor?.toFixed(0)}) / Orgs (
+        ({worstExistingCouncilor?.toFixed(0)} vs. {bestAvailableCouncilor?.toFixed(0)}) / Orgs (
         {worstExistingOrg?.toFixed(2)} vs {bestAvailableOrg?.toFixed(2)})
       </>
     ),
@@ -381,13 +383,13 @@ export function getCouncilorsUi(analysis: Analysis) {
           scoredAvailableCouncilors,
           scoredBaseCouncilors,
           scoredOrgs,
-          scoredUsedOrgs,
           scoredOwnedOrgs,
         }}
       />
     ),
   };
 }
+
 
 function CouncilorsComponent({
   analysis,
