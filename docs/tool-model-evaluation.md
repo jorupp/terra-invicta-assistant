@@ -13,6 +13,7 @@ This document is a collection of notes from those experiments on a 4080 (16GB VR
 | [PR 5: OpenCode, lmstudio, qwen3.6-35b-a3b w/ 128k context](https://github.com/jorupp/terra-invicta-assistant/pull/5) | 5h41m | 100 | $0.568 |
 | [PR 9: OpenCode, llama.cpp, granite-4.1-8b:i1-Q4_K_S w/ full context and q4 kv cache](https://github.com/jorupp/terra-invicta-assistant/pull/9) | x | x | x |
 | [PR 10: OpenCode, llama.cpp, granite-4.1-8b:i1-Q4_K_S w/ smaller, unquantized context](https://github.com/jorupp/terra-invicta-assistant/pull/10) | x | x | x |
+| [OpenCode, llama.cpp, unsloth/gemma-4-26B-A4B-it-UD-IQ4_XS crashed](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/gemma4-26b-a4b-failed/.github/ai-log/20260506-failed-gemma4-26b-a4b-llama-crashed-no-error.md), even with [extra 0.5GB reserved](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/gemma4-26b-a4b-failed-1.5GB-free/.github/ai-log/20260507-another-gemma4-crash.md) | x | x | x |
 
 > `*` Call count is from the session logs or GHCP session event log file - it is unclear how trustworthy they are for this number - ie. I'm unsure if this includes sub-agent calls or just calls from the main agent.
 
