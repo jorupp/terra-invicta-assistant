@@ -386,6 +386,14 @@ export function getCouncilorsUi(analysis: Analysis) {
         }}
       />
     ),
+    subItems: [
+      { key: "councilors.existing", label: "Existing Council" },
+      { key: "councilors.new-councilors", label: "Find new" },
+      { key: "councilors.current-orgs", label: "Current Organizations" },
+      { key: "councilors.takeover", label: "Hostile Takeover" },
+      { key: "councilors.missions", label: "Missions" },
+      { key: "councilors.other-councilors", label: "Other Councilors" },
+    ],
   };
 }
 
