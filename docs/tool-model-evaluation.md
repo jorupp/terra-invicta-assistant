@@ -1,6 +1,6 @@
 # Tool / Model evaluation
 
-Since early Feburary 2026, most of the development work on this was heavily assisted by GitHub Copilot, first with Claude Sonnet 4.5, then with 4.6 and some occasional experiments with Opus.  In April/May 2026, I also started using certain ideas I had for this project as a testbed for other tools/models - seeing how well they'd handle this kind of scenario, with the hope of informing my choice of tools and models for other work.
+Since early Feburary 2026, most of the development work on this was heavily assisted by GitHub Copilot, first with Claude Sonnet 4.5, then with 4.6 and some occasional experiments with Opus.  In April/May 2026, I also started using certain ideas I had for this project as a testbed for other tools/models - seeing how well they'd handle a specific single-shot UI refactor (starting from `base/ui-refactor` and running a specific prompt), with the hope of informing my choice of tools and models for other work.
 
 This document is a collection of notes from those experiments on a 4080 (16GB VRAM) + 7800X3D (64GB system RAM) windows desktop computer.
 
@@ -17,6 +17,14 @@ This document is a collection of notes from those experiments on a 4080 (16GB VR
 > `*` Call count is from the session logs or GHCP session event log file - it is unclear how trustworthy they are for this number - ie. I'm unsure if this includes sub-agent calls or just calls from the main agent.
 
 > `**` For GHCP-hosted models, costs are projected based on token usage for announced prices that take effect in June 2026.  For local models, costs are estimated based on observed power draw for the system (500W) at a bit over Illinois residential power costs ($0.20/kWh) for the duration of the run.  There is no attempt to account for hardware costs or depreciation in this number.  Models that didn't complete successfully are marked with "x" since it's not clear how to estimate their costs.
+
+## Scenario
+
+Here's the prompt used:
+
+> This app has a very complicated UI that has been built up over a long time by adding lots of little pieces in a surgical manner.  We need to completely reorganize the mini-app in the RenderGameComponent displayed on the page /game/current.  Instead of a series of tabs at the top and expand/collapse sections in the page, there should instead be a (collapsible) tree-style navigation along the left side of the page to select the information to display in the main part of the page.  For example, there should be a "Councilors" tree item, which has the score details as a subtitle, then options below that for "Existing Council", "Find new", etc.  This way each individual thing is more focused, and that tree allows for quickly switching between parts.
+
+The goal is for the tool+model to understand the current structure and generate the refactored code without further input from the user.
 
 ## Thoughts
 
