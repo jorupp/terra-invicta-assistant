@@ -14,6 +14,8 @@ This document is a collection of notes from those experiments on a 4080 (16GB VR
 | [PR 9: OpenCode, llama.cpp, granite-4.1-8b:i1-Q4_K_S w/ full context and q4 kv cache](https://github.com/jorupp/terra-invicta-assistant/pull/9) | x | x | x |
 | [PR 10: OpenCode, llama.cpp, granite-4.1-8b:i1-Q4_K_S w/ smaller, unquantized context](https://github.com/jorupp/terra-invicta-assistant/pull/10) | x | x | x |
 | [OpenCode, llama.cpp, unsloth/gemma-4-26B-A4B-it-UD-IQ4_XS crashed](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/gemma4-26b-a4b-failed/.github/ai-log/20260506-failed-gemma4-26b-a4b-llama-crashed-no-error.md), even with [extra 0.5GB reserved](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/gemma4-26b-a4b-failed-1.5GB-free/.github/ai-log/20260507-another-gemma4-crash.md) | x | x | x |
+| [OpenCode, llama.cpp, unsloth/gpt-oss-20b-UD-Q4_K_XL barely did anything](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/unsloth-gpt-oss-20b-UD-Q4_K_XL/.github/ai-log/20260511-gpt-oss-20b-failed-export.md) | x | x | x |
+| [OpenCode, llama.cpp, unsloth/gpt-oss-20b-UD-Q8_K_XL also barely did anything](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/unsloth-gpt-oss-20b-UD-Q8_K_XL/.github/ai-log/20260511-gpt-oss-20b-UD-Q8_K_XL-failed.md) | x | x | x |
 
 > `*` Call count is from the session logs or GHCP session event log file - it is unclear how trustworthy they are for this number - ie. I'm unsure if this includes sub-agent calls or just calls from the main agent.
 
@@ -36,6 +38,10 @@ The LM Studio run with `qwen3.6-35b-a3b` gave good output, but was _much_ too sl
 The Granite model didn't work well at all - at least with the quant and context size I was using.  Using even a 64k context size seems to require a _lot_ of memory with this model so I had to choose between a full context with Q4 kv cache or a small context that may have been too small to be useful.  And for both, I used an aggresive quant for the model to save some space for context.  I wonder if other context-compression approaches like [FastDMS](https://www.reddit.com/r/LocalLLaMA/comments/1t3vlrx/fastdms_64x_kvcache_compression_running_faster/) might be helpful here to get a usable context window with a smaller memory footprint to allow using a less-quantized model?
 
 `qwen3.6-35b-a3b` in general did a pretty good job re: outputs (both LMStudio and llama.cpp).  It would have to be _really_ aggressively quantized to fully fit in 16GB of VRAM, but since it's a MOE model, it's performance doesn't suffer too terribly when some of the MOE layers have to spill over to CPU memory.  The llama.cpp runs with the `i1-Q4_K_S` quant felt like they were within the same accuracy ballpark as GHCP+Sonnet, and I was surprised to see the ones with the full-size context were actually _faster_ to run than the GHCP-Sonnet one was.
+
+`gpt-oss-20b` with `q4` and `q8` quanitizations didn't seem to do much - it basically put the tabs on the left, did a bad job of putting text on the tab, and called itself done.
+
+I couldn't effectively get `qwen3.6-27b` to run - even with Q4 and an estimated host usage of 10GB, it'd use 32GB of host memory eventually and hang with no error message - it'd just stop processing prompts.  Maybe it went deep into swap?  Maybe I need to use a more aggressive quant and/or context quant?
 
 ### Security prompts
 
