@@ -2,7 +2,7 @@
 
 Since early Feburary 2026, most of the development work on this was heavily assisted by GitHub Copilot, first with Claude Sonnet 4.5, then with 4.6 and some occasional experiments with Opus.  In April/May 2026, I also started using certain ideas I had for this project as a testbed for other tools/models - seeing how well they'd handle a specific single-shot UI refactor (starting from `base/ui-refactor` and running a specific prompt), with the hope of informing my choice of tools and models for other work.
 
-This document is a collection of notes from those experiments on a 4080 (16GB VRAM) + 7800X3D (64GB system RAM) windows desktop computer.
+This document is a collection of notes from those experiments on a 4080 (16GB VRAM) + 7800X3D (64GB system RAM) windows desktop computer.  These scenarios that link to a PR have details in that PR about the command, config, before and after videos, and the code it generated.
 
 | Tool / Model | Duration | LLM calls `*` | Cost `**` |
 | --- | --- | --- | --- |
