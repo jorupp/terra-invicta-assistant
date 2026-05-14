@@ -16,6 +16,7 @@ This document is a collection of notes from those experiments on a 4080 (16GB VR
 | [OpenCode, llama.cpp, unsloth/gemma-4-26B-A4B-it-UD-IQ4_XS crashed](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/gemma4-26b-a4b-failed/.github/ai-log/20260506-failed-gemma4-26b-a4b-llama-crashed-no-error.md), even with [extra 0.5GB reserved](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/gemma4-26b-a4b-failed-1.5GB-free/.github/ai-log/20260507-another-gemma4-crash.md) | x | x | x |
 | [OpenCode, llama.cpp, unsloth/gpt-oss-20b-UD-Q4_K_XL barely did anything](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/unsloth-gpt-oss-20b-UD-Q4_K_XL/.github/ai-log/20260511-gpt-oss-20b-failed-export.md) | x | x | x |
 | [OpenCode, llama.cpp, unsloth/gpt-oss-20b-UD-Q8_K_XL also barely did anything](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/unsloth-gpt-oss-20b-UD-Q8_K_XL/.github/ai-log/20260511-gpt-oss-20b-UD-Q8_K_XL-failed.md) | x | x | x |
+| [PR 11: OpenCode, llama.cpp, qwen3.6-35b-a3b:MTP-Q4_K_S w/ 262k context](https://github.com/jorupp/terra-invicta-assistant/pull/1) | 49m | 69 | $0.082 |
 
 > `*` Call count is from the session logs or GHCP session event log file - it is unclear how trustworthy they are for this number - ie. I'm unsure if this includes sub-agent calls or just calls from the main agent.
 
@@ -42,6 +43,8 @@ The Granite model didn't work well at all - at least with the quant and context 
 `gpt-oss-20b` with `q4` and `q8` quanitizations didn't seem to do much - it basically put the tabs on the left, did a bad job of putting text on the tab, and called itself done.
 
 I couldn't effectively get `qwen3.6-27b` to run - even with Q4 and an estimated host usage of 10GB, it'd use 32GB of host memory eventually and hang with no error message - it'd just stop processing prompts.  Maybe it went deep into swap?  Maybe I need to use a more aggressive quant and/or context quant?
+
+MTP with `qwen3.6-35b-a3b` still worked, but was slower than the same size model without it.  I think it did show more memory used though, so maybe the increased CPU spill-over hurt it more than the speedup from MTP helped it?  Or maybe the specific MTP build I used wasn't as optimized yet?
 
 ### Security prompts
 
