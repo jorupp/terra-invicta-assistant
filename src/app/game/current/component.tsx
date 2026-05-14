@@ -138,7 +138,7 @@ export function RenderGameComponent({ analysis }: { analysis: Analysis }) {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto px-4 py-3">
-        <div className="mx-auto max-w-5xl">
+        <div>
           {/* Header */}
           <div className="mb-4">
             <h2 className="text-base font-semibold">
