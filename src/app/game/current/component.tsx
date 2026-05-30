@@ -1,6 +1,6 @@
 "use client";
 
-import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { SmartTabs } from "@/components/ui/smart-tabs";
 import { Analysis } from "@/lib/analysis";
 import { getCouncilorsUi } from "./councilors";
