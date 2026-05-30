@@ -1076,6 +1076,27 @@ Let me create a todo list to track this work.
 
 I'm not sure if it was an OpenCode issue or something with llama.cpp or the model, but it just stopped at two different points - I told it to `continue` after the first one, but I considered it failed after the second one.
 
+Command:
+```
+docker run -it --rm --gpus 1 -v vllm-hf-cache:/root/.cache/huggingface -p 8080:8080 ghcr.io/ggml-org/llama.cpp:server-cuda --hf-repo LiquidAI/LFM2.5-8B-A1B-GGUF --hf-file LFM2.5-8B-A1B-BF16.gguf --host 0.0.0.0 --fit-ctx 128000 --metrics
+```
+
+Initial allocation:
+
+```
+common_memory_breakdown_print: | memory breakdown [MiB] | total    free     self   model   context   compute    unaccounted |
+common_memory_breakdown_print: |   - CUDA0 (RTX 4080)   | 16375 = 14792 + (13800 = 12712 +     591 +     497) +      -12217 |
+common_memory_breakdown_print: |   - Host               |                   3337 =  3264 +       0 +      72                |
+```
+
+Final allocation:
+
+```
+common_memory_breakdown_print: | memory breakdown [MiB] | total   free     self   model   context   compute    unaccounted |
+common_memory_breakdown_print: |   - CUDA0 (RTX 4080)   | 16375 =    0 + (14014 = 12122 +    1501 +     391) +        2361 |
+common_memory_breakdown_print: |   - Host               |                 11494 = 11236 +       0 +     258                |
+```
+
 `/metrics`:
 
 ```
