@@ -16,7 +16,7 @@ This document is a collection of notes from those experiments on a 4080 (16GB VR
 | [OpenCode, llama.cpp, unsloth/gemma-4-26B-A4B-it-UD-IQ4_XS crashed](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/gemma4-26b-a4b-failed/.github/ai-log/20260506-failed-gemma4-26b-a4b-llama-crashed-no-error.md), even with [extra 0.5GB reserved](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/gemma4-26b-a4b-failed-1.5GB-free/.github/ai-log/20260507-another-gemma4-crash.md) | x | x | x |
 | [OpenCode, llama.cpp, unsloth/gpt-oss-20b-UD-Q4_K_XL barely did anything](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/unsloth-gpt-oss-20b-UD-Q4_K_XL/.github/ai-log/20260511-gpt-oss-20b-failed-export.md) | x | x | x |
 | [OpenCode, llama.cpp, unsloth/gpt-oss-20b-UD-Q8_K_XL also barely did anything](https://github.com/jorupp/terra-invicta-assistant/blob/refactor/unsloth-gpt-oss-20b-UD-Q8_K_XL/.github/ai-log/20260511-gpt-oss-20b-UD-Q8_K_XL-failed.md) | x | x | x |
-| [PR 11: OpenCode, llama.cpp, qwen3.6-35b-a3b:MTP-Q4_K_S w/ 262k context](https://github.com/jorupp/terra-invicta-assistant/pull/1) | 49m | 69 | $0.082 |
+| [PR 11: OpenCode, llama.cpp, qwen3.6-35b-a3b:MTP-Q4_K_S w/ 262k context](https://github.com/jorupp/terra-invicta-assistant/pull/11) | 49m | 69 | $0.082 |
 
 > `*` Call count is from the session logs or GHCP session event log file - it is unclear how trustworthy they are for this number - ie. I'm unsure if this includes sub-agent calls or just calls from the main agent.
 
