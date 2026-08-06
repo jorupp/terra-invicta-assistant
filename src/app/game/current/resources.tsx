@@ -25,7 +25,7 @@ function getNationBg(
   );
 }
 
-export function getResourcesUi(analysis: Analysis) {
+export function getResourcesUi(analysis: Analysis, activeSection?: string) {
   const spoils = analysis.playerFaction.monthlyTransactionSummary
     .filter((i) => i.resource === "Money" && i.source === "Spoils")
     .reduce((sum, i) => sum + i.amount, 0);
@@ -76,13 +76,14 @@ export function getResourcesUi(analysis: Analysis) {
       <ResourcesComponent
         {...{
           analysis,
+          activeSection,
         }}
       />
     ),
   };
 }
 
-function ResourcesComponent({ analysis }: { analysis: Analysis }) {
+function ResourcesComponent({ analysis, activeSection }: { analysis: Analysis; activeSection?: string }) {
   const {
     playerFaction: { monthlyTransactionSummary, permaAbandonedNationIds, id: playerFactionId },
     nations,
@@ -133,7 +134,13 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="space-y-2">
-      <SmartAccordion type="single" collapsible defaultValue="transactions" storageKey="resources-accordion">
+      <SmartAccordion
+        type="single"
+        collapsible
+        defaultValue="transactions"
+        storageKey="resources-accordion"
+        focusValue={activeSection}
+      >
         <AccordionItem value="transactions">
           <AccordionTrigger>
             <span>Transactions</span>

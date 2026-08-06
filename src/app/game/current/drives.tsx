@@ -1079,12 +1079,17 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
   );
 }
 
-export function getDrivesUi(analysis: Analysis) {
+export function getDrivesUi(analysis: Analysis, activeSection?: string) {
   return {
     key: "drives",
     tab: "Drives",
     content: (
-      <SmartAccordion type="multiple" storageKey="drives-accordion" defaultValue={["drive-table", "drive-calculator"]}>
+      <SmartAccordion
+        type="multiple"
+        storageKey="drives-accordion"
+        defaultValue={["drive-table", "drive-calculator"]}
+        focusValue={activeSection}
+      >
         <AccordionItem value="drive-table">
           <AccordionTrigger>Drive Systems</AccordionTrigger>
           <AccordionContent>

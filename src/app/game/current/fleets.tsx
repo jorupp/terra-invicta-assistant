@@ -10,7 +10,7 @@ import { Fragment } from "react/jsx-runtime";
 import { FactionIcons, MissionControl } from "@/components/icons";
 import { twMerge } from "tailwind-merge";
 
-export function getFleetsUi(analysis: Analysis) {
+export function getFleetsUi(analysis: Analysis, activeSection?: string) {
   const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
     const key = fleet.planetName || "Unknown Orbit";
     if (!acc.has(key)) {
@@ -116,11 +116,11 @@ export function getFleetsUi(analysis: Analysis) {
         )}
       </>
     ),
-    content: <FleetsComponent analysis={analysis} />,
+    content: <FleetsComponent analysis={analysis} activeSection={activeSection} />,
   };
 }
 
-function FleetsComponent({ analysis }: { analysis: Analysis }) {
+function FleetsComponent({ analysis, activeSection }: { analysis: Analysis; activeSection?: string }) {
   const alienFleets = analysis.alienFleetsToPlayerOrbits;
   const humanEnemyFleets = analysis.humanEnemyFleetsToPlayerOrbits;
   const playerFleets = analysis.playerFleets;
@@ -131,6 +131,7 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
       type="multiple"
       storageKey="fleetsSections"
       defaultValue={["alien-fleets", "human-enemy-fleets", "player-fleets", "ships-under-construction"]}
+      focusValue={activeSection}
     >
       {/* Alien Fleets */}
       <AccordionItem value="alien-fleets">

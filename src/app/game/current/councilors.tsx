@@ -312,7 +312,7 @@ function OrgTableRow({
   );
 }
 
-export function getCouncilorsUi(analysis: Analysis) {
+export function getCouncilorsUi(analysis: Analysis, activeSection?: string) {
   const { playerMissionCounts } = analysis;
   const [weights, setWeights] = useState<ScoringWeights>(defaultScoringWeights);
 
@@ -383,6 +383,7 @@ export function getCouncilorsUi(analysis: Analysis) {
           scoredOrgs,
           scoredUsedOrgs,
           scoredOwnedOrgs,
+          activeSection,
         }}
       />
     ),
@@ -398,6 +399,7 @@ function CouncilorsComponent({
   scoredBaseCouncilors,
   scoredOrgs,
   scoredOwnedOrgs,
+  activeSection,
 }: {
   analysis: Analysis;
   weights: ScoringWeights;
@@ -412,6 +414,7 @@ function CouncilorsComponent({
     councilor?: string;
     councilorId?: number;
   })[];
+  activeSection?: string;
 }) {
   const {
     playerMissionCounts,
@@ -545,7 +548,13 @@ function CouncilorsComponent({
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <div className="space-y-2">
-      <SmartAccordion type="single" collapsible storageKey="councilorsSections" defaultValue="existing">
+      <SmartAccordion
+        type="single"
+        collapsible
+        storageKey="councilorsSections"
+        defaultValue="existing"
+        focusValue={activeSection}
+      >
         <AccordionItem value="existing">
           <AccordionTrigger>
             <span>
