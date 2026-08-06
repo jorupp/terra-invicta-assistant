@@ -1079,25 +1079,19 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
   );
 }
 
-export function getDrivesUi(analysis: Analysis) {
+export function getDrivesSections(analysis: Analysis) {
   return {
-    key: "drives",
-    tab: "Drives",
-    content: (
-      <SmartAccordion type="multiple" storageKey="drives-accordion" defaultValue={["drive-table", "drive-calculator"]}>
-        <AccordionItem value="drive-table">
-          <AccordionTrigger>Drive Systems</AccordionTrigger>
-          <AccordionContent>
-            <DrivesTable analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="drive-calculator">
-          <AccordionTrigger>Drive Calculator</AccordionTrigger>
-          <AccordionContent>
-            <DriveCalculator analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
-    ),
+    group: {
+      id: "drives",
+      label: "Drives",
+      leaves: [
+        { id: "drives.systems", label: "Drive Systems" },
+        { id: "drives.calculator", label: "Drive Calculator" },
+      ],
+    },
+    contents: new Map([
+      ["drives.systems", <DrivesTable key="drives-table" analysis={analysis} />],
+      ["drives.calculator", <DriveCalculator key="drive-calc" analysis={analysis} />],
+    ]),
   };
 }
