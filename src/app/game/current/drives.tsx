@@ -12,8 +12,7 @@ import { Water, Volatiles, Metals, Nobles, Fissiles, Antimatter } from "@/compon
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
-import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Materials } from "@/lib/templates";
 import { twMerge } from "tailwind-merge";
 
@@ -1079,12 +1078,18 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
   );
 }
 
-export function getDrivesUi(analysis: Analysis) {
+export function getDrivesUi(analysis: Analysis, section = "drive-table") {
   return {
     key: "drives",
-    tab: "Drives",
+    label: "Drives",
+    summary: "Drive systems and ship performance calculator",
     content: (
-      <SmartAccordion type="multiple" storageKey="drives-accordion" defaultValue={["drive-table", "drive-calculator"]}>
+      <Accordion
+        type="single"
+        collapsible
+        value={section}
+        className="border-0 rounded-none [&>[data-slot=accordion-item]]:border-0 [&>[data-slot=accordion-item]>*>[data-slot=accordion-trigger]]:hidden"
+      >
         <AccordionItem value="drive-table">
           <AccordionTrigger>Drive Systems</AccordionTrigger>
           <AccordionContent>
@@ -1097,7 +1102,7 @@ export function getDrivesUi(analysis: Analysis) {
             <DriveCalculator analysis={analysis} />
           </AccordionContent>
         </AccordionItem>
-      </SmartAccordion>
+      </Accordion>
     ),
   };
 }

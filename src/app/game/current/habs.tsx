@@ -16,7 +16,7 @@ import {
   ControlPoint,
 } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -29,7 +29,6 @@ import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "
 import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
 import { User, Factory, ArrowUp, Pickaxe } from "lucide-react";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
 
 type AlienGoal = Analysis["expandedAlienGoals"][0];
 
@@ -307,7 +306,7 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
 type MineResourceType = "water" | "volatiles" | "metals" | "nobles" | "fissiles" | null;
 type MineSortDirection = "asc" | "desc" | null;
 
-export function getHabsUi(analysis: Analysis) {
+export function getHabsUi(analysis: Analysis, section = "current-bonuses") {
   const { playerHabs } = analysis;
 
   const missingMines = playerHabs.filter((h) => h.missingMine);
@@ -361,9 +360,10 @@ export function getHabsUi(analysis: Analysis) {
 
   return {
     key: "habs",
-    tab: (
+    label: "Habs",
+    summary: (
       <>
-        Habs ({playerHabs.length}){nextCompletion && <> {nextCompletion.daysToCompletion?.toFixed(0)}d</>}
+        {playerHabs.length} habs{nextCompletion && <> - {nextCompletion.daysToCompletion?.toFixed(0)}d</>}
         {missingMines.length > 0 && (
           <>
             {" "}
@@ -430,13 +430,14 @@ export function getHabsUi(analysis: Analysis) {
       <HabsComponent
         {...{
           analysis,
+          section,
         }}
       />
     ),
   };
 }
 
-function HabsComponent({ analysis }: { analysis: Analysis }) {
+function HabsComponent({ analysis, section }: { analysis: Analysis; section: string }) {
   // State for sorting mines table
   const [mineSortResource, setMineSortResource] = useState<MineResourceType>(null);
   const [mineSortDirection, setMineSortDirection] = useState<MineSortDirection>(null);
@@ -555,10 +556,11 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="space-y-2">
-      <SmartAccordion
-        type="multiple"
-        defaultValue={["current-bonuses", "future-bonuses", "available-cp-projects"]}
-        storageKey="habs"
+      <Accordion
+        type="single"
+        collapsible
+        value={section}
+        className="border-0 rounded-none [&>[data-slot=accordion-item]]:border-0 [&>[data-slot=accordion-item]>*>[data-slot=accordion-trigger]]:hidden"
       >
         <AccordionItem value="current-bonuses">
           <AccordionTrigger>
@@ -937,7 +939,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             </Table>
           </AccordionContent>
         </AccordionItem>
-      </SmartAccordion>
+      </Accordion>
 
       <Collapsible>
         <CollapsibleTrigger asChild>

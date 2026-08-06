@@ -2,7 +2,7 @@
 
 import { Boost, ControlPoint, FactionIcons, MissionControl, PrioritySpoils, ResourceIcons } from "@/components/icons";
 import { pct } from "@/components/showEffects";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
@@ -25,7 +25,7 @@ function getNationBg(
   );
 }
 
-export function getResourcesUi(analysis: Analysis) {
+export function getResourcesUi(analysis: Analysis, section = "transactions") {
   const spoils = analysis.playerFaction.monthlyTransactionSummary
     .filter((i) => i.resource === "Money" && i.source === "Spoils")
     .reduce((sum, i) => sum + i.amount, 0);
@@ -54,13 +54,16 @@ export function getResourcesUi(analysis: Analysis) {
   const showMcInfo = mcUsage < 300;
   return {
     key: "resources",
-    tab: (
+    label: "Resources",
+    summary: (
       <>
-        <span className={twMerge(nationBg, "px-1 py-0.5 -mx-1 -my-0.5 rounded")}>Resources</span>
-        (<PrioritySpoils /> ${spoils.toFixed(0)}
+        <span className={twMerge(nationBg, "px-1 py-0.5 -mx-1 -my-0.5 rounded")}>
+          <PrioritySpoils /> ${spoils.toFixed(0)}
+        </span>
         {showMcInfo ? (
           <>
-            , <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
+            {" "}
+            <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
             <span title="If more MC is used than this, alien hate will never fall below 50">
               Lim {mcAlienWarLimit.toFixed(0)}
             </span>
@@ -69,20 +72,20 @@ export function getResourcesUi(analysis: Analysis) {
             </span>
           </>
         ) : null}
-        )
       </>
     ),
     content: (
       <ResourcesComponent
         {...{
           analysis,
+          section,
         }}
       />
     ),
   };
 }
 
-function ResourcesComponent({ analysis }: { analysis: Analysis }) {
+function ResourcesComponent({ analysis, section }: { analysis: Analysis; section: string }) {
   const {
     playerFaction: { monthlyTransactionSummary, permaAbandonedNationIds, id: playerFactionId },
     nations,
@@ -133,7 +136,12 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="space-y-2">
-      <SmartAccordion type="single" collapsible defaultValue="transactions" storageKey="resources-accordion">
+      <Accordion
+        type="single"
+        collapsible
+        value={section}
+        className="border-0 rounded-none [&>[data-slot=accordion-item]]:border-0 [&>[data-slot=accordion-item]>*>[data-slot=accordion-trigger]]:hidden"
+      >
         <AccordionItem value="transactions">
           <AccordionTrigger>
             <span>Transactions</span>
@@ -365,7 +373,7 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
             <UnificationCandidatesSection analysis={analysis} />
           </AccordionContent>
         </AccordionItem>
-      </SmartAccordion>
+      </Accordion>
 
       <Collapsible>
         <CollapsibleTrigger asChild>

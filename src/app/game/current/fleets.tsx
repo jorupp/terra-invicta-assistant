@@ -1,8 +1,7 @@
 import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
@@ -10,7 +9,7 @@ import { Fragment } from "react/jsx-runtime";
 import { FactionIcons, MissionControl } from "@/components/icons";
 import { twMerge } from "tailwind-merge";
 
-export function getFleetsUi(analysis: Analysis) {
+export function getFleetsUi(analysis: Analysis, section = "alien-fleets") {
   const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
     const key = fleet.planetName || "Unknown Orbit";
     if (!acc.has(key)) {
@@ -98,12 +97,11 @@ export function getFleetsUi(analysis: Analysis) {
 
   return {
     key: "fleets",
-    tab: (
+    label: "Fleets",
+    summary: (
       <>
-        Fleets
         {label.length > 0 ? (
           <>
-            {" - "}
             {label.map((i, ix) => (
               <Fragment key={ix}>
                 {i}
@@ -116,21 +114,22 @@ export function getFleetsUi(analysis: Analysis) {
         )}
       </>
     ),
-    content: <FleetsComponent analysis={analysis} />,
+    content: <FleetsComponent analysis={analysis} section={section} />,
   };
 }
 
-function FleetsComponent({ analysis }: { analysis: Analysis }) {
+function FleetsComponent({ analysis, section }: { analysis: Analysis; section: string }) {
   const alienFleets = analysis.alienFleetsToPlayerOrbits;
   const humanEnemyFleets = analysis.humanEnemyFleetsToPlayerOrbits;
   const playerFleets = analysis.playerFleets;
   const shipsUnderConstruction = analysis.playerShipsUnderConstruction;
 
   return (
-    <SmartAccordion
-      type="multiple"
-      storageKey="fleetsSections"
-      defaultValue={["alien-fleets", "human-enemy-fleets", "player-fleets", "ships-under-construction"]}
+    <Accordion
+      type="single"
+      collapsible
+      value={section}
+      className="border-0 rounded-none [&>[data-slot=accordion-item]]:border-0 [&>[data-slot=accordion-item]>*>[data-slot=accordion-trigger]]:hidden"
     >
       {/* Alien Fleets */}
       <AccordionItem value="alien-fleets">
@@ -530,6 +529,6 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
           )}
         </AccordionContent>
       </AccordionItem>
-    </SmartAccordion>
+    </Accordion>
   );
 }
