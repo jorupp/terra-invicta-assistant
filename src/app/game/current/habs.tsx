@@ -16,7 +16,6 @@ import {
   ControlPoint,
 } from "@/components/icons";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -29,7 +28,7 @@ import { useTechnologyGoals, TechnologyGoalsDialog, TechnologyGoalsList } from "
 import { ResearchLink } from "./researchLink";
 import { twMerge } from "tailwind-merge";
 import { User, Factory, ArrowUp, Pickaxe } from "lucide-react";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
+import type { GameNavigationGroup } from "./navigation-types";
 
 type AlienGoal = Analysis["expandedAlienGoals"][0];
 
@@ -359,84 +358,166 @@ export function getHabsUi(analysis: Analysis) {
         } other upgradeable modules`
       : "";
 
+  const items: GameNavigationGroup["items"] = [
+    {
+      key: "habs-current-bonuses",
+      label: "Current Bonuses",
+      subtitle: "Active hab effects",
+      content: <HabsComponent analysis={analysis} section="current-bonuses" />,
+    },
+    {
+      key: "habs-future-bonuses",
+      label: "Future Bonuses",
+      subtitle: "Including unpowered and under-construction modules",
+      content: <HabsComponent analysis={analysis} section="future-bonuses" />,
+    },
+    {
+      key: "habs-boost-mc",
+      label: "MC/Boost Summary",
+      subtitle: "Current totals and monthly change",
+      content: <HabsComponent analysis={analysis} section="boost-mc-summary" />,
+    },
+    {
+      key: "habs-alien-hate",
+      label: "Alien Hate",
+      subtitle: "Alien strategy, goals, and hate values",
+      content: <HabsComponent analysis={analysis} section="alien-hate" />,
+    },
+    {
+      key: "habs-building-details",
+      label: "Building Details",
+      subtitle: `${analysis.buildingSummary.length} building types`,
+      content: <HabsComponent analysis={analysis} section="building-details" />,
+    },
+    ...(analysis.playerFaction.availableBoostProjects.length > 0
+      ? [
+          {
+            key: "habs-boost-projects",
+            label: "Available Boost Projects",
+            subtitle: `${analysis.playerFaction.availableBoostProjects.length} projects`,
+            content: <HabsComponent analysis={analysis} section="available-boost-projects" />,
+          },
+        ]
+      : []),
+    ...(analysis.playerFaction.availableCPProjects.length > 0
+      ? [
+          {
+            key: "habs-cp-projects",
+            label: "Available Control Point Projects",
+            subtitle: `${analysis.playerFaction.availableCPProjects.length} projects`,
+            content: <HabsComponent analysis={analysis} section="available-cp-projects" />,
+          },
+        ]
+      : []),
+    ...(analysis.playerFaction.availableMaxOrgProjects.length > 0
+      ? [
+          {
+            key: "habs-max-org-projects",
+            label: "Available Max Org Projects",
+            subtitle: `${analysis.playerFaction.availableMaxOrgProjects.length} projects`,
+            content: <HabsComponent analysis={analysis} section="available-max-org-projects" />,
+          },
+        ]
+      : []),
+    ...(analysis.playerFaction.availableExpandNationProjects.length > 0
+      ? [
+          {
+            key: "habs-expand-nation-projects",
+            label: "Available Expand Nations",
+            subtitle: `${analysis.playerFaction.availableExpandNationProjects.length} projects`,
+            content: <HabsComponent analysis={analysis} section="available-expand-nation-projects" />,
+          },
+        ]
+      : []),
+    ...(analysis.playerStealableProjects.length > 0
+      ? [
+          {
+            key: "habs-stealable-projects",
+            label: "Available Stealable Projects",
+            subtitle: `${analysis.playerStealableProjects.length} projects`,
+            content: <HabsComponent analysis={analysis} section="available-stealable-projects" />,
+          },
+        ]
+      : []),
+    {
+      key: "habs-technology-goals",
+      label: "Technology Goals",
+      subtitle: "Track research and project prerequisites",
+      content: <HabsComponent analysis={analysis} section="technology-goals" />,
+    },
+    {
+      key: "habs-manage-habs",
+      label: "Manage Habs",
+      subtitle: `${playerHabs.length} habitats`,
+      content: <HabsComponent analysis={analysis} section="habs" />,
+    },
+    {
+      key: "habs-manage-mines",
+      label: "Manage Mines",
+      subtitle: `${missingMines.length} missing mines · ${upgradableMiningHabs.length} upgrades`,
+      content: <HabsComponent analysis={analysis} section="mines" />,
+    },
+    {
+      key: "habs-debug",
+      label: "Debug Data",
+      subtitle: "Raw habitat analysis",
+      content: <HabsComponent analysis={analysis} section="debug" />,
+    },
+  ];
+
   return {
     key: "habs",
-    tab: (
+    label: "Habs",
+    subtitle: (
       <>
-        Habs ({playerHabs.length}){nextCompletion && <> {nextCompletion.daysToCompletion?.toFixed(0)}d</>}
-        {missingMines.length > 0 && (
-          <>
+        {playerHabs.length} habitats{nextCompletion && ` · ${nextCompletion.daysToCompletion?.toFixed(0)}d`}
+        {missingMines.length > 0 && <span title={missingMinesTitle}> · {missingMines.length} missing mines</span>}
+        {unnecessaryFactoryHabs.length > 0 && <span title={unnecessaryFactoryTitle}> · factories</span>}
+        {(upgradablePowerHabs.length > 0 ||
+          upgradableCombatHabs.length > 0 ||
+          upgradableFarmHabs.length > 0 ||
+          upgradableFactoryHabs.length > 0 ||
+          upgradableMiningHabs.length > 0 ||
+          upgradableOtherHabs.length > 0) && (
+          <span
+            title={[
+              upgradablePowerTitle,
+              upgradableCombatTitle,
+              upgradableFarmTitle,
+              upgradableFactoryTitle,
+              upgradableMiningTitle,
+              upgradableOtherTitle,
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          >
             {" "}
-            <span className="bg-yellow-300 text-black p-1 rounded" title={missingMinesTitle}>
-              M
-            </span>
-          </>
-        )}
-        {unnecessaryFactoryHabs.length > 0 && (
-          <>
-            {" "}
-            <span title={unnecessaryFactoryTitle}>
-              <Factory className="inline h-4 w-4 text-red-600" />
-            </span>
-          </>
-        )}
-        {upgradablePowerHabs.length > 0 && (
-          <>
-            {" "}
-            <HabPower title={upgradablePowerTitle} />
-          </>
-        )}
-        {upgradableCombatHabs.length > 0 && (
-          <>
-            {" "}
-            <CombatScore title={upgradableCombatTitle} />
-          </>
-        )}
-        {upgradableFarmHabs.length > 0 && (
-          <>
-            {" "}
-            <span title={upgradableFarmTitle}>
-              <User className="inline h-4 w-4" />
-            </span>
-          </>
-        )}
-        {upgradableFactoryHabs.length > 0 && (
-          <>
-            {" "}
-            <span title={upgradableFactoryTitle}>
-              <Factory className="inline h-4 w-4" />
-            </span>
-          </>
-        )}
-        {upgradableMiningHabs.length > 0 && (
-          <>
-            {" "}
-            <span title={upgradableMiningTitle}>
-              <Pickaxe className="inline h-4 w-4" />
-            </span>
-          </>
-        )}
-        {upgradableOtherHabs.length > 0 && (
-          <>
-            {" "}
-            <span title={upgradableOtherTitle}>
-              <ArrowUp className="inline h-4 w-4" />
-            </span>
-          </>
+            · upgrades available
+          </span>
         )}
       </>
     ),
-    content: (
-      <HabsComponent
-        {...{
-          analysis,
-        }}
-      />
-    ),
+    items,
   };
 }
 
-function HabsComponent({ analysis }: { analysis: Analysis }) {
+type HabSection =
+  | "current-bonuses"
+  | "future-bonuses"
+  | "boost-mc-summary"
+  | "alien-hate"
+  | "building-details"
+  | "available-boost-projects"
+  | "available-cp-projects"
+  | "available-max-org-projects"
+  | "available-expand-nation-projects"
+  | "available-stealable-projects"
+  | "technology-goals"
+  | "habs"
+  | "mines"
+  | "debug";
+
+function HabsComponent({ analysis, section }: { analysis: Analysis; section: HabSection }) {
   // State for sorting mines table
   const [mineSortResource, setMineSortResource] = useState<MineResourceType>(null);
   const [mineSortDirection, setMineSortDirection] = useState<MineSortDirection>(null);
@@ -452,7 +533,8 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
     playerStealableProjects,
   } = analysis;
   const time = formatDateTime(analysis.gameCurrentDateTime);
-  const { goals, addGoal, removeGoal } = useTechnologyGoals(analysis);
+  const techGoals = useTechnologyGoals(analysis);
+  const { goals, addGoal, removeGoal } = techGoals;
   const activeEffects = playerHabs.reduce<ShowEffectsProps>((acc, hab) => combineEffects(acc, hab.activeEffects), {});
   const potentialEffects = playerHabs.reduce<ShowEffectsProps>(
     (acc, hab) => combineEffects(acc, hab.potentialEffects),
@@ -548,39 +630,24 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
       },
     );
 
-  const techGoals = useTechnologyGoals(analysis);
   const habsWithoutSolarPowerMultipler = playerHabs
     .filter((hab) => hab.hasSolar && !hab.solarMultiplier)
     .toSorted((a, b) => a.finderSortOverride - b.finderSortOverride);
 
   return (
     <div className="space-y-2">
-      <SmartAccordion
-        type="multiple"
-        defaultValue={["current-bonuses", "future-bonuses", "available-cp-projects"]}
-        storageKey="habs"
-      >
-        <AccordionItem value="current-bonuses">
-          <AccordionTrigger>
-            <span>Current Hab bonuses</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <ShowHabScienceEffects effects={activeEffects} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="future-bonuses">
-          <AccordionTrigger>
-            <span>Future Hab bonuses (including unpowered/under-construction)</span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <ShowHabScienceEffects effects={potentialEffects} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="boost-mc-summary">
-          <AccordionTrigger>
-            <span>MC/Boost Income Summary</span>
-          </AccordionTrigger>
-          <AccordionContent>
+      {section === "current-bonuses" && (
+        <div>
+          <ShowHabScienceEffects effects={activeEffects} />
+        </div>
+      )}
+      {section === "future-bonuses" && (
+        <div>
+          <ShowHabScienceEffects effects={potentialEffects} />
+        </div>
+      )}
+      {section === "boost-mc-summary" && (
+        <div>
             <div className="flex space-x-4 pb-4">
               <span>
                 <Boost />
@@ -613,13 +680,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 )}
               </span>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="alien-hate">
-          <AccordionTrigger>
-            <span>Alien Hate</span>
-          </AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "alien-hate" && (
+        <div>
             <div className="space-y-1">
               <div>
                 <strong>Current Alien Strategy:</strong>{" "}
@@ -654,13 +718,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                   : "Never"}
               </div>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="building-details">
-          <AccordionTrigger>
-            <span>Building Details</span>
-          </AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "building-details" && (
+        <div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -687,14 +748,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        {availableBoostProjects.length > 0 && (
-          <AccordionItem value="available-boost-projects">
-            <AccordionTrigger>
-              <span>Available Boost Projects</span>
-            </AccordionTrigger>
-            <AccordionContent>
+        </div>
+      )}
+      {section === "available-boost-projects" && (
+        <div>
               <ul>
                 {availableBoostProjects
                   .toSorted((a, b) => a.researchCost - b.researchCost)
@@ -708,15 +765,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                     );
                   })}
               </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        {availableCPProjects.length > 0 && (
-          <AccordionItem value="available-cp-projects">
-            <AccordionTrigger>
-              <span>Available Control Point Projects</span>
-            </AccordionTrigger>
-            <AccordionContent>
+        </div>
+      )}
+      {section === "available-cp-projects" && (
+        <div>
               <ul>
                 {availableCPProjects
                   .toSorted((a, b) => {
@@ -737,15 +789,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                     );
                   })}
               </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        {availableMaxOrgProjects.length > 0 && (
-          <AccordionItem value="available-max-org-projects">
-            <AccordionTrigger>
-              <span>Available Max Org Projects</span>
-            </AccordionTrigger>
-            <AccordionContent>
+        </div>
+      )}
+      {section === "available-max-org-projects" && (
+        <div>
               <ul>
                 {availableMaxOrgProjects
                   .toSorted((a, b) => a.researchCost - b.researchCost)
@@ -759,15 +806,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                     );
                   })}
               </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        {availableExpandNationProjects.length > 0 && (
-          <AccordionItem value="available-expand-nation-projects">
-            <AccordionTrigger>
-              <span>Available Expand Nations</span>
-            </AccordionTrigger>
-            <AccordionContent>
+        </div>
+      )}
+      {section === "available-expand-nation-projects" && (
+        <div>
               <ul>
                 {availableExpandNationProjects
                   .toSorted((a, b) => {
@@ -786,15 +828,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                     );
                   })}
               </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        {playerStealableProjects.length > 0 && (
-          <AccordionItem value="available-stealable-projects">
-            <AccordionTrigger>
-              <span>Available Stealable Projects</span>
-            </AccordionTrigger>
-            <AccordionContent>
+        </div>
+      )}
+      {section === "available-stealable-projects" && (
+        <div>
               <ul>
                 {playerStealableProjects.map(({ projectName, factionId }, ix) => {
                   const faction = analysis.factionsById.get(factionId);
@@ -813,14 +850,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                   );
                 })}
               </ul>
-            </AccordionContent>
-          </AccordionItem>
-        )}
-        <AccordionItem value="technology-goals">
-          <AccordionTrigger>
-            <span>Technology goals</span>
-          </AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "technology-goals" && (
+        <div>
             <TechnologyGoalsDialog
               analysis={analysis}
               goals={techGoals.goals}
@@ -831,13 +864,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
             <br />
             <br />
             <TechnologyGoalsList analysis={analysis} goals={techGoals.goals} onRemove={techGoals.removeGoal} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="habs">
-          <AccordionTrigger>
-            <span>Manage Habs</span>
-          </AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "habs" && (
+        <div>
             <>
               {habsWithoutSolarPowerMultipler.length > 0 && (
                 <>
@@ -860,13 +890,10 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 </TableBody>
               </Table>
             </>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="mines">
-          <AccordionTrigger>
-            <span>Manage Mines</span>
-          </AccordionTrigger>
-          <AccordionContent innerClassName="py-2 space-y-2">
+        </div>
+      )}
+      {section === "mines" && (
+        <div className="space-y-2">
             <Card>
               <CardHeader>
                 <CardTitle>Mining Bonuses</CardTitle>
@@ -935,18 +962,19 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
                 ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
+        </div>
+      )}
 
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline">Debug Data</Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <pre>{JSON.stringify(analysis.playerHabs, null, 2)}</pre>
-        </CollapsibleContent>
-      </Collapsible>
+      {section === "debug" && (
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline">Show Debug Data</Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <pre>{JSON.stringify(analysis.playerHabs, null, 2)}</pre>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </div>
   );
 }

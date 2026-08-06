@@ -1,141 +1,74 @@
 import { Analysis } from "@/lib/analysis";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { diffDateTime, sortByDateTime, toDays } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
 import { FactionIcons, MissionControl } from "@/components/icons";
 import { twMerge } from "tailwind-merge";
+import type { GameNavigationGroup } from "./navigation-types";
 
 export function getFleetsUi(analysis: Analysis) {
-  const byTarget = analysis.alienFleetsToPlayerOrbits.reduce((acc, fleet) => {
-    const key = fleet.planetName || "Unknown Orbit";
-    if (!acc.has(key)) {
-      acc.set(key, []);
-    }
-    acc.get(key)!.push(fleet);
-    return acc;
-  }, new Map<string, typeof analysis.alienFleetsToPlayerOrbits>());
-  const label = [
-    ...byTarget.entries().map(([target, rawFleets]) => {
-      const fleets = rawFleets.filter((f) => f.deltaV > 0 && (f.daysToTarget || 0) > 0);
-      const surv = rawFleets.filter((f) => f.operation === "AlienEarthSurveillanceOperation" && !f.arrivalTime);
-      const survInfo = surv.length ? (
-        <>
-          <span className="text-white bg-destructive rounded py-2 px-3 font-bold">
-            {surv
-              .map((f) => f.operationCompleteDays || 0)
-              .reduce((a, b) => Math.min(a, b), 9999999999)
-              .toFixed(0)}
-            d Surveillance
-          </span>{" "}
-        </>
-      ) : null;
-      if (fleets.length === 0) {
-        if (survInfo) {
-          return (
-            <span>
-              {target}: {survInfo}
-            </span>
-          );
-        }
-        return null;
-      }
-      // now that we know the arrival of the first one, find all arriving within 14 days to summarize MC
-      const firstFleet = sortByDateTime(fleets, (f) => f.arrivalTime || analysis.gameCurrentDateTime)[0];
-      const firstFleets = fleets.filter(
-        (f) =>
-          toDays(
-            diffDateTime(
-              f.arrivalTime || analysis.gameCurrentDateTime,
-              firstFleet.arrivalTime || analysis.gameCurrentDateTime,
-            ),
-          ) < 14,
-      );
-      const firstMc = firstFleets.reduce((sum, f) => sum + f.totalMC, 0);
+  const nextAlienFleet = analysis.alienFleetsToPlayerOrbits
+    .filter((fleet) => fleet.deltaV > 0 && (fleet.daysToTarget || 0) > 0)
+    .toSorted((a, b) => (a.daysToTarget || 0) - (b.daysToTarget || 0))[0];
+  const nextSurveillance = analysis.alienFleetsToPlayerOrbits
+    .filter((fleet) => fleet.operation === "AlienEarthSurveillanceOperation" && !fleet.arrivalTime)
+    .toSorted((a, b) => (a.operationCompleteDays || 0) - (b.operationCompleteDays || 0))[0];
 
-      // tier 2 hab (60d), fusion power, and defense module (90d) take a total of 150 days
-      // tier 3 hab (90d), fusion power, and defense module (180d) take a total of 270 days.
-      // T2 hab should be able to stop a bombard from a 10MC fleet, and T3 is the best we can do anyway, plus the turn time of 30 days should make for enough warning
-      // before that, we'll still have the nameplate warning and can look at details in the fleets tab
-      const warningNeeded = (firstMc > 10 ? 270 : 150) + 30;
-      const daysToTarget = firstFleet.daysToTarget || 0;
-      const farFuture = daysToTarget > warningNeeded;
-      const className = twMerge(
-        farFuture && "px-1 -mx-1 py-0.5 -my-0.5 rounded bg-green-500",
-        farFuture &&
-          (daysToTarget < warningNeeded + 50
-            ? "bg-red-200"
-            : daysToTarget < warningNeeded + 100
-              ? "bg-yellow-200"
-              : "bg-green-200"),
-      );
-      return (
-        <span
-          className={className}
-          title={`${fleets.length} fleet(s) targeting ${target}, arriving in ${daysToTarget.toFixed(
-            0,
-          )} days, using ${firstMc.toFixed(0)} MC`}
-        >
-          {target}
-          {fleets.length > 1 ? `(${fleets.length})` : ""}
-          {farFuture ? (
-            ""
-          ) : (
-            <>
-              : {daysToTarget.toFixed(0)}d <MissionControl />
-              {firstMc.toFixed(0)}
-            </>
-          )}
-          {survInfo && <>,{survInfo}</>}
-        </span>
-      );
-    }),
-  ].filter((i) => !!i);
-
-  return {
+  const group: GameNavigationGroup = {
     key: "fleets",
-    tab: (
+    label: "Fleets",
+    subtitle: (
       <>
-        Fleets
-        {label.length > 0 ? (
-          <>
-            {" - "}
-            {label.map((i, ix) => (
-              <Fragment key={ix}>
-                {i}
-                {ix < label.length - 1 ? " | " : ""}
-              </Fragment>
-            ))}
-          </>
-        ) : (
-          ""
-        )}
+        {analysis.alienFleetsToPlayerOrbits.length} alien · {analysis.playerFleets.length} player
+        {nextAlienFleet && ` · next arrival ${nextAlienFleet.daysToTarget?.toFixed(0)}d`}
+        {nextSurveillance && ` · surveillance ${nextSurveillance.operationCompleteDays?.toFixed(0)}d`}
       </>
     ),
-    content: <FleetsComponent analysis={analysis} />,
+    items: [
+      {
+        key: "fleets-alien",
+        label: "Alien Fleets",
+        subtitle: `${analysis.alienFleetsToPlayerOrbits.length} heading to player orbits`,
+        content: <FleetsComponent analysis={analysis} section="alien-fleets" />,
+      },
+      {
+        key: "fleets-human",
+        label: "Other Human Factions",
+        subtitle: `${analysis.humanEnemyFleetsToPlayerOrbits.length} fleets`,
+        content: <FleetsComponent analysis={analysis} section="human-enemy-fleets" />,
+      },
+      {
+        key: "fleets-player",
+        label: "Player Fleets",
+        subtitle: `${analysis.playerFleets.length} fleets`,
+        content: <FleetsComponent analysis={analysis} section="player-fleets" />,
+      },
+      {
+        key: "fleets-construction",
+        label: "Ships Under Construction",
+        subtitle: `${analysis.playerShipsUnderConstruction.length} ships`,
+        content: <FleetsComponent analysis={analysis} section="ships-under-construction" />,
+      },
+    ],
   };
+  return group;
 }
 
-function FleetsComponent({ analysis }: { analysis: Analysis }) {
+type FleetSection = "alien-fleets" | "human-enemy-fleets" | "player-fleets" | "ships-under-construction";
+
+function FleetsComponent({ analysis, section }: { analysis: Analysis; section: FleetSection }) {
   const alienFleets = analysis.alienFleetsToPlayerOrbits;
   const humanEnemyFleets = analysis.humanEnemyFleetsToPlayerOrbits;
   const playerFleets = analysis.playerFleets;
   const shipsUnderConstruction = analysis.playerShipsUnderConstruction;
 
   return (
-    <SmartAccordion
-      type="multiple"
-      storageKey="fleetsSections"
-      defaultValue={["alien-fleets", "human-enemy-fleets", "player-fleets", "ships-under-construction"]}
-    >
+    <div className="space-y-2">
       {/* Alien Fleets */}
-      <AccordionItem value="alien-fleets">
-        <AccordionTrigger>Alien Fleets ({alienFleets.length})</AccordionTrigger>
-        <AccordionContent>
+      {section === "alien-fleets" && (
+        <div>
           {alienFleets.length === 0 ? (
             <div className="p-4 text-muted-foreground">No alien fleets detected heading to player orbits.</div>
           ) : (
@@ -314,13 +247,12 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               </Collapsible>
             </div>
           )}
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      )}
 
       {/* Other Human Factions Fleets */}
-      <AccordionItem value="human-enemy-fleets">
-        <AccordionTrigger>Other Human Factions ({humanEnemyFleets.length})</AccordionTrigger>
-        <AccordionContent>
+      {section === "human-enemy-fleets" && (
+        <div>
           {humanEnemyFleets.length === 0 ? (
             <div className="p-4 text-muted-foreground">No other human faction fleets detected heading to player orbits.</div>
           ) : (
@@ -394,13 +326,12 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               </TableBody>
             </Table>
           )}
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      )}
 
       {/* Player Fleets */}
-      <AccordionItem value="player-fleets">
-        <AccordionTrigger>Player Fleets ({playerFleets.length})</AccordionTrigger>
-        <AccordionContent>
+      {section === "player-fleets" && (
+        <div>
           {playerFleets.length === 0 ? (
             <div className="p-4 text-muted-foreground">No player fleets found.</div>
           ) : (
@@ -460,13 +391,12 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               </TableBody>
             </Table>
           )}
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      )}
 
       {/* Ships Under Construction */}
-      <AccordionItem value="ships-under-construction">
-        <AccordionTrigger>Ships Under Construction ({shipsUnderConstruction.length})</AccordionTrigger>
-        <AccordionContent>
+      {section === "ships-under-construction" && (
+        <div>
           {shipsUnderConstruction.length === 0 ? (
             <div className="p-4 text-muted-foreground">No ships under construction.</div>
           ) : (
@@ -528,8 +458,8 @@ function FleetsComponent({ analysis }: { analysis: Analysis }) {
               </TableBody>
             </Table>
           )}
-        </AccordionContent>
-      </AccordionItem>
-    </SmartAccordion>
+        </div>
+      )}
+    </div>
   );
 }

@@ -12,10 +12,9 @@ import { Water, Volatiles, Metals, Nobles, Fissiles, Antimatter } from "@/compon
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SmartAccordion } from "@/components/ui/smart-accordion";
-import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Materials } from "@/lib/templates";
 import { twMerge } from "tailwind-merge";
+import type { GameNavigationGroup } from "./navigation-types";
 
 type SortColumn =
   | "friendlyName"
@@ -1080,24 +1079,24 @@ function DriveCalculator({ analysis }: { analysis: Analysis }) {
 }
 
 export function getDrivesUi(analysis: Analysis) {
-  return {
+  const group: GameNavigationGroup = {
     key: "drives",
-    tab: "Drives",
-    content: (
-      <SmartAccordion type="multiple" storageKey="drives-accordion" defaultValue={["drive-table", "drive-calculator"]}>
-        <AccordionItem value="drive-table">
-          <AccordionTrigger>Drive Systems</AccordionTrigger>
-          <AccordionContent>
-            <DrivesTable analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="drive-calculator">
-          <AccordionTrigger>Drive Calculator</AccordionTrigger>
-          <AccordionContent>
-            <DriveCalculator analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
-    ),
+    label: "Drives",
+    subtitle: `${analysis.drives.length} drive systems`,
+    items: [
+      {
+        key: "drives-systems",
+        label: "Drive Systems",
+        subtitle: `${analysis.drives.length} systems`,
+        content: <DrivesTable analysis={analysis} />,
+      },
+      {
+        key: "drives-calculator",
+        label: "Drive Calculator",
+        subtitle: "Compare ship propulsion configurations",
+        content: <DriveCalculator analysis={analysis} />,
+      },
+    ],
   };
+  return group;
 }
