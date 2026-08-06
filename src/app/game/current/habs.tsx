@@ -307,7 +307,7 @@ function HabMineTableRow({ hab, time }: { hab: Analysis["playerHabs"][0]; time: 
 type MineResourceType = "water" | "volatiles" | "metals" | "nobles" | "fissiles" | null;
 type MineSortDirection = "asc" | "desc" | null;
 
-export function getHabsUi(analysis: Analysis) {
+export function getHabsUi(analysis: Analysis, activeSection?: string) {
   const { playerHabs } = analysis;
 
   const missingMines = playerHabs.filter((h) => h.missingMine);
@@ -430,13 +430,14 @@ export function getHabsUi(analysis: Analysis) {
       <HabsComponent
         {...{
           analysis,
+          activeSection,
         }}
       />
     ),
   };
 }
 
-function HabsComponent({ analysis }: { analysis: Analysis }) {
+function HabsComponent({ analysis, activeSection }: { analysis: Analysis; activeSection?: string }) {
   // State for sorting mines table
   const [mineSortResource, setMineSortResource] = useState<MineResourceType>(null);
   const [mineSortDirection, setMineSortDirection] = useState<MineSortDirection>(null);
@@ -559,6 +560,7 @@ function HabsComponent({ analysis }: { analysis: Analysis }) {
         type="multiple"
         defaultValue={["current-bonuses", "future-bonuses", "available-cp-projects"]}
         storageKey="habs"
+        focusValue={activeSection}
       >
         <AccordionItem value="current-bonuses">
           <AccordionTrigger>
