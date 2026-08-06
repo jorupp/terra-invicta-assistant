@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { combineEffects, ShowEffects, ShowEffectsProps } from "@/components/showEffects";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SmartAccordion } from "@/components/ui/smart-accordion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -312,7 +312,7 @@ function OrgTableRow({
   );
 }
 
-export function getCouncilorsUi(analysis: Analysis) {
+export function getCouncilorsUi(analysis: Analysis, section = "existing") {
   const { playerMissionCounts } = analysis;
   const [weights, setWeights] = useState<ScoringWeights>(defaultScoringWeights);
 
@@ -365,10 +365,11 @@ export function getCouncilorsUi(analysis: Analysis) {
 
   return {
     key: "councilors",
-    tab: (
+    label: "Councilors",
+    summary: (
       <>
-        Councilors ({worstExistingCouncilor?.toFixed(0)} vs. {bestAvailableCouncilor?.toFixed(0)}) / Orgs (
-        {worstExistingOrg?.toFixed(2)} vs {bestAvailableOrg?.toFixed(2)})
+        {worstExistingCouncilor?.toFixed(0)} vs. {bestAvailableCouncilor?.toFixed(0)} councilor /{" "}
+        {worstExistingOrg?.toFixed(2)} vs {bestAvailableOrg?.toFixed(2)} org
       </>
     ),
     content: (
@@ -383,6 +384,7 @@ export function getCouncilorsUi(analysis: Analysis) {
           scoredOrgs,
           scoredUsedOrgs,
           scoredOwnedOrgs,
+          section,
         }}
       />
     ),
@@ -398,6 +400,7 @@ function CouncilorsComponent({
   scoredBaseCouncilors,
   scoredOrgs,
   scoredOwnedOrgs,
+  section,
 }: {
   analysis: Analysis;
   weights: ScoringWeights;
@@ -412,6 +415,7 @@ function CouncilorsComponent({
     councilor?: string;
     councilorId?: number;
   })[];
+  section: string;
 }) {
   const {
     playerMissionCounts,
@@ -545,7 +549,12 @@ function CouncilorsComponent({
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <div className="space-y-2">
-      <SmartAccordion type="single" collapsible storageKey="councilorsSections" defaultValue="existing">
+      <Accordion
+        type="single"
+        collapsible
+        value={section}
+        className="border-0 rounded-none [&>[data-slot=accordion-item]]:border-0 [&>[data-slot=accordion-item]>*>[data-slot=accordion-trigger]]:hidden"
+      >
         <AccordionItem value="existing">
           <AccordionTrigger>
             <span>
@@ -792,7 +801,7 @@ function CouncilorsComponent({
             <OtherCouncilorsByFaction {...{ analysis, weights }} />
           </AccordionContent>
         </AccordionItem>
-      </SmartAccordion>
+      </Accordion>
 
       <div className="my-4">
         <ScoringWeightsDialog weights={weights} onWeightsChange={setWeights} />
