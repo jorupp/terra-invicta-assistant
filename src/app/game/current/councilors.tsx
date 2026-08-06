@@ -12,10 +12,11 @@ import { Analysis } from "@/lib/analysis";
 import { MissionDataName, TraitDataName } from "@/lib/template-types-generated";
 import { MinusCircleIcon, PlusCircleIcon } from "lucide-react";
 import { defaultScoringWeights, loadWeightsFromStorage, ScoringWeights, ScoringWeightsDialog } from "./scoringWeights";
-import { Administration, MissionIcons, TraitIcons, UnknownIcon } from "@/components/icons";
+import { MissionIcons, TraitIcons, UnknownIcon } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartTabs } from "@/components/ui/smart-tabs";
 import { twMerge } from "tailwind-merge";
+import type { GameNavigationGroup } from "./navigation-types";
 
 function CouncilorTableHeader({ hasOrgs }: { hasOrgs?: boolean }) {
   return (
@@ -312,7 +313,7 @@ function OrgTableRow({
   );
 }
 
-export function getCouncilorsUi(analysis: Analysis) {
+export function useCouncilorsUi(analysis: Analysis) {
   const { playerMissionCounts } = analysis;
   const [weights, setWeights] = useState<ScoringWeights>(defaultScoringWeights);
 
@@ -363,34 +364,85 @@ export function getCouncilorsUi(analysis: Analysis) {
   const bestAvailableOrg = scoredOrgs[0]?.score.value;
   const worstExistingOrg = scoredUsedOrgs[scoredUsedOrgs.length - 1]?.score.value;
 
-  return {
+  const sharedProps = {
+    analysis,
+    weights,
+    setWeights,
+    scoredModifiedCouncilors,
+    scoredAvailableCouncilors,
+    scoredBaseCouncilors,
+    scoredOrgs,
+    scoredOwnedOrgs,
+  };
+
+  const group: GameNavigationGroup = {
     key: "councilors",
-    tab: (
+    label: "Councilors",
+    subtitle: (
       <>
-        Councilors ({worstExistingCouncilor?.toFixed(0)} vs. {bestAvailableCouncilor?.toFixed(0)}) / Orgs (
-        {worstExistingOrg?.toFixed(2)} vs {bestAvailableOrg?.toFixed(2)})
+        Councilors {worstExistingCouncilor?.toFixed(0)} vs. {bestAvailableCouncilor?.toFixed(0)} · Orgs{" "}
+        {worstExistingOrg?.toFixed(2)} vs {bestAvailableOrg?.toFixed(2)}
       </>
     ),
-    content: (
-      <CouncilorsComponent
-        {...{
-          analysis,
-          weights,
-          setWeights,
-          scoredModifiedCouncilors,
-          scoredAvailableCouncilors,
-          scoredBaseCouncilors,
-          scoredOrgs,
-          scoredUsedOrgs,
-          scoredOwnedOrgs,
-        }}
-      />
-    ),
+    items: [
+      {
+        key: "councilors-existing",
+        label: "Existing Council",
+        subtitle: "Manage councilors and available organizations",
+        content: <CouncilorsComponent section="existing" {...sharedProps} />,
+      },
+      {
+        key: "councilors-new",
+        label: "Find New",
+        subtitle: `${analysis.playerAvailableCouncilors.length} available councilors`,
+        content: <CouncilorsComponent section="new-councilors" {...sharedProps} />,
+      },
+      {
+        key: "councilors-orgs",
+        label: "Current Organizations",
+        subtitle: `${analysis.playerUnassignedOrgs.length} unassigned organizations`,
+        content: <CouncilorsComponent section="current-orgs" {...sharedProps} />,
+      },
+      {
+        key: "councilors-takeover",
+        label: "Hostile Takeover",
+        subtitle: `${analysis.playerStealableOrgs.length} stealable organizations`,
+        content: <CouncilorsComponent section="takeover" {...sharedProps} />,
+      },
+      {
+        key: "councilors-missions",
+        label: "Missions",
+        subtitle: "Mission sources by faction",
+        content: <CouncilorsComponent section="missions" {...sharedProps} />,
+      },
+      {
+        key: "councilors-other",
+        label: "Other Councilors",
+        subtitle: `${analysis.playerVisibleCouncilors.length} visible councilors`,
+        content: <CouncilorsComponent section="other-councilors" {...sharedProps} />,
+      },
+      {
+        key: "councilors-scoring",
+        label: "Scoring Weights",
+        subtitle: "Configure ranking priorities",
+        content: <CouncilorsComponent section="scoring" {...sharedProps} />,
+      },
+      {
+        key: "councilors-debug",
+        label: "Debug Data",
+        subtitle: "Raw councilor analysis",
+        content: <CouncilorsComponent section="debug" {...sharedProps} />,
+      },
+    ],
   };
+  return group;
 }
+
+type CouncilorSection = "existing" | "new-councilors" | "current-orgs" | "takeover" | "missions" | "other-councilors" | "scoring" | "debug";
 
 function CouncilorsComponent({
   analysis,
+  section,
   weights,
   setWeights,
   scoredModifiedCouncilors,
@@ -400,6 +452,7 @@ function CouncilorsComponent({
   scoredOwnedOrgs,
 }: {
   analysis: Analysis;
+  section: CouncilorSection;
   weights: ScoringWeights;
   setWeights: (weights: ScoringWeights) => void;
   scoredModifiedCouncilors: (Analysis["playerCouncilors"][number] & { score: ScoreResult })[];
@@ -451,19 +504,6 @@ function CouncilorsComponent({
   }
   const playerNationIds = new Set(analysis.playerNationIds);
   const playerTraits = new Set(analysis.playerCouncilors.flatMap((i) => i.traitTemplateNames));
-  const unusedAdmin = analysis.playerCouncilors
-    .map(
-      (c) =>
-        Math.min(
-          25,
-          Math.max(
-            0,
-            (c.effectsWithOrgsAndAugments.Administration || 0) + (c.effectsWithOrgsAndAugments.administration || 0)
-          )
-        ) - c.orgs.reduce((a, b) => a + b.tier, 0)
-    )
-    .reduce((a, b) => a + b, 0);
-
   const stealableOrgsByFaction = scoredStealableOrgs.reduce((acc, org) => {
     const key = org.faction?.id || 0;
     if (!acc.has(key)) {
@@ -545,14 +585,8 @@ function CouncilorsComponent({
   // TODO: would be cool to click an effect icon and sort everything by that (ie. click persuasion icon to see who/org gives most persuasion)
   return (
     <div className="space-y-2">
-      <SmartAccordion type="single" collapsible storageKey="councilorsSections" defaultValue="existing">
-        <AccordionItem value="existing">
-          <AccordionTrigger>
-            <span>
-              Manage Existing Council ({unusedAdmin.toFixed(0)} <Administration />)
-            </span>
-          </AccordionTrigger>
-          <AccordionContent>
+      {section === "existing" && (
+        <div>
             <div className="py-1">
               <ShowEffects
                 incomeBoost_month={councilEffects.incomeBoost_month}
@@ -613,11 +647,10 @@ function CouncilorsComponent({
                 ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="new-councilors">
-          <AccordionTrigger>Find New Councilors</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "new-councilors" && (
+        <div>
             <h3>Available Councilors:</h3>
             <Table>
               <CouncilorTableHeader />
@@ -649,11 +682,10 @@ function CouncilorsComponent({
                 ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="current-orgs">
-          <AccordionTrigger>Current Organizations</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "current-orgs" && (
+        <div>
             <Table>
               <OrgTableHeader costHeader="Councilor" />
               <TableBody>
@@ -668,11 +700,10 @@ function CouncilorsComponent({
                 ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="takeover">
-          <AccordionTrigger>Hostile Takeover</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "takeover" && (
+        <div>
             <SmartTabs
               storageKey="councilorsTakeoverTabs"
               defaultValue={`faction-${Array.from(stealableOrgsByFaction.keys())[0]}`}
@@ -704,11 +735,13 @@ function CouncilorsComponent({
                 </TabsContent>
               ))}
             </SmartTabs>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="missions">
-          <AccordionTrigger>Missions</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "missions" && (
+        <div>
+          {factions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No mission sources are visible.</p>
+          ) : (
             <SmartTabs storageKey="councilorsMissionsTabs" defaultValue={`faction-${factions[0].id}`}>
               <TabsList>
                 {factions.map((faction) => (
@@ -784,32 +817,37 @@ function CouncilorsComponent({
                 </TabsContent>
               ))}
             </SmartTabs>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="other-councilors">
-          <AccordionTrigger>Other Councilors</AccordionTrigger>
-          <AccordionContent>
+          )}
+        </div>
+      )}
+      {section === "other-councilors" && (
+        <div>
             <OtherCouncilorsByFaction {...{ analysis, weights }} />
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
-
-      <div className="my-4">
-        <ScoringWeightsDialog weights={weights} onWeightsChange={setWeights} />
-      </div>
-
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline">Debug Data</Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          {/* <pre>{JSON.stringify(analysis.playerCouncilors, null, 2)}</pre>
-          <pre>{JSON.stringify(analysis.playerAvailableCouncilors, null, 2)}</pre>
-          <pre>{JSON.stringify(analysis.playerAvailableOrgs, null, 2)}</pre>
-          <pre>{JSON.stringify(analysis.playerUnassignedOrgs, null, 2)}</pre> */}
-          <pre>{JSON.stringify(analysis.playerFaction, null, 2)}</pre>
-        </CollapsibleContent>
-      </Collapsible>
+        </div>
+      )}
+      {section === "scoring" && (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Adjust the weights used to rank councilors and organizations. Changes are saved with the current scoring
+            configuration.
+          </p>
+          <ScoringWeightsDialog weights={weights} onWeightsChange={setWeights} />
+        </div>
+      )}
+      {section === "debug" && (
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline">Show Debug Data</Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            {/* <pre>{JSON.stringify(analysis.playerCouncilors, null, 2)}</pre>
+            <pre>{JSON.stringify(analysis.playerAvailableCouncilors, null, 2)}</pre>
+            <pre>{JSON.stringify(analysis.playerAvailableOrgs, null, 2)}</pre>
+            <pre>{JSON.stringify(analysis.playerUnassignedOrgs, null, 2)}</pre> */}
+            <pre>{JSON.stringify(analysis.playerFaction, null, 2)}</pre>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </div>
   );
 }
@@ -837,6 +875,10 @@ function OtherCouncilorsByFaction({ analysis, weights }: { analysis: Analysis; w
   const factions = Array.from(councilorsByFactionId.keys())
     .map((i) => factionsById.get(i!)!)
     .filter((i) => i.id !== analysis.alienFaction.id);
+
+  if (factions.length === 0) {
+    return <p className="text-sm text-muted-foreground">No other councilors are visible.</p>;
+  }
 
   return (
     <Tabs defaultValue={`faction-${factions[0].id}`}>

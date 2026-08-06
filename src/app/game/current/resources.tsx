@@ -13,6 +13,7 @@ import { ClaimCoverage } from "@/lib/analysis/nations";
 import { diffDateTime, smartRound, sortByDateTime, toDays } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
+import type { GameNavigationGroup } from "./navigation-types";
 
 function getNationBg(
   nation: Pick<Analysis["nations"][0], "wastedOppression" | "tooHighUnrest" | "couldBuildBoost" | "spoilsWithoutAllCPs">
@@ -52,37 +53,72 @@ export function getResourcesUi(analysis: Analysis) {
 
   // once you're using over 300mc, you're not worried about your MC hate floor anymore.
   const showMcInfo = mcUsage < 300;
-  return {
+  const group: GameNavigationGroup = {
     key: "resources",
-    tab: (
+    label: <span className={twMerge(nationBg, "rounded px-1")}>Resources</span>,
+    subtitle: (
       <>
-        <span className={twMerge(nationBg, "px-1 py-0.5 -mx-1 -my-0.5 rounded")}>Resources</span>
-        (<PrioritySpoils /> ${spoils.toFixed(0)}
+        <PrioritySpoils /> ${spoils.toFixed(0)}
         {showMcInfo ? (
           <>
-            , <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} -
-            <span title="If more MC is used than this, alien hate will never fall below 50">
-              Lim {mcAlienWarLimit.toFixed(0)}
-            </span>
-            <span title="Current hate floor (alien hate cannot go below this due to your MC usage)">
-              Flr {mcHateFloor.toFixed(0)}
-            </span>
+            {" "}
+            · <MissionControl /> {mcUsage.toFixed(0)}/{mcCurrentLimit.toFixed(0)} · Lim {mcAlienWarLimit.toFixed(0)} ·
+            Flr {mcHateFloor.toFixed(0)}
           </>
         ) : null}
-        )
       </>
     ),
-    content: (
-      <ResourcesComponent
-        {...{
-          analysis,
-        }}
-      />
-    ),
+    items: [
+      {
+        key: "resources-transactions",
+        label: "Transactions",
+        subtitle: "Monthly income and spending",
+        content: <ResourcesComponent analysis={analysis} section="transactions" />,
+      },
+      {
+        key: "resources-owned",
+        label: "Owned Nations",
+        subtitle: "Control points, spoils, MC, and boost",
+        content: <ResourcesComponent analysis={analysis} section="owned" />,
+      },
+      {
+        key: "resources-spoils",
+        label: "Spoil Targets",
+        subtitle: "Best spoils opportunities",
+        content: <ResourcesComponent analysis={analysis} section="spoils" />,
+      },
+      {
+        key: "resources-space",
+        label: "MC/Boost Targets",
+        subtitle: "Space-resource opportunities",
+        content: <ResourcesComponent analysis={analysis} section="space" />,
+      },
+      {
+        key: "resources-nation-claims",
+        label: "Nation Claims",
+        subtitle: `${analysis.nationClaims.length} controlled nations`,
+        content: <ResourcesComponent analysis={analysis} section="nation-claims" />,
+      },
+      {
+        key: "resources-unification",
+        label: "Unification Candidates",
+        subtitle: `${analysis.unificationCandidates.length} candidates`,
+        content: <ResourcesComponent analysis={analysis} section="unification-candidates" />,
+      },
+      {
+        key: "resources-debug",
+        label: "Debug Data",
+        subtitle: "Raw resource analysis",
+        content: <ResourcesComponent analysis={analysis} section="debug" />,
+      },
+    ],
   };
+  return group;
 }
 
-function ResourcesComponent({ analysis }: { analysis: Analysis }) {
+type ResourceSection = "transactions" | "owned" | "spoils" | "space" | "nation-claims" | "unification-candidates" | "debug";
+
+function ResourcesComponent({ analysis, section }: { analysis: Analysis; section: ResourceSection }) {
   const {
     playerFaction: { monthlyTransactionSummary, permaAbandonedNationIds, id: playerFactionId },
     nations,
@@ -133,12 +169,8 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="space-y-2">
-      <SmartAccordion type="single" collapsible defaultValue="transactions" storageKey="resources-accordion">
-        <AccordionItem value="transactions">
-          <AccordionTrigger>
-            <span>Transactions</span>
-          </AccordionTrigger>
-          <AccordionContent>
+      {section === "transactions" && (
+        <div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -200,11 +232,10 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                 </TableRow>
               </TableFooter>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="owned">
-          <AccordionTrigger>Owned nations</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "owned" && (
+        <div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -270,11 +301,10 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                   ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="spoils">
-          <AccordionTrigger>Spoil targets</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "spoils" && (
+        <div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -311,11 +341,10 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                   ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="space">
-          <AccordionTrigger>MC/Boost targets</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "space" && (
+        <div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -351,31 +380,30 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
                   ))}
               </TableBody>
             </Table>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="nation-claims">
-          <AccordionTrigger>Nation Claims</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "nation-claims" && (
+        <div>
             <NationClaimsSection analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="unification-candidates">
-          <AccordionTrigger>Unification Candidates ({analysis.unificationCandidates.length})</AccordionTrigger>
-          <AccordionContent>
+        </div>
+      )}
+      {section === "unification-candidates" && (
+        <div>
             <UnificationCandidatesSection analysis={analysis} />
-          </AccordionContent>
-        </AccordionItem>
-      </SmartAccordion>
+        </div>
+      )}
 
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline">Debug Data</Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <pre>{JSON.stringify(monthlyTransactionSummary, null, 2)}</pre>
-          <pre>{JSON.stringify(nations, null, 2)}</pre>
-        </CollapsibleContent>
-      </Collapsible>
+      {section === "debug" && (
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline">Show Debug Data</Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <pre>{JSON.stringify(monthlyTransactionSummary, null, 2)}</pre>
+            <pre>{JSON.stringify(nations, null, 2)}</pre>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </div>
   );
 }
