@@ -1101,3 +1101,12 @@ export function getDrivesUi(analysis: Analysis) {
     ),
   };
 }
+
+// ==================== Tree Navigation Views ====================
+
+export function getDrivesViews(analysis: Analysis) {
+  return [
+    { id: "drives-systems", label: "Drive Systems", subtitle: "All drives overview", content: <DrivesTable analysis={analysis} /> },
+    { id: "drives-calculator", label: "Drive Calculator", subtitle: "Ship configuration tool", content: <DriveCalculator analysis={analysis} /> },
+  ];
+}

@@ -380,6 +380,115 @@ function ResourcesComponent({ analysis }: { analysis: Analysis }) {
   );
 }
 
+// ==================== Tree Navigation Views ====================
+
+function ResourcesTransactionsView({ analysis }: { analysis: Analysis }) {
+  const { monthlyTransactionSummary } = analysis.playerFaction;
+  const bySourceByResource = monthlyTransactionSummary.reduce((acc, curr) => {
+    if (!acc.has(curr.source)) acc.set(curr.source, new Map<string, { amount: number; transactions: { date: string; amount: number }[] }>());
+    const resourceMap = acc.get(curr.source)!;
+    const existing = resourceMap.get(curr.resource) || { amount: 0, transactions: [] as { date: string; amount: number }[] };
+    existing.amount += curr.amount;
+    if (curr.transactions && curr.transactions.length > 0) existing.transactions.push(...curr.transactions);
+    resourceMap.set(curr.resource, existing);
+    return acc;
+  }, new Map<string, Map<string, { amount: number; transactions: { date: string; amount: number }[] }>>());
+  const byResource = monthlyTransactionSummary.reduce((acc, curr) => { acc.set(curr.resource, (acc.get(curr.resource) || 0) + curr.amount); return acc; }, new Map<string, number>());
+  const resourcesSet = new Set(["Money", "Influence", "Operations", "Research", "Boost", "Water", "Volatiles", "Metals", "NobleMetals", "Fissiles", "Antimatter", "Exotics", ...byResource.keys()]);
+  resourcesSet.delete("Projects"); resourcesSet.delete("MissionControl");
+  const resources = [...resourcesSet];
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Source</TableHead>
+          {resources.map((resource) => {
+            const Icon = ResourceIcons[resource as keyof typeof ResourceIcons];
+            return <TableHead key={resource}>{Icon ? <Icon /> : null} {resource}</TableHead>;
+          })}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[...bySourceByResource.entries()].map(([source, resourceMap]) => (
+          <TableRow key={source}>
+            <TableCell>{source}</TableCell>
+            {resources.map((resource) => {
+              const data = resourceMap.get(resource);
+              if (!data) return <TableCell key={resource}></TableCell>;
+              const hasTooltip = (resource === "Exotics" || resource === "Antimatter") && data.transactions.length > 0;
+              return (
+                <TableCell key={resource}>
+                  {hasTooltip ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild><span className="cursor-help">{smartRound(data.amount)}</span></TooltipTrigger>
+                        <TooltipContent><div className="space-y-1">{data.transactions.map((txn, i) => <div key={i}>{txn.date}: {smartRound(txn.amount)}</div>)}</div></TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    smartRound(data.amount)
+                  )}
+                </TableCell>
+              );
+            })}
+          </TableRow>
+        ))}
+      </TableBody>
+      <TableFooter>
+        <TableRow>
+          <TableHead>Total</TableHead>
+          {resources.map((resource) => <TableHead key={resource}>{smartRound(byResource.get(resource) || 0)}</TableHead>)}
+        </TableRow>
+      </TableFooter>
+    </Table>
+  );
+}
+
+function ResourcesOwnedNationsView({ analysis }: { analysis: Analysis }) {
+  const { nations, playerFaction, factionsById } = analysis;
+  const playerNationCps = nations.filter((i) => i.controlPoints.some((cp) => cp.factionId === playerFaction.id)).toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1));
+  return (
+    <Table>
+      <TableHeader><TableRow><TableHead>Nation</TableHead><TableHead>Control Points</TableHead><TableHead>Opp P</TableHead><TableHead>Boost P</TableHead><TableHead>MC P</TableHead><TableHead>Spoil P</TableHead><TableHead>Unrest</TableHead><TableHead>Total Spoils</TableHead><TableHead>Total Spoils Per Point</TableHead><TableHead>Total Spoils Per CP Cost</TableHead><TableHead>Current MC / Boost</TableHead><TableHead>Boost/mo Per CP Cost</TableHead><TableHead>MC Per CP Cost</TableHead></TableRow></TableHeader>
+      <TableBody>{playerNationCps.map((nation) => (<TableRow key={nation.id} className={getNationBg(nation)}><TableCell>{nation.displayName}</TableCell><TableCell><NationCPDetails analysis={analysis} nation={nation} /></TableCell><TableCell>{nation.allocatedPriorities.Oppression ? pct(nation.allocatedPriorities.Oppression) : null}</TableCell><TableCell>{nation.allocatedPriorities.LaunchFacilities ? pct(nation.allocatedPriorities.LaunchFacilities) : null}</TableCell><TableCell>{nation.allocatedPriorities.MissionControl ? pct(nation.allocatedPriorities.MissionControl) : null}</TableCell><TableCell>{nation.allocatedPriorities.Spoils ? pct(nation.allocatedPriorities.Spoils) : null}</TableCell><TableCell>{nation.unrest.toFixed(2)}</TableCell><TableCell><span title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(2)} IP`}>{nation.totalSpoils.toFixed(0)}</span></TableCell><TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell><TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell><TableCell>{nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost /></TableCell><TableCell>{nation.boostPerMonthPerCpCost.toFixed(2)}</TableCell><TableCell>{nation.mcPerCpCost.toFixed(2)}</TableCell></TableRow>))}</TableBody>
+    </Table>
+  );
+}
+
+function ResourcesSpoilTargetsView({ analysis }: { analysis: Analysis }) {
+  const { nations } = analysis;
+  return (
+    <Table>
+      <TableHeader><TableRow><TableHead>Nation</TableHead><TableHead>Control Points</TableHead><TableHead>Unrest</TableHead><TableHead>Total Spoils</TableHead><TableHead>Total Spoils Per Point</TableHead><TableHead>Total Spoils Per CP Cost</TableHead></TableRow></TableHeader>
+      <TableBody>{nations.toSorted((a, b) => (a.totalSpoilsPerCpCost < b.totalSpoilsPerCpCost ? 1 : -1)).map((nation) => (<TableRow key={nation.id}><TableCell>{nation.displayName}</TableCell><TableCell><NationCPDetails analysis={analysis} nation={nation} /></TableCell><TableCell>{nation.unrest.toFixed(2)}</TableCell><TableCell><span title={`${nation.valuePerSpoilsIP.toFixed(1)} per IP * ${nation.investmentPoints.toFixed(2)} IP`}>{nation.totalSpoils.toFixed(0)}</span></TableCell><TableCell>{nation.totalSpoilsPerControlPoint.toFixed(0)}</TableCell><TableCell>{nation.totalSpoilsPerCpCost.toFixed(2)}</TableCell></TableRow>))}</TableBody>
+    </Table>
+  );
+}
+
+function ResourcesMcBoostTargetsView({ analysis }: { analysis: Analysis }) {
+  const { nations } = analysis;
+  return (
+    <Table>
+      <TableHeader><TableRow><TableHead>Nation</TableHead><TableHead>Control Points</TableHead><TableHead>Possible Boost IP Per CP Cost</TableHead><TableHead>Current MC / Boost</TableHead><TableHead>Boost/mo Per CP Cost</TableHead><TableHead>MC Per CP Cost</TableHead></TableRow></TableHeader>
+      <TableBody>{nations.toSorted((a, b) => { if (a.boostPerMonthPerCpCost !== b.boostPerMonthPerCpCost) return b.possibleBoostPerCpCost - a.possibleBoostPerCpCost; return a.boostPerMonthPerCpCost < b.boostPerMonthPerCpCost ? 1 : -1; }).map((nation) => (<TableRow key={nation.id}><TableCell>{nation.displayName}</TableCell><TableCell><NationCPDetails analysis={analysis} nation={nation} /></TableCell><TableCell>{nation.possibleBoostPerCpCost.toFixed(2)}</TableCell><TableCell>{nation.mc.toFixed(0)} <MissionControl /> / {nation.boostPerMonth.toFixed(2)} <Boost /></TableCell><TableCell>{nation.boostPerMonthPerCpCost.toFixed(2)}</TableCell><TableCell>{nation.mcPerCpCost.toFixed(2)}</TableCell></TableRow>))}</TableBody>
+    </Table>
+  );
+}
+
+function ResourcesNationClaimsView({ analysis }: { analysis: Analysis }) { return <NationClaimsSection analysis={analysis} />; }
+function ResourcesUnificationView({ analysis }: { analysis: Analysis }) { return <UnificationCandidatesSection analysis={analysis} />; }
+
+export function getResourcesViews(analysis: Analysis) {
+  return [
+    { id: "resources-transactions", label: "Transactions", subtitle: "Income by source", content: <ResourcesTransactionsView analysis={analysis} /> },
+    { id: "resources-owned", label: "Owned Nations", subtitle: "Control point analysis", content: <ResourcesOwnedNationsView analysis={analysis} /> },
+    { id: "resources-spoils", label: "Spoil Targets", subtitle: "Spoils optimization", content: <ResourcesSpoilTargetsView analysis={analysis} /> },
+    { id: "resources-mcboost", label: "MC/Boost Targets", subtitle: "MC & boost sources", content: <ResourcesMcBoostTargetsView analysis={analysis} /> },
+    { id: "resources-claims", label: "Nation Claims", subtitle: "Unification claims", content: <ResourcesNationClaimsView analysis={analysis} /> },
+    { id: "resources-unification", label: "Unification", subtitle: `(${analysis.unificationCandidates.length})`, content: <ResourcesUnificationView analysis={analysis} /> },
+  ];
+}
+
 const NationCPDetails = ({ analysis, nation }: { nation: Analysis["nations"][0]; analysis: Analysis }) => {
   const {
     factionsById,
